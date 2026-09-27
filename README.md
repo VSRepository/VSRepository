@@ -110,7 +110,7 @@ The sections above (installation, basic usage) are the essentials to get you sta
 | [Raw query builder](./docs/raw-query-builder.md) | The fluent `createRawQueryBuilder()` API for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs (`with`/`withRecursive`). |
 | [Transactions](./docs/transactions.md) | Running several repositories against the same native ORM transaction. |
 | [Utility types](./docs/utility-types.md) | The exported helper types (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) and where each one is used. |
-| [Writing your own adapter](./docs/writing-an-adapter.md) | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database, method by method. |
+| [Writing your own adapter](./docs/writing-an-adapter.md) | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database. |
 | [Error handling](./docs/error-handling.md) | `VSRepoError`, `VSRepoErrorType`, and `VSRepoAdapterError`/`AdapterErrorCode`. |
 | [Logging](./docs/logging.md) | `logLevel`, `logSlowThresholdMs`, and the log format used by the repository and the query builder. |
 | [Contributing](./CONTRIBUTING.md) | Repository layout, the key scripts, conventions and CI — plus the contribution flow itself (issues, pull requests, review). |

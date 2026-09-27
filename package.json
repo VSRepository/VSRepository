@@ -9,7 +9,7 @@
   },
   "bugs": {
     "email": "joaodev.azevedo@outlook.com",
-    "url": "https://github.com/jaobrabo123/VSRepoDrizzleAdapter/issues"
+    "url": "https://github.com/jaobrabo123/VSRepository/issues"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -110,7 +110,7 @@ As seções acima (instalação, uso básico) são o essencial para começar. Tu
 | [Raw query builder](./docs/raw-query-builder.pt-BR.md) | A API fluente `createRawQueryBuilder()` para queries `SELECT` escritas à mão, específicas demais para o query builder — joins, subqueries, CTEs (`with`/`withRecursive`). |
 | [Transações](./docs/transactions.pt-BR.md) | Rodando vários repositories na mesma transação nativa do ORM. |
 | [Tipos utilitários](./docs/utility-types.pt-BR.md) | Os tipos utilitários exportados (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) e onde cada um é usado. |
-| [Escrevendo seu próprio adapter](./docs/writing-an-adapter.pt-BR.md) | Do que um adapter é responsável, e como implementar o contrato `VSRepoAdapter` para um novo ORM ou banco, método a método. |
+| [Escrevendo seu próprio adapter](./docs/writing-an-adapter.pt-BR.md) | Do que um adapter é responsável, e como implementar o contrato `VSRepoAdapter` para um novo ORM ou banco. |
 | [Tratamento de erros](./docs/error-handling.pt-BR.md) | `VSRepoError`, `VSRepoErrorType`, e `VSRepoAdapterError`/`AdapterErrorCode`. |
 | [Logging](./docs/logging.pt-BR.md) | `logLevel`, `logSlowThresholdMs`, e o formato de log usado pelo repository e pelo query builder. |
 | [Contribuindo](./CONTRIBUTING.pt-BR.md) | Estrutura do repositório, os principais scripts, convenções e CI — mais o próprio fluxo de contribuição (issues, pull requests, revisão). |
