@@ -25,16 +25,16 @@ For queries whose SQL is too specific for this builder's `where`/`relations` mod
 
 ## Building the query
 
-| Method                 | Description                                                                                                                                                |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `select(select)`       | Fields (and nested relation fields) to select — same shape as in [`select` and `relations`](./select-and-relations.md#select-and-relations). Replaces any previous `select`.        |
-| `relations(relations)` | Relations to eagerly load. Replaces any previous `relations`.                                                                                              |
-| `where(where)`         | The filter: the same `VSRepoWhere` used by the rest of the library (field operators, relation filters and `AND`/`OR`/`NOT`). Replaces any previous filter. |
-| `orderBy(order)`       | An object or an array of objects with `"asc"`/`"desc"` (lower or upper case). Only scalar fields can be ordered. Replaces any previous ordering.        |
-| `limit(limit)`         | Maximum number of records. Must be a non-negative integer.                                                                                                 |
-| `offset(offset)`       | Number of records to skip. Must be a non-negative integer.                                                                                                 |
-| `distinctOn(fields)`   | A primitive field, or an array of them, to apply `distinct` on. Only used by `getResult()`.                                                                |
-| `see(mode)`            | Soft-delete visibility: `"active"` (default), `"removed"` or `"all"`. See [Soft-delete with `see()`](#soft-delete-with-see).                               |
+| Method                 | Description                                                                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `select(select)`       | Fields (and nested relation fields) to select — same shape as in [`select` and `relations`](./select-and-relations.md#select-and-relations). Replaces any previous `select`. |
+| `relations(relations)` | Relations to eagerly load. Replaces any previous `relations`.                                                                                                                |
+| `where(where)`         | The filter: the same `VSRepoWhere` used by the rest of the library (field operators, relation filters and `AND`/`OR`/`NOT`). Replaces any previous filter.                   |
+| `orderBy(order)`       | An object or an array of objects with `"asc"`/`"desc"` (lower or upper case). Only scalar fields can be ordered. Replaces any previous ordering.                             |
+| `limit(limit)`         | Maximum number of records. Must be a non-negative integer.                                                                                                                   |
+| `offset(offset)`       | Number of records to skip. Must be a non-negative integer.                                                                                                                   |
+| `distinctOn(fields)`   | A primitive field, or an array of them, to apply `distinct` on. Only used by `getResult()`.                                                                                  |
+| `see(mode)`            | Soft-delete visibility: `"active"` (default), `"removed"` or `"all"`. See [Soft-delete with `see()`](#soft-delete-with-see).                                                 |
 
 Calling `where()` again replaces the previous filter, and the [soft-delete](#soft-delete-with-see) filter is added on top of it when the query runs. Since the builder is mutable, a filter that depends on optional inputs is easiest to build as an object first:
 

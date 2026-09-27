@@ -24,22 +24,19 @@ Everything above is ORM-agnostic and shared by every adapter. What remains for y
 
 The types you'll meet throughout the contract are all documented in [Utility types](./utility-types.md):
 
-| Type                     | Role in the contract                                                                                             |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `VSRepoWhere<T>`         | The already-resolved filter. It must be converted to the ORM equivalent for your adapter.                                   |
-| `AdapterMethodOptions<T>` | The per-call options: `select`, `relations`, `see`, and the transaction handle.                                   |
-| `DeepPartial<T>`         | A partial entity for writes — a nested `DeepPartial` of a relation is a nested partial, not a full object.        |
-| `CountResult`            | What `createMany`/`deleteMany`/`updateMany` resolve to when the caller only wants `{ count }`.                    |
-| `NumericKeys<T>`         | Constrains the atomic/aggregate `field` argument to numeric (or `DecimalLike`) columns.                             |
+| Type                      | Role in the contract                                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `VSRepoWhere<T>`          | The already-resolved filter. It must be converted to the ORM equivalent for your adapter.                  |
+| `AdapterMethodOptions<T>` | The per-call options: `select`, `relations`, `see`, and the transaction handle.                            |
+| `DeepPartial<T>`          | A partial entity for writes — a nested `DeepPartial` of a relation is a nested partial, not a full object. |
+| `CountResult`             | What `createMany`/`deleteMany`/`updateMany` resolve to when the caller only wants `{ count }`.             |
+| `NumericKeys<T>`          | Constrains the atomic/aggregate `field` argument to numeric (or `DecimalLike`) columns.                    |
 
 ## The `VSRepoAdapter` contract
 
 ```typescript
 export abstract class VSRepoAdapter<T> {
-    abstract runInTransaction<R>(
-        fn: (tx: any) => Promise<R>,
-        options?: VSRepoTransactionOptions,
-    ): Promise<R>;
+    abstract runInTransaction<R>(fn: (tx: any) => Promise<R>, options?: VSRepoTransactionOptions): Promise<R>;
     abstract getDbClient(): any;
     abstract query<T = any>(query: string, options?: AdapterQueryOptions): Promise<T>;
     abstract findOne(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T | null>;
@@ -60,19 +57,9 @@ export abstract class VSRepoAdapter<T> {
         options?: AdapterMethodOptions<T> & { ignoreConflicts?: boolean },
     ): Promise<T[]>;
     abstract delete(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T>;
-    abstract deleteMany(
-        where: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<CountResult>;
-    abstract deleteManyReturning(
-        where: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T[]>;
-    abstract update(
-        where: VSRepoWhere<T>,
-        obj: DeepPartial<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T>;
+    abstract deleteMany(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<CountResult>;
+    abstract deleteManyReturning(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T[]>;
+    abstract update(where: VSRepoWhere<T>, obj: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<T>;
     abstract updateMany(
         where: VSRepoWhere<T>,
         obj: DeepPartial<T>,
@@ -85,11 +72,7 @@ export abstract class VSRepoAdapter<T> {
     ): Promise<T[]>;
     abstract count(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<number>;
     abstract exists(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<boolean>;
-    abstract merge<K>(
-        where: VSRepoWhere<T>,
-        obj: DeepPartial<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<K & T>;
+    abstract merge<K>(where: VSRepoWhere<T>, obj: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<K & T>;
     abstract upsert(
         where: VSRepoWhere<T>,
         create: DeepPartial<T>,
@@ -153,7 +136,7 @@ The optional `getPlaceholder?(index)` declares the placeholder syntax your datab
 
 Two rules cover the method bodies:
 
-- **Don't rebuild the filter — but do translate it.** The `where` is already resolved, validated and already carries the soft-delete filter. Translating its *shape* into your ORM's vocabulary is your job, and is the subject of the next section.
+- **Don't rebuild the filter — but do translate it.** The `where` is already resolved, validated and already carries the soft-delete filter. Translating its _shape_ into your ORM's vocabulary is your job, and is the subject of the next section.
 - **Wrap every ORM error — never let it escape raw.** Anything the ORM/driver throws must be caught and rethrown as a `VSRepoAdapterError`, with the raw error kept in `originalError` and the failure classified by an `AdapterErrorCode` (see [`VSRepoAdapterError` and `AdapterErrorCode`](./error-handling.md#vsrepoadaptererror-and-adaptererrorcode)). Swallowing it, or letting the ORM's own error class reach the caller, breaks the guarantee that callers never depend on a single ORM's error shape:
 
     ```typescript
@@ -186,7 +169,7 @@ Take `{ name: { equals: "Ana", contains: "an", ignoreCase: true }, age: { betwee
 { name: { eq: "Ana", ilike: "%an%" }, age: { gte: 18, lte: 65 } }
 ```
 
-Same input, two different outputs, and neither is a pass-through: `between: [min, max]` has to become `gte: min, lte: max` in both, and `equals` only keeps its name in Prisma. Operators that already match your ORM's keys (`gt`, `gte`, `lt`, `lte`, `in`, `notIn`) *can* be forwarded untouched — the ones that don't, must be rewritten.
+Same input, two different outputs, and neither is a pass-through: `between: [min, max]` has to become `gte: min, lte: max` in both, and `equals` only keeps its name in Prisma. Operators that already match your ORM's keys (`gt`, `gte`, `lt`, `lte`, `in`, `notIn`) _can_ be forwarded untouched — the ones that don't, must be rewritten.
 
 ## Logging from your adapter
 
@@ -244,17 +227,17 @@ An official adapter is published under the `@vsrepo` scope on npm, which the pro
 
 That's the same pipeline the core itself uses — see [`.github/workflows/publish.yml`](https://github.com/jaobrabo123/VSRepository/blob/main/.github/workflows/publish.yml). Access is granted once the checklist below passes.
 
-| Requirement         | What it means                                                                                                                                                                                                                                    |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Full contract       | Every abstract method of `VSRepoAdapter`, including the 8 atomic/aggregate operations (`incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max`).                                                                            |
-| Contract tests      | A fake client plus a suite asserting *which* adapter methods the repository calls and *with which arguments*.                                                                                   |
-| Integration tests   | **Tests against a real database**, exercising the SQL your adapter actually generates.                                                                       |
-| `getPlaceholder()`  | Implemented, otherwise `query()`, `VSSql` fragments and `vsPlaceholders` don't work.                                                                                                                                                             |
-| Peer dependencies   | The ORM and the core `vsrepo` declared as `peerDependencies`.                                                                                                                                                                                     |
-| Independent repo    | Its own repository, versioned and released independently of the core.                                                                                                                                                                              |
-| Maturity dist-tag   | `latest` once the adapter is production-ready; `alpha`/`beta` while it isn't. Never publish a work-in-progress as `latest`.                                                                                                                       |
-| Docs in both languages | English and Portuguese, changed together — the same rule the core follows.                                                                                                                                                                    |
-| Registration        | A PR adding a row to the official table in [Adapter status](./adapters.md#adapter-status).                                                                                                                                                     |
+| Requirement            | What it means                                                                                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full contract          | Every abstract method of `VSRepoAdapter`, including the 8 atomic/aggregate operations (`incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max`). |
+| Contract tests         | A fake client plus a suite asserting _which_ adapter methods the repository calls and _with which arguments_.                                                                       |
+| Integration tests      | **Tests against a real database**, exercising the SQL your adapter actually generates.                                                                                              |
+| `getPlaceholder()`     | Implemented, otherwise `query()`, `VSSql` fragments and `vsPlaceholders` don't work.                                                                                                |
+| Peer dependencies      | The ORM and the core `vsrepo` declared as `peerDependencies`.                                                                                                                       |
+| Independent repo       | Its own repository, versioned and released independently of the core.                                                                                                               |
+| Maturity dist-tag      | `latest` once the adapter is production-ready; `alpha`/`beta` while it isn't. Never publish a work-in-progress as `latest`.                                                         |
+| Docs in both languages | English and Portuguese, changed together — the same rule the core follows.                                                                                                          |
+| Registration           | A PR adding a row to the official table in [Adapter status](./adapters.md#adapter-status).                                                                                          |
 
 To request it, open an issue with the link to your repository and a short note on which ORM versions you support.
 

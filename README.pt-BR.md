@@ -99,22 +99,22 @@ As seções acima (instalação, uso básico) são o essencial para começar. Tu
 
 ### Guias
 
-| Guia | Cobre |
-| --- | --- |
-| [Status dos adapters](./docs/adapters.pt-BR.md) | Quais adapters de ORM existem hoje, o que "agnóstico de ORM por design" significa na prática, e como instalar, escrever ou publicar o seu. |
-| [Métodos base, configuração & soft-delete](./docs/base-methods.pt-BR.md) | Options do construtor, os 12 métodos CRUD automáticos, soft-delete nativo, e os 8 métodos atômicos/de agregação (`increment`, `sum`, ...). |
-| [`select` e `relations`](./docs/select-and-relations.pt-BR.md) | Seleção de campos e carregamento de relações ad-hoc em qualquer chamada, e o `InferMethodReturn` para estreitar o tipo de retorno de acordo. |
-| [Métodos dinâmicos](./docs/dynamic-methods.pt-BR.md) | Métodos no estilo `findByEmail`, resolvidos a partir de um nome de método `declare`d: prefixos, filtros de campo, operadores lógicos, filtros de relação, ordenação/paginação/distinct. |
-| [Query methods (SQL raw)](./docs/query-methods.pt-BR.md) | SQL raw via `@QueryMethod`, fragmentos parametrizados `VSSql` e os placeholders agnósticos `?1`/`?2` (`vsPlaceholders`). |
-| [Query builder](./docs/query-builder.pt-BR.md) | A API fluente `createQueryBuilder()` para queries montadas em tempo de execução, incluindo paginação, visibilidade de soft-delete e transações. |
-| [Raw query builder](./docs/raw-query-builder.pt-BR.md) | A API fluente `createRawQueryBuilder()` para queries `SELECT` escritas à mão, específicas demais para o query builder — joins, subqueries, CTEs (`with`/`withRecursive`). |
-| [Transações](./docs/transactions.pt-BR.md) | Rodando vários repositories na mesma transação nativa do ORM. |
-| [Tipos utilitários](./docs/utility-types.pt-BR.md) | Os tipos utilitários exportados (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) e onde cada um é usado. |
-| [Escrevendo seu próprio adapter](./docs/writing-an-adapter.pt-BR.md) | Do que um adapter é responsável, e como implementar o contrato `VSRepoAdapter` para um novo ORM ou banco. |
-| [Tratamento de erros](./docs/error-handling.pt-BR.md) | `VSRepoError`, `VSRepoErrorType`, e `VSRepoAdapterError`/`AdapterErrorCode`. |
-| [Logging](./docs/logging.pt-BR.md) | `logLevel`, `logSlowThresholdMs`, e o formato de log usado pelo repository e pelo query builder. |
-| [Contribuindo](./CONTRIBUTING.pt-BR.md) | Estrutura do repositório, os principais scripts, convenções e CI — mais o próprio fluxo de contribuição (issues, pull requests, revisão). |
-| [Migrando da v1](./docs/migrating-from-v1.pt-BR.md) | Tudo o que mudou entre a v1 e a v2 — API, config, sufixos renomeados, funcionalidades removidas — em uma única referência para migrar repositories existentes. |
+| Guia                                                                     | Cobre                                                                                                                                                                                   |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Status dos adapters](./docs/adapters.pt-BR.md)                          | Quais adapters de ORM existem hoje, o que "agnóstico de ORM por design" significa na prática, e como instalar, escrever ou publicar o seu.                                              |
+| [Métodos base, configuração & soft-delete](./docs/base-methods.pt-BR.md) | Options do construtor, os 12 métodos CRUD automáticos, soft-delete nativo, e os 8 métodos atômicos/de agregação (`increment`, `sum`, ...).                                              |
+| [`select` e `relations`](./docs/select-and-relations.pt-BR.md)           | Seleção de campos e carregamento de relações ad-hoc em qualquer chamada, e o `InferMethodReturn` para estreitar o tipo de retorno de acordo.                                            |
+| [Métodos dinâmicos](./docs/dynamic-methods.pt-BR.md)                     | Métodos no estilo `findByEmail`, resolvidos a partir de um nome de método `declare`d: prefixos, filtros de campo, operadores lógicos, filtros de relação, ordenação/paginação/distinct. |
+| [Query methods (SQL raw)](./docs/query-methods.pt-BR.md)                 | SQL raw via `@QueryMethod`, fragmentos parametrizados `VSSql` e os placeholders agnósticos `?1`/`?2` (`vsPlaceholders`).                                                                |
+| [Query builder](./docs/query-builder.pt-BR.md)                           | A API fluente `createQueryBuilder()` para queries montadas em tempo de execução, incluindo paginação, visibilidade de soft-delete e transações.                                         |
+| [Raw query builder](./docs/raw-query-builder.pt-BR.md)                   | A API fluente `createRawQueryBuilder()` para queries `SELECT` escritas à mão, específicas demais para o query builder — joins, subqueries, CTEs (`with`/`withRecursive`).               |
+| [Transações](./docs/transactions.pt-BR.md)                               | Rodando vários repositories na mesma transação nativa do ORM.                                                                                                                           |
+| [Tipos utilitários](./docs/utility-types.pt-BR.md)                       | Os tipos utilitários exportados (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) e onde cada um é usado.                                                                     |
+| [Escrevendo seu próprio adapter](./docs/writing-an-adapter.pt-BR.md)     | Do que um adapter é responsável, e como implementar o contrato `VSRepoAdapter` para um novo ORM ou banco.                                                                               |
+| [Tratamento de erros](./docs/error-handling.pt-BR.md)                    | `VSRepoError`, `VSRepoErrorType`, e `VSRepoAdapterError`/`AdapterErrorCode`.                                                                                                            |
+| [Logging](./docs/logging.pt-BR.md)                                       | `logLevel`, `logSlowThresholdMs`, e o formato de log usado pelo repository e pelo query builder.                                                                                        |
+| [Contribuindo](./CONTRIBUTING.pt-BR.md)                                  | Estrutura do repositório, os principais scripts, convenções e CI — mais o próprio fluxo de contribuição (issues, pull requests, revisão).                                               |
+| [Migrando da v1](./docs/migrating-from-v1.pt-BR.md)                      | Tudo o que mudou entre a v1 e a v2 — API, config, sufixos renomeados, funcionalidades removidas — em uma única referência para migrar repositories existentes.                          |
 
 ---
 
@@ -122,12 +122,12 @@ As seções acima (instalação, uso básico) são o essencial para começar. Tu
 
 O VSRepository é **agnóstico de ORM por design**: o pacote core (`vsrepo`) traz apenas a classe de repository, os decoradores, o engine de parsing de nomes, o tratamento de erros e o logging — nenhum adapter de produção. O suporte a ORM vive em pacotes `@vsrepo/*-adapter` separados e versionados de forma independente, então cada um pode acompanhar o ciclo de releases do seu próprio ORM.
 
-| Adapter                               | Status                                                                                                 |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Prisma 7 (`@vsrepo/prisma7-adapter`)  | 🟢 **Lançado** — publicado no npm, com testes. [Código e docs](https://github.com/jaobrabo123/VSRepoPrisma7Adapter). |
+| Adapter                               | Status                                                                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prisma 7 (`@vsrepo/prisma7-adapter`)  | 🟢 **Lançado** — publicado no npm, com testes. [Código e docs](https://github.com/jaobrabo123/VSRepoPrisma7Adapter).                              |
 | Drizzle (`@vsrepo/drizzle-adapter`)   | 🔵 **Alpha** — `npm i @vsrepo/drizzle-adapter@alpha`. A API ainda pode mudar. [Repositório](https://github.com/jaobrabo123/VSRepoDrizzleAdapter). |
-| Outros ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planejados, ainda não publicados.** Escreva o seu enquanto isso — é totalmente suportado.    |
-| Adapters customizados                 | 🟢 Totalmente suportados — implemente o `VSRepoAdapter` você mesmo, no seu projeto ou pacote.     |
+| Outros ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planejados, ainda não publicados.** Escreva o seu enquanto isso — é totalmente suportado.                                                    |
+| Adapters customizados                 | 🟢 Totalmente suportados — implemente o `VSRepoAdapter` você mesmo, no seu projeto ou pacote.                                                     |
 
 O status completo e como instalar cada um: [Status dos adapters](./docs/adapters.pt-BR.md). Para publicar o seu, veja [Publicando o seu próprio adapter](./docs/writing-an-adapter.pt-BR.md#publicando-o-seu-próprio-adapter).
 
@@ -155,5 +155,4 @@ O status completo e como instalar cada um: [Status dos adapters](./docs/adapters
 
 Contribuições são bem-vindas — adapters, reports de bug e documentação. O core é agnóstico de ORM, então trabalho específico de ORM pertence ao seu próprio pacote de adapter — o escopo `@vsrepo` é reservado para os oficiais; veja as regras de escopo antes de abrir um PR.
 
-* **[CONTRIBUTING.pt-BR.md](./CONTRIBUTING.pt-BR.md)** — como reportar um bug, pedir uma feature e enviar um pull request.
-
+- **[CONTRIBUTING.pt-BR.md](./CONTRIBUTING.pt-BR.md)** — como reportar um bug, pedir uma feature e enviar um pull request.

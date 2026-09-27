@@ -99,22 +99,22 @@ The sections above (installation, basic usage) are the essentials to get you sta
 
 ### Guides
 
-| Guide | Covers |
-| --- | --- |
-| [Adapter status](./docs/adapters.md) | Which ORM adapters exist today, what "ORM-agnostic by design" means in practice, and how to install, write or publish your own. |
-| [Base methods, configuration & soft-delete](./docs/base-methods.md) | Constructor options, the 12 automatic CRUD methods, native soft-delete, and the 8 atomic/aggregate methods (`increment`, `sum`, ...). |
-| [`select` and `relations`](./docs/select-and-relations.md) | Ad-hoc field selection and eager relation loading on any call, and `InferMethodReturn` to narrow the return type accordingly. |
-| [Dynamic methods](./docs/dynamic-methods.md) | `findByEmail`-style methods parsed from a `declare`d method name: prefixes, field filters, logical operators, relation filters, ordering/pagination/distinct. |
-| [Query methods (raw SQL)](./docs/query-methods.md) | Raw SQL via `@QueryMethod`, parameterized `VSSql` fragments and the agnostic `?1`/`?2` placeholders (`vsPlaceholders`). |
-| [Query builder](./docs/query-builder.md) | The fluent `createQueryBuilder()` API for queries assembled at runtime, including pagination, soft-delete visibility and transactions. |
-| [Raw query builder](./docs/raw-query-builder.md) | The fluent `createRawQueryBuilder()` API for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs (`with`/`withRecursive`). |
-| [Transactions](./docs/transactions.md) | Running several repositories against the same native ORM transaction. |
-| [Utility types](./docs/utility-types.md) | The exported helper types (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) and where each one is used. |
-| [Writing your own adapter](./docs/writing-an-adapter.md) | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database. |
-| [Error handling](./docs/error-handling.md) | `VSRepoError`, `VSRepoErrorType`, and `VSRepoAdapterError`/`AdapterErrorCode`. |
-| [Logging](./docs/logging.md) | `logLevel`, `logSlowThresholdMs`, and the log format used by the repository and the query builder. |
-| [Contributing](./CONTRIBUTING.md) | Repository layout, the key scripts, conventions and CI — plus the contribution flow itself (issues, pull requests, review). |
-| [Migrating from v1](./docs/migrating-from-v1.md) | Everything that changed between v1 and v2 — API, config, renamed suffixes, removed features — in a single reference for migrating existing repositories. |
+| Guide                                                               | Covers                                                                                                                                                                |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Adapter status](./docs/adapters.md)                                | Which ORM adapters exist today, what "ORM-agnostic by design" means in practice, and how to install, write or publish your own.                                       |
+| [Base methods, configuration & soft-delete](./docs/base-methods.md) | Constructor options, the 12 automatic CRUD methods, native soft-delete, and the 8 atomic/aggregate methods (`increment`, `sum`, ...).                                 |
+| [`select` and `relations`](./docs/select-and-relations.md)          | Ad-hoc field selection and eager relation loading on any call, and `InferMethodReturn` to narrow the return type accordingly.                                         |
+| [Dynamic methods](./docs/dynamic-methods.md)                        | `findByEmail`-style methods parsed from a `declare`d method name: prefixes, field filters, logical operators, relation filters, ordering/pagination/distinct.         |
+| [Query methods (raw SQL)](./docs/query-methods.md)                  | Raw SQL via `@QueryMethod`, parameterized `VSSql` fragments and the agnostic `?1`/`?2` placeholders (`vsPlaceholders`).                                               |
+| [Query builder](./docs/query-builder.md)                            | The fluent `createQueryBuilder()` API for queries assembled at runtime, including pagination, soft-delete visibility and transactions.                                |
+| [Raw query builder](./docs/raw-query-builder.md)                    | The fluent `createRawQueryBuilder()` API for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs (`with`/`withRecursive`). |
+| [Transactions](./docs/transactions.md)                              | Running several repositories against the same native ORM transaction.                                                                                                 |
+| [Utility types](./docs/utility-types.md)                            | The exported helper types (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) and where each one is used.                                                     |
+| [Writing your own adapter](./docs/writing-an-adapter.md)            | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database.                                                      |
+| [Error handling](./docs/error-handling.md)                          | `VSRepoError`, `VSRepoErrorType`, and `VSRepoAdapterError`/`AdapterErrorCode`.                                                                                        |
+| [Logging](./docs/logging.md)                                        | `logLevel`, `logSlowThresholdMs`, and the log format used by the repository and the query builder.                                                                    |
+| [Contributing](./CONTRIBUTING.md)                                   | Repository layout, the key scripts, conventions and CI — plus the contribution flow itself (issues, pull requests, review).                                           |
+| [Migrating from v1](./docs/migrating-from-v1.md)                    | Everything that changed between v1 and v2 — API, config, renamed suffixes, removed features — in a single reference for migrating existing repositories.              |
 
 ---
 
@@ -122,12 +122,12 @@ The sections above (installation, basic usage) are the essentials to get you sta
 
 VSRepository is **ORM-agnostic by design**: the core package (`vsrepo`) ships only the repository class, the decorators, the name-parsing engine, error handling and logging — no production adapter. ORM support lives in separate, independently versioned `@vsrepo/*-adapter` packages, so each one can follow its own ORM's release cycle.
 
-| Adapter                              | Status                                                                                          |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Prisma 7 (`@vsrepo/prisma7-adapter`) | 🟢 **Released** — published to npm, with tests. [Source and docs](https://github.com/jaobrabo123/VSRepoPrisma7Adapter). |
+| Adapter                              | Status                                                                                                                                       |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prisma 7 (`@vsrepo/prisma7-adapter`) | 🟢 **Released** — published to npm, with tests. [Source and docs](https://github.com/jaobrabo123/VSRepoPrisma7Adapter).                      |
 | Drizzle (`@vsrepo/drizzle-adapter`)  | 🔵 **Alpha** — `npm i @vsrepo/drizzle-adapter@alpha`. The API may still change. [Repo](https://github.com/jaobrabo123/VSRepoDrizzleAdapter). |
-| Other ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planned, not published yet.** Write your own in the meantime — it's fully supported.       |
-| Custom adapters                      | 🟢 Fully supported — implement `VSRepoAdapter` yourself, in your own project or package.      |
+| Other ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planned, not published yet.** Write your own in the meantime — it's fully supported.                                                    |
+| Custom adapters                      | 🟢 Fully supported — implement `VSRepoAdapter` yourself, in your own project or package.                                                     |
 
 The full status and how to install each one: [Adapter status](./docs/adapters.md). To publish your own, see [Publishing your own adapter](./docs/writing-an-adapter.md#publishing-your-own-adapter).
 
@@ -155,5 +155,4 @@ The full status and how to install each one: [Adapter status](./docs/adapters.md
 
 Contributions are welcome — adapters, bug reports and documentation alike. The core is ORM-agnostic, so ORM-specific work belongs in your own adapter package — the `@vsrepo` scope is reserved for official ones; see the scope rules before opening a PR.
 
-* **[CONTRIBUTING.md](./CONTRIBUTING.md)** — how to report a bug, request a feature, and submit a pull request.
-
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** — how to report a bug, request a feature, and submit a pull request.

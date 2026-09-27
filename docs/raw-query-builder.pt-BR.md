@@ -34,19 +34,19 @@ Exige que o adapter implemente `getPlaceholder()` — mesmo requisito do [`VSSql
 
 Toda cláusula aceita uma string crua e confiável (um identificador para `select`/`from`/`groupBy`/`orderBy`, ou uma condição simples para `on`/`where`/`having`, passada como está — nunca passe input do usuário) ou um fragmento [`VSSql`](./query-methods.pt-BR.md#fragmentos-parametrizados-com-vssql) para qualquer coisa parametrizada ou com alias:
 
-| Método                              | Descrição                                                                                                                               |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `select(...columns)`                 | Colunas/expressões a selecionar, substituindo qualquer `select` anterior. Sem argumentos equivale a `SELECT *`.                          |
-| `from(target, alias?)`               | O alvo do `FROM`, substituindo qualquer um anterior. Veja [Subqueries](#subqueries).                                                     |
-| `innerJoin/leftJoin/rightJoin/fullJoin(target, alias, on)` | Adiciona um join. `target` aceita os mesmos valores que `from()`; `on` é uma string de condição crua ou um fragmento `VSSql`. |
-| `where(condition)` / `andWhere(condition)` | Adiciona uma condição `WHERE`. A primeira chamada define o filtro; toda `where`/`andWhere` seguinte é combinada com `AND`, cada uma entre parênteses. |
-| `orWhere(condition)`                 | Combina `condition` com `OR` ao filtro `WHERE` existente.                                                                                |
-| `groupBy(...columns)`                | Adiciona colunas ao `GROUP BY`. Cada chamada acumula.                                                                                    |
-| `having(condition)` / `andHaving(condition)` / `orHaving(condition)` | Mesma semântica `AND`/`OR` de `where`/`andWhere`/`orWhere`, para `HAVING`.                                                                    |
-| `orderBy(column, direction?)`        | Adiciona uma coluna ao `ORDER BY`. Cada chamada acumula, então chame uma vez por coluna para ordenação multi-coluna. `direction` é `"asc"`/`"desc"`. |
-| `limit(limit)`                       | Número máximo de linhas. Deve ser um inteiro não-negativo.                                                                               |
-| `offset(offset)`                     | Número de linhas a pular. Deve ser um inteiro não-negativo.                                                                              |
-| `with(name, query, columns?)` / `withRecursive(name, query, columns?)` | Adiciona um `WITH` (CTE). Veja [CTEs com `with()`/`withRecursive()`](#ctes-com-withwithrecursive). |
+| Método                                                                 | Descrição                                                                                                                                             |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `select(...columns)`                                                   | Colunas/expressões a selecionar, substituindo qualquer `select` anterior. Sem argumentos equivale a `SELECT *`.                                       |
+| `from(target, alias?)`                                                 | O alvo do `FROM`, substituindo qualquer um anterior. Veja [Subqueries](#subqueries).                                                                  |
+| `innerJoin/leftJoin/rightJoin/fullJoin(target, alias, on)`             | Adiciona um join. `target` aceita os mesmos valores que `from()`; `on` é uma string de condição crua ou um fragmento `VSSql`.                         |
+| `where(condition)` / `andWhere(condition)`                             | Adiciona uma condição `WHERE`. A primeira chamada define o filtro; toda `where`/`andWhere` seguinte é combinada com `AND`, cada uma entre parênteses. |
+| `orWhere(condition)`                                                   | Combina `condition` com `OR` ao filtro `WHERE` existente.                                                                                             |
+| `groupBy(...columns)`                                                  | Adiciona colunas ao `GROUP BY`. Cada chamada acumula.                                                                                                 |
+| `having(condition)` / `andHaving(condition)` / `orHaving(condition)`   | Mesma semântica `AND`/`OR` de `where`/`andWhere`/`orWhere`, para `HAVING`.                                                                            |
+| `orderBy(column, direction?)`                                          | Adiciona uma coluna ao `ORDER BY`. Cada chamada acumula, então chame uma vez por coluna para ordenação multi-coluna. `direction` é `"asc"`/`"desc"`.  |
+| `limit(limit)`                                                         | Número máximo de linhas. Deve ser um inteiro não-negativo.                                                                                            |
+| `offset(offset)`                                                       | Número de linhas a pular. Deve ser um inteiro não-negativo.                                                                                           |
+| `with(name, query, columns?)` / `withRecursive(name, query, columns?)` | Adiciona um `WITH` (CTE). Veja [CTEs com `with()`/`withRecursive()`](#ctes-com-withwithrecursive).                                                    |
 
 ## Subqueries
 
@@ -125,11 +125,11 @@ Uma única CTE recursiva já é suficiente para tornar a cláusula inteira `WITH
 
 ## Executando a query
 
-| Método       | Retorna           | Descrição                                                                                                                                              |
-| ------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `toVSSql()`  | `VSSql`            | Compila todas as cláusulas em um único fragmento `VSSql`, na ordem `WITH` → `SELECT` → `FROM` → `JOIN`s → `WHERE` → `GROUP BY` → `HAVING` → `ORDER BY` → `LIMIT` → `OFFSET`. Nada é executado — insira o resultado em outro fragmento como subquery, ou passe para `VSRepository.query()`. |
-| `toSql()`    | `string`           | Compila para uma string SQL simples, renderizada com a sintaxe de placeholder do próprio adapter (`$1`, `$2`, ... ou `?`). Os valores **não** são interpolados — use `toVSSql()` (`.compile()`) se também precisar deles. |
-| `execute<T>()` | `Promise<T>`     | Compila e executa a query através do adapter, retornando o que `adapter.query()` resolver para esse SQL (normalmente as linhas encontradas). `T` tem default `any`. |
+| Método         | Retorna      | Descrição                                                                                                                                                                                                                                                                                  |
+| -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `toVSSql()`    | `VSSql`      | Compila todas as cláusulas em um único fragmento `VSSql`, na ordem `WITH` → `SELECT` → `FROM` → `JOIN`s → `WHERE` → `GROUP BY` → `HAVING` → `ORDER BY` → `LIMIT` → `OFFSET`. Nada é executado — insira o resultado em outro fragmento como subquery, ou passe para `VSRepository.query()`. |
+| `toSql()`      | `string`     | Compila para uma string SQL simples, renderizada com a sintaxe de placeholder do próprio adapter (`$1`, `$2`, ... ou `?`). Os valores **não** são interpolados — use `toVSSql()` (`.compile()`) se também precisar deles.                                                                  |
+| `execute<T>()` | `Promise<T>` | Compila e executa a query através do adapter, retornando o que `adapter.query()` resolver para esse SQL (normalmente as linhas encontradas). `T` tem default `any`.                                                                                                                        |
 
 `toVSSql()` lança um `VSRepoError` se nenhum alvo de `from()` foi definido (`select()` sozinho tem default `SELECT *`, então nunca é o que está faltando). `toSql()`/`execute()` também lançam se o adapter não implementa `getPlaceholder()`.
 
@@ -153,10 +153,17 @@ await orderRepository.transaction(async tx => {
 `clone()` retorna um builder independente com as mesmas cláusulas (incluindo CTEs) e o mesmo `db`. Mudanças feitas em um deles depois não afetam o outro:
 
 ```typescript
-const base = userRepository.createRawQueryBuilder().select("id").from("user").where(VSSql.sql`active = ${true}`);
+const base = userRepository
+    .createRawQueryBuilder()
+    .select("id")
+    .from("user")
+    .where(VSSql.sql`active = ${true}`);
 
 const withAdmins = await base.clone().andWhere("is_admin = true").execute();
-const withMinAge = await base.clone().andWhere(VSSql.sql`age > ${18}`).execute();
+const withMinAge = await base
+    .clone()
+    .andWhere(VSSql.sql`age > ${18}`)
+    .execute();
 ```
 
 ## Validação e erros
@@ -167,7 +174,7 @@ Os argumentos são validados assim que passados a um método encadeado, não qua
 - `alias` de `from`/join, quando informado
 - `name` de `with`/`withRecursive`, e cada item de seu `columns` opcional
 
-Isso é só uma checagem de presença — a biblioteca nunca faz parsing nem valida de qualquer outra forma o *conteúdo* de uma string SQL crua.
+Isso é só uma checagem de presença — a biblioteca nunca faz parsing nem valida de qualquer outra forma o _conteúdo_ de uma string SQL crua.
 
 ```typescript
 import { VSRepoError, VSRepoErrorType } from "vsrepo";

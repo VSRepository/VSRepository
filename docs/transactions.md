@@ -12,10 +12,7 @@ All methods (base, dynamic, and query) accept `options.db` to participate in a s
 await userRepository.transaction(async tx => {
     const user = await userRepository.save({ name: "Maria", email: "maria@email.com" }, { db: tx });
 
-    await userLogsRepository.save(
-        { action: "User created", data: { userId: user.id } },
-        { db: tx },
-    );
+    await userLogsRepository.save({ action: "User created", data: { userId: user.id } }, { db: tx });
 });
 ```
 

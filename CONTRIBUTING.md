@@ -21,14 +21,14 @@ bun install
 
 ## Scripts
 
-| Script                    | What it does                                                                                                    |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `bun run full-validation` | `typecheck` + `lint` + `format:check` + `test` — the gate to run before opening a PR.                           |
+| Script                    | What it does                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `bun run full-validation` | `typecheck` + `lint` + `format:check` + `test` — the gate to run before opening a PR.                               |
 | `bun run build`           | `clean` + `tsc -p tsconfig.build.json` — compiles `src/` into `dist/` with `rootDir: src`, emitting JS and `.d.ts`. |
-| `bun run test`            | `test:typing` and then `test:implementation`, in that order.                                                     |
-| `bun run typecheck`       | `tsc --noEmit -p tsconfig.build.json` — type validation.                               |
-| `bun run lint`            | `oxlint --type-aware src/ test/`.                                                                                |
-| `bun run format:check`    | Prettier in check mode over `src/**/*.ts` and `test/**/*.ts`.                                     |
+| `bun run test`            | `test:typing` and then `test:implementation`, in that order.                                                        |
+| `bun run typecheck`       | `tsc --noEmit -p tsconfig.build.json` — type validation.                                                            |
+| `bun run lint`            | `oxlint --type-aware src/ test/`.                                                                                   |
+| `bun run format:check`    | Prettier in check mode over `src/**/*.ts` and `test/**/*.ts`.                                                       |
 
 The two test suites also run on their own — `test:typing` (compile-time assertions) and `test:implementation` (runtime behaviour against a fake adapter), with `test:implementation:watch` for watch mode. Every other script (`format`, `clean`, `prepack`) is in [`package.json`](./package.json).
 
@@ -40,10 +40,10 @@ bun run full-validation
 
 This is the single most important thing to get right before opening an Issue or a PR.
 
-| Your change belongs in…                            | When                                                                     |
-| -------------------------------------------------- | ------------------------------------------------------------------------ |
-| **core (`vsrepo`)**                      | The repository class, the `@DynamicMethod`/`@QueryMethod` decorators, the name-parsing engine, the query builders, transactions, soft-delete, error handling, logging, and the `VSRepoAdapter` contract itself. |
-| **adapter**                       | Anything ORM-specific: translating a `VSRepoWhere` into a Prisma `where`/`include`, mapping driver errors, the placeholder syntax, `runInTransaction`. |
+| Your change belongs in… | When                                                                                                                                                                                                            |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **core (`vsrepo`)**     | The repository class, the `@DynamicMethod`/`@QueryMethod` decorators, the name-parsing engine, the query builders, transactions, soft-delete, error handling, logging, and the `VSRepoAdapter` contract itself. |
+| **adapter**             | Anything ORM-specific: translating a `VSRepoWhere` into a Prisma `where`/`include`, mapping driver errors, the placeholder syntax, `runInTransaction`.                                                          |
 
 The core **never imports an ORM**. Support for Prisma 7 and Drizzle ships as separate packages precisely so the core can stay ORM-agnostic:
 
@@ -142,8 +142,8 @@ This is the loop an adapter author wants: build the core locally, pack it, and i
 
 `.github/workflows/ci.yml` runs on every push and pull request to `main`, with `concurrency` cancelling any in-flight run for the same ref. Three jobs, all on `ubuntu-latest` with Bun:
 
-| Job     | Runs                                                   | Depends on    |
-| ------- | ------------------------------------------------------ | ------------- |
-| `lint`  | `bun run lint` and `bun run format:check`              | —             |
-| `test`  | `bun run test` (typing + implementation)               | —             |
-| `build` | `bun run build`, then uploads `dist/` as an artifact   | `lint`, `test` |
+| Job     | Runs                                                 | Depends on     |
+| ------- | ---------------------------------------------------- | -------------- |
+| `lint`  | `bun run lint` and `bun run format:check`            | —              |
+| `test`  | `bun run test` (typing + implementation)             | —              |
+| `build` | `bun run build`, then uploads `dist/` as an artifact | `lint`, `test` |

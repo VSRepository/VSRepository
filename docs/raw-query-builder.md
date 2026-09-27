@@ -34,19 +34,19 @@ Requires the adapter to implement `getPlaceholder()` — same requirement as [`V
 
 Every clause accepts a raw, trusted string (an identifier for `select`/`from`/`groupBy`/`orderBy`, or a plain condition for `on`/`where`/`having`, passed through as-is — never pass user-controlled input) or a [`VSSql`](./query-methods.md#parameterized-fragments-with-vssql) fragment for anything parameterized or aliased:
 
-| Method                            | Description                                                                                                                            |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `select(...columns)`               | Columns/expressions to select, replacing any previous `select`. No arguments is equivalent to `SELECT *`.                              |
-| `from(target, alias?)`             | The `FROM` target, replacing any previous one. See [Subqueries](#subqueries).                                                           |
-| `innerJoin/leftJoin/rightJoin/fullJoin(target, alias, on)` | Adds a join. `target` accepts the same values as `from()`; `on` is a raw condition string or a `VSSql` fragment.        |
-| `where(condition)` / `andWhere(condition)` | Adds a `WHERE` condition. The first call sets the filter; every later `where`/`andWhere` is `AND`-combined with it, each wrapped in parentheses. |
-| `orWhere(condition)`               | `OR`-combines `condition` with the existing `WHERE` filter.                                                                             |
-| `groupBy(...columns)`              | Adds columns to `GROUP BY`. Each call appends.                                                                                          |
-| `having(condition)` / `andHaving(condition)` / `orHaving(condition)` | Same `AND`/`OR` semantics as `where`/`andWhere`/`orWhere`, for `HAVING`.                                                                    |
-| `orderBy(column, direction?)`      | Adds a column to `ORDER BY`. Each call appends, so call it once per column for a multi-column ordering. `direction` is `"asc"`/`"desc"`. |
-| `limit(limit)`                     | Maximum number of rows. Must be a non-negative integer.                                                                                 |
-| `offset(offset)`                   | Number of rows to skip. Must be a non-negative integer.                                                                                 |
-| `with(name, query, columns?)` / `withRecursive(name, query, columns?)` | Adds a `WITH` (CTE). See [CTEs with `with()`/`withRecursive()`](#ctes-with-withwithrecursive). |
+| Method                                                                 | Description                                                                                                                                      |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `select(...columns)`                                                   | Columns/expressions to select, replacing any previous `select`. No arguments is equivalent to `SELECT *`.                                        |
+| `from(target, alias?)`                                                 | The `FROM` target, replacing any previous one. See [Subqueries](#subqueries).                                                                    |
+| `innerJoin/leftJoin/rightJoin/fullJoin(target, alias, on)`             | Adds a join. `target` accepts the same values as `from()`; `on` is a raw condition string or a `VSSql` fragment.                                 |
+| `where(condition)` / `andWhere(condition)`                             | Adds a `WHERE` condition. The first call sets the filter; every later `where`/`andWhere` is `AND`-combined with it, each wrapped in parentheses. |
+| `orWhere(condition)`                                                   | `OR`-combines `condition` with the existing `WHERE` filter.                                                                                      |
+| `groupBy(...columns)`                                                  | Adds columns to `GROUP BY`. Each call appends.                                                                                                   |
+| `having(condition)` / `andHaving(condition)` / `orHaving(condition)`   | Same `AND`/`OR` semantics as `where`/`andWhere`/`orWhere`, for `HAVING`.                                                                         |
+| `orderBy(column, direction?)`                                          | Adds a column to `ORDER BY`. Each call appends, so call it once per column for a multi-column ordering. `direction` is `"asc"`/`"desc"`.         |
+| `limit(limit)`                                                         | Maximum number of rows. Must be a non-negative integer.                                                                                          |
+| `offset(offset)`                                                       | Number of rows to skip. Must be a non-negative integer.                                                                                          |
+| `with(name, query, columns?)` / `withRecursive(name, query, columns?)` | Adds a `WITH` (CTE). See [CTEs with `with()`/`withRecursive()`](#ctes-with-withwithrecursive).                                                   |
 
 ## Subqueries
 
@@ -125,11 +125,11 @@ One recursive CTE is enough to make the whole clause `WITH RECURSIVE`, even when
 
 ## Running the query
 
-| Method       | Returns          | Description                                                                                                                                           |
-| ------------ | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `toVSSql()`  | `VSSql`           | Compiles every clause into a single `VSSql` fragment, in the order `WITH` → `SELECT` → `FROM` → `JOIN`s → `WHERE` → `GROUP BY` → `HAVING` → `ORDER BY` → `LIMIT` → `OFFSET`. Nothing runs — splice the result into another fragment as a subquery, or pass it to `VSRepository.query()`. |
-| `toSql()`    | `string`          | Compiles down to a plain SQL string, rendered with the adapter's own placeholder syntax (`$1`, `$2`, ... or `?`). Values are **not** interpolated — use `toVSSql()` (`.compile()`) if you also need them. |
-| `execute<T>()` | `Promise<T>`    | Compiles and runs the query through the adapter, returning whatever `adapter.query()` resolves to for this SQL (typically the matching rows). `T` defaults to `any`. |
+| Method         | Returns      | Description                                                                                                                                                                                                                                                                              |
+| -------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toVSSql()`    | `VSSql`      | Compiles every clause into a single `VSSql` fragment, in the order `WITH` → `SELECT` → `FROM` → `JOIN`s → `WHERE` → `GROUP BY` → `HAVING` → `ORDER BY` → `LIMIT` → `OFFSET`. Nothing runs — splice the result into another fragment as a subquery, or pass it to `VSRepository.query()`. |
+| `toSql()`      | `string`     | Compiles down to a plain SQL string, rendered with the adapter's own placeholder syntax (`$1`, `$2`, ... or `?`). Values are **not** interpolated — use `toVSSql()` (`.compile()`) if you also need them.                                                                                |
+| `execute<T>()` | `Promise<T>` | Compiles and runs the query through the adapter, returning whatever `adapter.query()` resolves to for this SQL (typically the matching rows). `T` defaults to `any`.                                                                                                                     |
 
 `toVSSql()` throws a `VSRepoError` if no `from()` target was set (`select()` alone defaults to `SELECT *`, so it's never the one missing). `toSql()`/`execute()` additionally throw if the adapter doesn't implement `getPlaceholder()`.
 
@@ -153,10 +153,17 @@ await orderRepository.transaction(async tx => {
 `clone()` returns an independent builder with the same clauses (including any CTEs) and `db`. Changes made to either one afterwards don't affect the other:
 
 ```typescript
-const base = userRepository.createRawQueryBuilder().select("id").from("user").where(VSSql.sql`active = ${true}`);
+const base = userRepository
+    .createRawQueryBuilder()
+    .select("id")
+    .from("user")
+    .where(VSSql.sql`active = ${true}`);
 
 const withAdmins = await base.clone().andWhere("is_admin = true").execute();
-const withMinAge = await base.clone().andWhere(VSSql.sql`age > ${18}`).execute();
+const withMinAge = await base
+    .clone()
+    .andWhere(VSSql.sql`age > ${18}`)
+    .execute();
 ```
 
 ## Validation and errors
@@ -167,7 +174,7 @@ Arguments are validated as soon as they're passed to a chained method, not when 
 - `from`/join `alias`, when given
 - `with`/`withRecursive`'s `name`, and every item of its optional `columns`
 
-This is a presence check only — the library never parses or otherwise validates the *content* of a raw SQL string.
+This is a presence check only — the library never parses or otherwise validates the _content_ of a raw SQL string.
 
 ```typescript
 import { VSRepoError, VSRepoErrorType } from "vsrepo";

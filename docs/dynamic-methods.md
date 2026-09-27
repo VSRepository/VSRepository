@@ -44,38 +44,38 @@ class UserRepository extends VSRepository<User, string> {
 
 ## Available prefixes
 
-| Prefix                     | Adapter method         | Returns          | Notes                                                                               |
-| --------------------------- | ---------------------- | ----------------- | ------------------------------------------------------------------------------------ |
-| `findBy`                   | `findMany`              | `Entity[]`        | Field filters follow the prefix.                                                    |
-| `findOneBy`                | `findOne`               | `Entity \| null`  | Field filters follow the prefix; single result.                                     |
-| `findOneOrThrowBy`         | `findOneOrThrow`        | `Entity`          | Throws if no record is found.                                                       |
-| `findOneOrThrow`           | `findOneOrThrow`        | `Entity`          | No field filters; applies only soft-delete/`see`.                                   |
-| `findOneOrThrowWhere`      | `findOneOrThrow`        | `Entity`          | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findWhere`                | `findMany`              | `Entity[]`        | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findOneWhere`             | `findOne`               | `Entity \| null`  | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findOne`                  | `findOne`               | `Entity \| null`  | No field filters; applies only soft-delete/`see`.                                   |
-| `countBy`                  | `count`                 | `number`          | Field filters follow the prefix.                                                    |
-| `countWhere`               | `count`                 | `number`          | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `count`                    | `count`                 | `number`          | No field filters.                                                                   |
-| `existsBy`                 | `exists`                | `boolean`         | Field filters follow the prefix.                                                    |
-| `existsWhere`              | `exists`                | `boolean`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `create`                   | `create`                | `Entity`          | Receives `DeepPartial<Entity>` as argument.                                         |
-| `createMany`               | `createMany`            | `CountResult`     | Receives `DeepPartial<Entity>[]` as argument; supports `IgnoreConflicts`.           |
-| `createManyReturning`      | `createManyReturning`  | `Entity[]`        | Receives `DeepPartial<Entity>[]` as argument; supports `IgnoreConflicts`.           |
-| `updateBy`                 | `update`                | `Entity`          | Field filters + `DeepPartial<Entity>` as argument.                                  |
-| `updateWhere`              | `update`                | `Entity`          | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.       |
-| `updateManyBy`             | `updateMany`            | `CountResult`     | Field filters + `DeepPartial<Entity>`.                                              |
-| `updateManyWhere`          | `updateMany`            | `CountResult`     | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.       |
-| `updateManyReturningBy`    | `updateManyReturning`  | `Entity[]`        | Field filters + `DeepPartial<Entity>`.                                              |
-| `updateManyReturningWhere` | `updateManyReturning`  | `Entity[]`        | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.       |
-| `upsertBy`                 | `upsert`                | `Entity`          | Field filters + `create`/`update` payloads.                                         |
-| `upsertWhere`              | `upsert`                | `Entity`          | Receives a `VSRepoWhere<T>` as the first argument, then `create`/`update` payloads.  |
-| `deleteBy`                 | `delete`                | `Entity`          | Field filters follow the prefix.                                                    |
-| `deleteWhere`              | `delete`                | `Entity`          | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `deleteManyBy`             | `deleteMany`            | `CountResult`     | Field filters follow the prefix.                                                    |
-| `deleteManyWhere`          | `deleteMany`            | `CountResult`     | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `deleteManyReturningBy`    | `deleteManyReturning`  | `Entity[]`        | Field filters follow the prefix.                                                    |
-| `deleteManyReturningWhere` | `deleteManyReturning`  | `Entity[]`        | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| Prefix                     | Adapter method        | Returns          | Notes                                                                               |
+| -------------------------- | --------------------- | ---------------- | ----------------------------------------------------------------------------------- |
+| `findBy`                   | `findMany`            | `Entity[]`       | Field filters follow the prefix.                                                    |
+| `findOneBy`                | `findOne`             | `Entity \| null` | Field filters follow the prefix; single result.                                     |
+| `findOneOrThrowBy`         | `findOneOrThrow`      | `Entity`         | Throws if no record is found.                                                       |
+| `findOneOrThrow`           | `findOneOrThrow`      | `Entity`         | No field filters; applies only soft-delete/`see`.                                   |
+| `findOneOrThrowWhere`      | `findOneOrThrow`      | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findWhere`                | `findMany`            | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findOneWhere`             | `findOne`             | `Entity \| null` | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findOne`                  | `findOne`             | `Entity \| null` | No field filters; applies only soft-delete/`see`.                                   |
+| `countBy`                  | `count`               | `number`         | Field filters follow the prefix.                                                    |
+| `countWhere`               | `count`               | `number`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `count`                    | `count`               | `number`         | No field filters.                                                                   |
+| `existsBy`                 | `exists`              | `boolean`        | Field filters follow the prefix.                                                    |
+| `existsWhere`              | `exists`              | `boolean`        | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `create`                   | `create`              | `Entity`         | Receives `DeepPartial<Entity>` as argument.                                         |
+| `createMany`               | `createMany`          | `CountResult`    | Receives `DeepPartial<Entity>[]` as argument; supports `IgnoreConflicts`.           |
+| `createManyReturning`      | `createManyReturning` | `Entity[]`       | Receives `DeepPartial<Entity>[]` as argument; supports `IgnoreConflicts`.           |
+| `updateBy`                 | `update`              | `Entity`         | Field filters + `DeepPartial<Entity>` as argument.                                  |
+| `updateWhere`              | `update`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `updateManyBy`             | `updateMany`          | `CountResult`    | Field filters + `DeepPartial<Entity>`.                                              |
+| `updateManyWhere`          | `updateMany`          | `CountResult`    | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `updateManyReturningBy`    | `updateManyReturning` | `Entity[]`       | Field filters + `DeepPartial<Entity>`.                                              |
+| `updateManyReturningWhere` | `updateManyReturning` | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `upsertBy`                 | `upsert`              | `Entity`         | Field filters + `create`/`update` payloads.                                         |
+| `upsertWhere`              | `upsert`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument, then `create`/`update` payloads. |
+| `deleteBy`                 | `delete`              | `Entity`         | Field filters follow the prefix.                                                    |
+| `deleteWhere`              | `delete`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `deleteManyBy`             | `deleteMany`          | `CountResult`    | Field filters follow the prefix.                                                    |
+| `deleteManyWhere`          | `deleteMany`          | `CountResult`    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `deleteManyReturningBy`    | `deleteManyReturning` | `Entity[]`       | Field filters follow the prefix.                                                    |
+| `deleteManyReturningWhere` | `deleteManyReturning` | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument.                                  |
 
 > `groupBy` is **not planned** — it doesn't map cleanly onto the ORM-agnostic contract. `aggregate` as a separate prefix is also unlikely to be implemented: the most common aggregate operations (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) are already available as dedicated base methods — see [Atomic and aggregate methods](./base-methods.md#atomic-and-aggregate-methods). For anything more complex, use a `@QueryMethod` with raw SQL.
 
@@ -83,30 +83,30 @@ class UserRepository extends VSRepository<User, string> {
 
 Applied as suffixes to the field name inside the method:
 
-| Suffix             | Meaning                                                                                                                                                       | Argument                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| _(none)_ / `Equals` | equality (`=`)                                                                                                                                              | yes                                    |
-| `Not` / `NotEquals` | negation                                                                                                                                                      | yes                                    |
-| `In`               | is one of                                                                                                                                                     | yes (array)                            |
-| `NotIn`            | is none of                                                                                                                                                    | yes (array)                            |
-| `Contains`         | substring match                                                                                                                                               | yes                                    |
-| `NotContains`      | negated substring match                                                                                                                                       | yes                                    |
-| `StartsWith`       | prefix match                                                                                                                                                  | yes                                    |
-| `NotStartsWith`    | negated prefix match                                                                                                                                          | yes                                    |
-| `EndsWith`         | suffix match                                                                                                                                                  | yes                                    |
-| `NotEndsWith`      | negated suffix match                                                                                                                                          | yes                                    |
-| `GreaterThan`      | `>`                                                                                                                                                           | yes                                    |
-| `GreaterThanEqual` | `>=`                                                                                                                                                          | yes                                    |
-| `LessThan`         | `<`                                                                                                                                                           | yes                                    |
-| `LessThanEqual`    | `<=`                                                                                                                                                          | yes                                    |
-| `Between`          | inclusive range                                                                                                                                               | yes (`[min, max]` tuple)               |
-| `NotBetween`       | outside an inclusive range                                                                                                                                    | yes (`[min, max]` tuple)               |
-| `IsNull`           | field is `null`                                                                                                                                               | no                                     |
-| `IsNotNull`        | field is not `null`                                                                                                                                           | no                                     |
-| `IsTrue`           | field is `true`                                                                                                                                               | no                                     |
-| `IsFalse`          | field is `false`                                                                                                                                              | no                                     |
-| `IgnoreCase`       | case-insensitive combinator for text filters                                                                                                                  | yes |
-| `Optional`         | optional flag to make it explicit that the parameter is optional      | yes _(in practice, nothing changes)_                                      |
+| Suffix              | Meaning                                                          | Argument                             |
+| ------------------- | ---------------------------------------------------------------- | ------------------------------------ |
+| _(none)_ / `Equals` | equality (`=`)                                                   | yes                                  |
+| `Not` / `NotEquals` | negation                                                         | yes                                  |
+| `In`                | is one of                                                        | yes (array)                          |
+| `NotIn`             | is none of                                                       | yes (array)                          |
+| `Contains`          | substring match                                                  | yes                                  |
+| `NotContains`       | negated substring match                                          | yes                                  |
+| `StartsWith`        | prefix match                                                     | yes                                  |
+| `NotStartsWith`     | negated prefix match                                             | yes                                  |
+| `EndsWith`          | suffix match                                                     | yes                                  |
+| `NotEndsWith`       | negated suffix match                                             | yes                                  |
+| `GreaterThan`       | `>`                                                              | yes                                  |
+| `GreaterThanEqual`  | `>=`                                                             | yes                                  |
+| `LessThan`          | `<`                                                              | yes                                  |
+| `LessThanEqual`     | `<=`                                                             | yes                                  |
+| `Between`           | inclusive range                                                  | yes (`[min, max]` tuple)             |
+| `NotBetween`        | outside an inclusive range                                       | yes (`[min, max]` tuple)             |
+| `IsNull`            | field is `null`                                                  | no                                   |
+| `IsNotNull`         | field is not `null`                                              | no                                   |
+| `IsTrue`            | field is `true`                                                  | no                                   |
+| `IsFalse`           | field is `false`                                                 | no                                   |
+| `IgnoreCase`        | case-insensitive combinator for text filters                     | yes                                  |
+| `Optional`          | optional flag to make it explicit that the parameter is optional | yes _(in practice, nothing changes)_ |
 
 ```typescript
 @DynamicMethod()
@@ -116,7 +116,7 @@ declare findByNameContainsIgnoreCase: (name: string) => Promise<User[]>;
 declare findByAgeBetween: (age: [number, number]) => Promise<User[]>;
 ```
 
-> **Keyword collisions in field names:** a suffix/operator is only recognized at a camelCase boundary — followed by an uppercase letter, a non-ASCII character, or (for field suffixes) the end of the name — so `findByOrganizationId` and `findByNotes` resolve to the fields `organizationId` and `notes`, not to the `Or`/`Not` keywords. This still leaves one case ambiguous: a field whose name genuinely *ends* at such a boundary with the same letters as a keyword (e.g. `checkIn`, which reads as field `check` + the `In` suffix by default). Append `Equals` (or `NotEquals`) to force equality and disambiguate: `findByCheckInEquals` resolves to the field `checkIn`.
+> **Keyword collisions in field names:** a suffix/operator is only recognized at a camelCase boundary — followed by an uppercase letter, a non-ASCII character, or (for field suffixes) the end of the name — so `findByOrganizationId` and `findByNotes` resolve to the fields `organizationId` and `notes`, not to the `Or`/`Not` keywords. This still leaves one case ambiguous: a field whose name genuinely _ends_ at such a boundary with the same letters as a keyword (e.g. `checkIn`, which reads as field `check` + the `In` suffix by default). Append `Equals` (or `NotEquals`) to force equality and disambiguate: `findByCheckInEquals` resolves to the field `checkIn`.
 
 ## Logical operators
 
@@ -155,15 +155,15 @@ declare findByProductsSome: () => Promise<User[]>;
 
 ## Ordering, pagination and distinct
 
-| Suffix                                     | Effect                                                                                                                                                             |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Paginated`                                | Injects a `pagination` argument (`{ limit?, offset? }`) as the **penultimate** parameter (before the optional `MethodOptions`).                                    |
-| `Ordered`                                  | Injects an `order: Ordering<T>` argument as the **penultimate** parameter (before the optional `MethodOptions`).                                                   |
-| `OrderedAndPaginated`                      | Injects `order` as the antepenultimate, then `pagination` as the penultimate — both before `MethodOptions`.                                                        |
-| `PaginatedAndOrdered`                      | Injects `pagination` as the antepenultimate, then `order` as the penultimate — both before `MethodOptions`.                                                        |
-| `OrderBy<Field>Asc` / `OrderBy<Field>Desc` | Bakes a fixed ordering directly into the method name — chain fields with `And` (e.g. `OrderByCreatedAtAscAndNameDesc`). No `order` argument needed. *Note: If you do not specify `Asc` or `Desc`, it defaults to `Asc`.* |
-| `Distinct<Field>And<Field>...`             | Bakes fixed `distinct` fields directly into the method name (only valid on `findBy`/`findWhere`-family methods).                                                   |
-| `IgnoreConflicts`                          | On `createMany`/`createManyReturning`, skips records that would violate a unique constraint instead of throwing.           |
+| Suffix                                     | Effect                                                                                                                                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Paginated`                                | Injects a `pagination` argument (`{ limit?, offset? }`) as the **penultimate** parameter (before the optional `MethodOptions`).                                                                                          |
+| `Ordered`                                  | Injects an `order: Ordering<T>` argument as the **penultimate** parameter (before the optional `MethodOptions`).                                                                                                         |
+| `OrderedAndPaginated`                      | Injects `order` as the antepenultimate, then `pagination` as the penultimate — both before `MethodOptions`.                                                                                                              |
+| `PaginatedAndOrdered`                      | Injects `pagination` as the antepenultimate, then `order` as the penultimate — both before `MethodOptions`.                                                                                                              |
+| `OrderBy<Field>Asc` / `OrderBy<Field>Desc` | Bakes a fixed ordering directly into the method name — chain fields with `And` (e.g. `OrderByCreatedAtAscAndNameDesc`). No `order` argument needed. _Note: If you do not specify `Asc` or `Desc`, it defaults to `Asc`._ |
+| `Distinct<Field>And<Field>...`             | Bakes fixed `distinct` fields directly into the method name (only valid on `findBy`/`findWhere`-family methods).                                                                                                         |
+| `IgnoreConflicts`                          | On `createMany`/`createManyReturning`, skips records that would violate a unique constraint instead of throwing.                                                                                                         |
 
 > ⚠️ **Parameter order:** `pagination` and `order` are always placed **before** the optional `MethodOptions<T>` last argument. When both `order` and `pagination` are present, their relative order follows the suffix name (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
 >
@@ -245,10 +245,10 @@ await userRepository.findOneByEmail("john@example.com", { relations: { address: 
 // { id: string; name: string; email: string; address: Address | null } | null
 ```
 
-| Generic    | Description                                                                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Args`     | Tuple with the method's positional arguments, **without** `options` — e.g. `[name: string]` or `[where: VSRepoWhere<User>, pagination: Pagination]`.         |
-| `Return`   | What the method resolves to: `Entity`, `Entity \| null` or `Entity[]`. The entity type used for `select`/`relations` is taken from here.                     |
+| Generic    | Description                                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Args`     | Tuple with the method's positional arguments, **without** `options` — e.g. `[name: string]` or `[where: VSRepoWhere<User>, pagination: Pagination]`.                     |
+| `Return`   | What the method resolves to: `Entity`, `Entity \| null` or `Entity[]`. The entity type used for `select`/`relations` is taken from here.                                 |
 | `OrmTypes` | _Optional._ `VSRepoOrmTypes` for your ORM, used to type the `db` option (see [Creating a repository](../README.md#creating-a-repository)). Defaults to `VSRepoOrmTypes`. |
 
 - `options` (`MethodOptions<Entity, OrmTypes>`) is always the **last**, optional parameter, after every argument in `Args`. If one of those arguments is optional, pass `undefined` explicitly to reach `options`.

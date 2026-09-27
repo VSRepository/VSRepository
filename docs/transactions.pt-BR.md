@@ -10,15 +10,9 @@ Todos os métodos (base, dinâmicos e de query) aceitam `options.db` para partic
 
 ```typescript
 await userRepository.transaction(async tx => {
-    const usuario = await userRepository.save(
-        { name: "Maria", email: "maria@email.com" },
-        { db: tx },
-    );
+    const usuario = await userRepository.save({ name: "Maria", email: "maria@email.com" }, { db: tx });
 
-    await userLogsRepository.save(
-        { action: "Usuário criado", data: { userId: usuario.id } },
-        { db: tx },
-    );
+    await userLogsRepository.save({ action: "Usuário criado", data: { userId: usuario.id } }, { db: tx });
 });
 ```
 
