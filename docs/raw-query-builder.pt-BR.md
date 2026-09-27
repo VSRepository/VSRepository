@@ -6,7 +6,7 @@
 
 # Raw query builder
 
-`createRawQueryBuilder(db?)` retorna um builder fluente e agnóstico de SQL para queries **`SELECT`** escritas à mão, cujo SQL é específico demais (funções de janela, sintaxe específica do banco, subqueries ad-hoc, CTEs, ...) para caber no modelo `where`/`relations` do [`createQueryBuilder()`](./query-builder.pt-BR.md). Está disponível em toda instância de `VSRepository` e passa pelo mesmo adapter que os demais métodos:
+`createRawQueryBuilder(db?)` retorna um SQL builder fluente, agnóstico de ORM para queries **`SELECT`** escritas à mão, cujo SQL é específico demais (funções de janela, sintaxe específica do banco, subqueries ad-hoc, CTEs, ...) para caber no modelo `where`/`relations` do [`createQueryBuilder()`](./query-builder.pt-BR.md). Está disponível em toda instância de `VSRepository` e passa pelo mesmo adapter que os demais métodos:
 
 ```typescript
 import { VSSql } from "vsrepo";

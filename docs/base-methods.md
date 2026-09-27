@@ -139,8 +139,4 @@ await productRepository.increment(id, "price", 10.5); // compile error — wrap 
 
 Note that several ORMs (Drizzle, MikroORM, TypeORM) represent `decimal`/`numeric` columns as plain `string` by default, to avoid floating-point precision loss — a `string` field does **not** satisfy `NumericKeys<Entity>` out of the box. Configure the column in a numeric mode (or a transformer) on those ORMs if you want the field to be usable with these 8 methods.
 
-### Writing an adapter
-
-`VSRepoAdapter` mirrors the same 8 operations (`incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max` — see [Writing your own adapter](./writing-an-adapter.md#writing-your-own-adapter)). Each adapter translates them into whatever its ORM/database considers "native": Prisma has a built-in `{ field: { increment: value } }` update shape and an `aggregate()` call; other ORMs typically need a `QueryBuilder`/raw-`sql` expression (e.g. `SET field = field * :value`, `SELECT SUM(field) ...`) instead. The atomic methods must return the record reflecting the state _after_ the write — if the ORM's atomic-update API only returns an affected-row count, issue a follow-up read rather than returning a stale in-memory copy.
-
 [⬆️ Back to top](#top)

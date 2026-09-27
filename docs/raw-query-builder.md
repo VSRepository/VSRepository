@@ -6,7 +6,7 @@
 
 # Raw query builder
 
-`createRawQueryBuilder(db?)` returns a fluent, SQL-agnostic builder for hand-written **`SELECT`** queries whose SQL is too specific (window functions, vendor-specific syntax, ad-hoc subqueries, CTEs, ...) to express through [`createQueryBuilder()`](./query-builder.md)'s `where`/`relations` model. It's available on every `VSRepository` instance and goes through the same adapter as every other method:
+`createRawQueryBuilder(db?)` returns a fluent, ORM-agnostic SQL builder for hand-written **`SELECT`** queries whose SQL is too specific (window functions, vendor-specific syntax, ad-hoc subqueries, CTEs, ...) to express through [`createQueryBuilder()`](./query-builder.md)'s `where`/`relations` model. It's available on every `VSRepository` instance and goes through the same adapter as every other method:
 
 ```typescript
 import { VSSql } from "vsrepo";

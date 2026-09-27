@@ -50,6 +50,6 @@ If that same call takes longer than `logSlowThresholdMs` (300ms by default), the
 2026-09-21T05:02:02.501Z [WARN] [UserRepositoryLogger] Took 412.16ms to run save (slower than the 300ms threshold)
 ```
 
-The operation name in these lines (`save`, `findByEmail`, `getResultAndCount`, ...) is whatever base method, dynamic method, or query builder terminal method was called, so grepping the log for `Took ` surfaces every slow operation across the repository regardless of which method produced it.
+The operation name in these lines (`save`, `findByEmail`, `getResultAndCount`, ...) is whatever base method, dynamic method, or query builder terminal method was called.
 
 [⬆️ Back to top](#top)
