@@ -6,6 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.7.1] - 2026-09-28
+
+### Fixed
+- A dynamic method now resolves every parameter by its own position instead of relying on the end of the argument list — the `options` are read from the first argument after the expected parameters, and the payload (`data`/`create`/`update`), `order` and `pagination` of a method called with more than one extra argument are now read from the correct slots instead of shifting onto the `options` object. Arguments beyond the expected parameters plus `options` are ignored
+- A failing dynamic method is no longer logged at `ERROR` by the resolver — the error is simply rethrown to the caller and the execution time is still recorded by `endPerformLog`, leaving `ERROR` for validation and guard-clause failures. This is the last call site that still logged it: the base methods, `query()` and the query methods had already stopped in **2.0.0**
+
+### Documentation
+- Both logging guides now describe `ERROR` accurately: it is logged for validation and guard-clause failures right before the `VSRepoError` is thrown, while a failure raised by the adapter itself is no longer logged and simply propagates to the caller
+
+## [2.7.1] - 2026-09-28 (Português)
+
+### Corrigido
+- Um método dinâmico agora resolve cada parâmetro pela sua própria posição em vez de depender do fim da lista de argumentos — as `options` são lidas do primeiro argumento depois dos parâmetros esperados, e o payload (`data`/`create`/`update`), o `order` e a `pagination` de um método chamado com mais de um argumento extra passam a ser lidos dos slots corretos, em vez de deslocarem para o objeto de options. Argumentos além dos parâmetros esperados mais as options são ignorados
+- Um método dinâmico que falha não é mais logado em `ERROR` pelo resolver — o erro simplesmente é relançado para quem chamou e o tempo de execução continua sendo registrado por `endPerformLog`, deixando o `ERROR` para falhas de validação e de guarda. Esta é a última chamada que ainda registrava o erro: os métodos base, o `query()` e os query methods já haviam parado na **2.0.0**
+
+### Documentação
+- Os dois guias de logging agora descrevem o `ERROR` com precisão: ele é registrado para falhas de validação e de guarda logo antes do `VSRepoError` ser lançado, enquanto uma falha lançada pelo próprio adapter não é mais registrada e simplesmente propaga para quem chamou
+
 ## [2.7.0] - 2026-09-26
 
 ### Added
