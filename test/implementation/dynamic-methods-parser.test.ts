@@ -1095,3 +1095,154 @@ describe("validação de quantidade de argumentos", () => {
         await expect((repo as any).findByName("João", { see: "nonsense" })).rejects.toThrow(VSRepoError);
     });
 });
+
+// =============================================================================
+// Argumento extra além das options — o resolver normaliza a lista de
+// argumentos para exatamente `argsCount + 1` posições antes de montá-la, e é
+// sobre esse comprimento normalizado que os índices NEGATIVOS do parser
+// (`dataIndex = -2`, `createIndex = -3`, `updateIndex = -2`,
+// `orderPosition`/`paginationPosition` de `-2`/`-3`) são resolvidos por
+// `Array.prototype.at()`. Sem a normalização, um argumento a mais desloca
+// todos esses índices e o payload/`order`/`pagination`passam a ser lidos do
+// objeto de options — que é truthy, então nem chega a sumir: ele vira o
+// payload. Por isso os testes abaixo comparam os payloads por IDENTIDADE
+// (`.toBe`) e contam os argumentos recebidos pelo adapter.
+// =============================================================================
+
+describe("argumento extra além das options não desloca os índices negativos do parser", () => {
+    it("'updateByEmail' mantém o 'data' na posição '-2' e descarta o argumento extra", async () => {
+        const data = { name: "novo" };
+        fakeAdapter.update.mockResolvedValueOnce({});
+
+        await repo.updateByEmail("e@x.com", data, { select: { name: true } }, "extra");
+
+        expect(fakeAdapter.update).toHaveBeenCalledTimes(1);
+        expect(fakeAdapter.update.mock.calls[0]).toHaveLength(3);
+        expect(fakeAdapter.update.mock.calls[0]?.[0]).toEqual({ email: "e@x.com" });
+        expect(fakeAdapter.update.mock.calls[0]?.[1]).toBe(data);
+    });
+
+    it("'updateWhere' mantém o 'data' na posição '-2' e descarta o argumento extra", async () => {
+        const whereArg = { id: "1" };
+        const data = { name: "novo" };
+        fakeAdapter.update.mockResolvedValueOnce({});
+
+        await repo.updateWhere(whereArg, data, { select: { name: true } }, "extra");
+
+        expect(fakeAdapter.update.mock.calls[0]).toHaveLength(3);
+        expect(fakeAdapter.update.mock.calls[0]?.[0]).toEqual(whereArg);
+        expect(fakeAdapter.update.mock.calls[0]?.[1]).toBe(data);
+    });
+
+    it("'upsertByEmail' mantém 'create' em '-3' e 'update' em '-2' e descarta o argumento extra", async () => {
+        const createData = { email: "e@x.com" };
+        const updateData = { name: "novo" };
+        fakeAdapter.upsert.mockResolvedValueOnce({});
+
+        await repo.upsertByEmail("e@x.com", createData, updateData, { select: { name: true } }, "extra");
+
+        expect(fakeAdapter.upsert.mock.calls[0]).toHaveLength(4);
+        expect(fakeAdapter.upsert.mock.calls[0]?.[0]).toEqual({ email: "e@x.com" });
+        expect(fakeAdapter.upsert.mock.calls[0]?.[1]).toBe(createData);
+        expect(fakeAdapter.upsert.mock.calls[0]?.[2]).toBe(updateData);
+    });
+
+    it("'upsertWhere' mantém 'create' em '-3' e 'update' em '-2' e descarta o argumento extra", async () => {
+        const whereArg = { email: "e@x.com" };
+        const createData = { email: "e@x.com" };
+        const updateData = { name: "novo" };
+        fakeAdapter.upsert.mockResolvedValueOnce({});
+
+        await repo.upsertWhere(whereArg, createData, updateData, { select: { name: true } }, "extra");
+
+        expect(fakeAdapter.upsert.mock.calls[0]).toHaveLength(4);
+        expect(fakeAdapter.upsert.mock.calls[0]?.[0]).toEqual(whereArg);
+        expect(fakeAdapter.upsert.mock.calls[0]?.[1]).toBe(createData);
+        expect(fakeAdapter.upsert.mock.calls[0]?.[2]).toBe(updateData);
+    });
+
+    it("'upsertByEmailAndName' (where de 2 campos) mantém 'create' em '-3' e 'update' em '-2'", async () => {
+        const createData = { email: "e@x.com", name: "João" };
+        const updateData = { name: "Novo" };
+        fakeAdapter.upsert.mockResolvedValueOnce({});
+
+        await repo.upsertByEmailAndName("e@x.com", "João", createData, updateData, { select: { name: true } }, "extra");
+
+        expect(fakeAdapter.upsert.mock.calls[0]).toHaveLength(4);
+        expect(fakeAdapter.upsert.mock.calls[0]?.[1]).toBe(createData);
+        expect(fakeAdapter.upsert.mock.calls[0]?.[2]).toBe(updateData);
+    });
+
+    it("'findByActivePaginated' mantém a 'pagination' em '-2' e descarta o argumento extra", async () => {
+        await repo.findByActivePaginated(true, { limit: 10, offset: 0 }, { select: { name: true } }, "extra");
+
+        expect(where()).toEqual({ active: true });
+        expect(fakeAdapter.findMany.mock.calls[0]).toHaveLength(2);
+        expect(fakeAdapter.findMany.mock.calls[0]?.[1]).toEqual(
+            expect.objectContaining({ pagination: { limit: 10, offset: 0 } }),
+        );
+    });
+
+    it("'findByActiveOrdered' mantém o 'order' em '-2' e descarta o argumento extra", async () => {
+        await repo.findByActiveOrdered(true, { createdAt: "desc" }, { select: { name: true } }, "extra");
+
+        expect(where()).toEqual({ active: true });
+        expect(fakeAdapter.findMany.mock.calls[0]?.[1]).toEqual(
+            expect.objectContaining({ order: { createdAt: "desc" } }),
+        );
+    });
+
+    it("'findByActiveOrderedAndPaginated' mantém 'order' em '-3' e 'pagination' em '-2'", async () => {
+        await repo.findByActiveOrderedAndPaginated(
+            true,
+            { createdAt: "desc" },
+            { limit: 10, offset: 0 },
+            { select: { name: true } },
+            "extra",
+        );
+
+        expect(fakeAdapter.findMany.mock.calls[0]?.[1]).toEqual(
+            expect.objectContaining({
+                order: { createdAt: "desc" },
+                pagination: { limit: 10, offset: 0 },
+            }),
+        );
+    });
+
+    it("'findByActivePaginatedAndOrdered' mantém 'pagination' em '-3' e 'order' em '-2' (a ordem invertida no nome)", async () => {
+        await repo.findByActivePaginatedAndOrdered(
+            true,
+            { limit: 10, offset: 0 },
+            { createdAt: "desc" },
+            { select: { name: true } },
+            "extra",
+        );
+
+        expect(fakeAdapter.findMany.mock.calls[0]?.[1]).toEqual(
+            expect.objectContaining({
+                order: { createdAt: "desc" },
+                pagination: { limit: 10, offset: 0 },
+            }),
+        );
+    });
+
+    it("'findWherePaginated' (whereIndex = 0) mantém a 'pagination' em '-2'", async () => {
+        await repo.findWherePaginated({ active: true }, { limit: 10, offset: 0 }, { select: { name: true } }, "extra");
+
+        expect(where()).toEqual({ active: true });
+        expect(fakeAdapter.findMany.mock.calls[0]?.[1]).toEqual(
+            expect.objectContaining({ pagination: { limit: 10, offset: 0 } }),
+        );
+    });
+
+    it("'updateManyByActive' mantém o 'data' em '-2' e descarta o argumento extra", async () => {
+        const data = { active: false };
+        fakeAdapter.updateMany.mockResolvedValueOnce({ count: 2 });
+
+        await repo.updateManyByActive(true, data, { select: { name: true } }, "extra");
+
+        expect(fakeAdapter.updateMany.mock.calls[0]).toHaveLength(3);
+        expect(fakeAdapter.updateMany.mock.calls[0]?.[0]).toEqual({ active: true });
+        expect(fakeAdapter.updateMany.mock.calls[0]?.[1]).toBe(data);
+    });
+});
