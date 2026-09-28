@@ -163,7 +163,7 @@ declare findByProductsSome: () => Promise<User[]>;
 | `Distinct<Campo>And<Campo>...`             | Embute campos `distinct` fixos diretamente no nome do método (só válido em métodos da família `findBy`/`findWhere`).                                                                                                                   |
 | `IgnoreConflicts`                          | No `createMany`/`createManyReturning`, ignora registros que violariam uma constraint única, em vez de lançar erro.                                                                                                                     |
 
-> [!WARN]
+> [!WARNING]
 >
 > **Ordem dos parâmetros:** `pagination` e `order` sempre vêm **antes** do último argumento opcional `MethodOptions<T>`. Quando `order` e `pagination` estão presentes juntos, a ordem relativa entre eles segue o nome do sufixo (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
 >
@@ -192,7 +192,7 @@ declare createManyReturningIgnoreConflicts: (data: DeepPartial<User>[]) => Promi
 declare findOne: (options?: MethodOptions<User>) => Promise<User | null>;
 ```
 
-> [!WARN]
+> [!WARNING]
 >
 > **Precedência entre `Distinct` e `OrderBy`:** quando os dois são usados no mesmo nome de método, **`Distinct` deve vir antes de `OrderBy`**:
 >

@@ -22,7 +22,7 @@ const userWithAddress = await userRepository.get(id, {
 - `relations` eagerly loads related records; each relation field takes a `boolean` or a nested `relations` object.
 - Whether `select` and `relations` can be combined depends on the adapter (see below).
 
-> [!WARN]
+> [!WARNING]
 >
 > **Adapter-dependent behavior for `relations`:**
 >
