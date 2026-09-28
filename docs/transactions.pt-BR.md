@@ -10,15 +10,9 @@ Todos os métodos (base, dinâmicos e de query) aceitam `options.db` para partic
 
 ```typescript
 await userRepository.transaction(async tx => {
-    const usuario = await userRepository.save(
-        { name: "Maria", email: "maria@email.com" },
-        { db: tx },
-    );
+    const usuario = await userRepository.save({ name: "Maria", email: "maria@email.com" }, { db: tx });
 
-    await userLogsRepository.save(
-        { action: "Usuário criado", data: { userId: usuario.id } },
-        { db: tx },
-    );
+    await userLogsRepository.save({ action: "Usuário criado", data: { userId: usuario.id } }, { db: tx });
 });
 ```
 
@@ -81,7 +75,7 @@ try {
 
 ## Query builder dentro de uma transação
 
-Um [query builder](./query-builder.pt-BR.md#query-builder) pode ser apontado para uma transação da mesma forma — seja criando ele com `createQueryBuilder(tx)`, seja de forma lazy com `setDb(tx)` depois que a transação já começou, o que permite montar a query antes mesmo de a transação existir:
+Um [query builder](./query-builder.pt-BR.md#query-builder) — ou um [raw query builder](./raw-query-builder.pt-BR.md#transações-e-setdb) — pode ser apontado para uma transação da mesma forma — seja criando ele com `createQueryBuilder(tx)`, seja de forma lazy com `setDb(tx)` depois que a transação já começou, o que permite montar a query antes mesmo de a transação existir:
 
 ```typescript
 const qb = userRepository.createQueryBuilder().where({ active: true });
@@ -89,6 +83,17 @@ const qb = userRepository.createQueryBuilder().where({ active: true });
 await userRepository.transaction(async tx => {
     qb.setDb(tx);
     return qb.getResult();
+});
+```
+
+O [raw query builder](./raw-query-builder.pt-BR.md#raw-query-builder) funciona exatamente igual: crie-o com `createRawQueryBuilder(tx)` ou aponte-o para a transação depois, com `setDb(tx)`, e chame `execute()` dentro do callback:
+
+```typescript
+const rawQb = userRepository.createRawQueryBuilder().select("id", "name").from("user");
+
+await userRepository.transaction(async tx => {
+    rawQb.setDb(tx);
+    return rawQb.execute();
 });
 ```
 

@@ -28,7 +28,7 @@ try {
 | `VALIDATOR`       | Invalid method options or arguments were detected during validation (e.g. a missing `pkName` when the adapter has no `getPkName()`). |
 | `BASE`            | Invalid usage of a base method (`get`, `save`, `remove`, etc).                                                                       |
 | `ADAPTER`         | A `VSRepoAdapter` failed while talking to the underlying ORM/database — always thrown as `VSRepoAdapterError`.                       |
-| `QUERY_BUILDER`   | An invalid argument was passed to a [query builder](./query-builder.md#validation-and-errors) method (e.g. a negative `limit`).                        |
+| `QUERY_BUILDER`   | An invalid argument was passed to a [query builder](./query-builder.md#validation-and-errors) method (e.g. a negative `limit`).      |
 
 ## `VSRepoAdapterError` and `AdapterErrorCode`
 

@@ -38,7 +38,7 @@ All notable changes to this project will be documented in this file.
 - **`VSRepoErrorType.QUERY_BUILDER`** — new error type, thrown as a `VSRepoError` when an invalid argument is passed to a query builder method
 - **Query builder logs** — the builder uses the repository's logger: at `DEBUG` it traces every chained call and the resolved query of each terminal method (the `db` is never logged), and each terminal method is timed (`Took Xms to run query builder <method>`, promoted to `WARN` above `logSlowThresholdMs`)
 - **`Equals` / `NotEquals`** field-filter suffixes for dynamic methods — same effect as no suffix and `Not`, respectively; useful to disambiguate a field name that ends at the same camelCase boundary as an existing keyword suffix (e.g. `findByCheckInEquals` resolves to the field `checkIn`, instead of the default `check` + `In` reading)
-- **`lazyDynamicMethods`** constructor option — when `true`, postpones resolving `@DynamicMethod`/`@QueryMethod` methods until the subclass calls the `protected resolveDynamicMethods()` itself, instead of resolving them synchronously in the constructor. Useful for deferring the resolution cost to a more convenient point in the app's lifecycle (e.g. an async init hook), and lets fields annotated with `@DynamicMethod`/`@QueryMethod` skip the `declare` modifier as long as `resolveDynamicMethods()` is called after calls `supper()`. Calling `resolveDynamicMethods()` again after it already resolved once logs a `WARN`, since it's redundant
+- **`lazyDynamicMethods`** constructor option — when `true`, postpones resolving `@DynamicMethod`/`@QueryMethod` methods until the subclass calls the `protected resolveDynamicMethods()` itself, instead of resolving them synchronously in the constructor. Useful for deferring the resolution cost to a more convenient point in the app's lifecycle (e.g. an async init hook), and lets fields annotated with `@DynamicMethod`/`@QueryMethod` skip the `declare` modifier as long as `resolveDynamicMethods()` is called after calls `super()`. Calling `resolveDynamicMethods()` again after it already resolved once logs a `WARN`, since it's redundant
 
 ### Changed
 - `pagination` validation is now stricter: `limit` and `offset` must be non-negative integers. Negative, decimal and infinite values, previously accepted, are now rejected
@@ -278,7 +278,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0] - 2026-09-01
  
-> Major rewrite. If you're upgrading from v1, see the ["What changed from v1"](./README.md#what-changed-from-v1) table in the README for the full breakdown before migrating.
+> Major rewrite. If you're upgrading from v1, see the [Migrating from v1](./docs/migrating-from-v1.md) guide for the full breakdown before migrating.
  
 ### Changed
 - **BREAKING:** VSRepository is now **ORM-agnostic** — the core no longer talks to Prisma directly, it delegates every operation to a pluggable `VSRepoAdapter`. ORM support now ships as separate packages (e.g. `@vsrepo/prisma7-adapter`) instead of being bundled in the core `vsrepo` package
@@ -315,7 +315,7 @@ All notable changes to this project will be documented in this file.
  
 ## [2.0.0] - 2026-09-01 (Português)
  
-> Reescrita major. Se você está migrando da v1, veja a tabela ["O que mudou da v1"](./README.pt-BR.md#o-que-mudou-da-v1) no README para o detalhamento completo antes de migrar.
+> Reescrita major. Se você está migrando da v1, veja o guia [Migrando da v1](./docs/migrating-from-v1.pt-BR.md) para o detalhamento completo antes de migrar.
  
 ### Alterado
 - **BREAKING:** O VSRepository agora é **agnóstico de ORM** — o core não conversa mais diretamente com o Prisma, delegando toda operação a um `VSRepoAdapter` plugável. O suporte a ORMs agora é publicado em pacotes separados (ex.: `@vsrepo/prisma7-adapter`) em vez de vir embutido no pacote core `vsrepo`

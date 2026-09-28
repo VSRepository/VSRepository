@@ -28,7 +28,7 @@ try {
 | `VALIDATOR`       | Options ou argumentos de método inválidos foram detectados durante a validação (ex.: `pkName` ausente quando o adapter não tem `getPkName()`). |
 | `BASE`            | Uso inválido de um método base (`get`, `save`, `remove`, etc).                                                                                 |
 | `ADAPTER`         | Um `VSRepoAdapter` falhou ao falar com o ORM/banco subjacente — sempre é lançado como `VSRepoAdapterError`.                                    |
-| `QUERY_BUILDER`   | Um argumento inválido foi passado para um método do [query builder](./query-builder.pt-BR.md#validação-e-erros) (ex.: um `limit` negativo).                            |
+| `QUERY_BUILDER`   | Um argumento inválido foi passado para um método do [query builder](./query-builder.pt-BR.md#validação-e-erros) (ex.: um `limit` negativo).    |
 
 ## `VSRepoAdapterError` e `AdapterErrorCode`
 

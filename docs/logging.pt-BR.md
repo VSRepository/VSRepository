@@ -29,4 +29,27 @@ super({
 
 O [query builder](./query-builder.pt-BR.md#logs-do-query-builder) usa o mesmo logger: em `DEBUG` ele também registra cada chamada encadeada e a query resolvida de cada método terminal, e cada método terminal tem o tempo medido como qualquer outra operação.
 
+## Formato do log
+
+Toda linha começa com um timestamp ISO, o nível e o nome do logger derivado da classe do repository — `${ClassName}Logger`:
+
+```text
+2026-09-21T05:02:02.087Z [INFO] [UserRepositoryLogger] Initializing UserRepository (pk: 'id', softRemoveKey: 'deletedAt', defaultOrdering: {"createdAt":"desc"}, adapter: VSRepoPrisma7Adapter)
+```
+
+Todo método base e todo método dinâmico tem o tempo medido automaticamente. Com `logLevel: VSLogLevel.DEBUG`, uma chamada `userRepository.save({ name: "Joao", email: "joao@email.com" })` imprime:
+
+```text
+2026-09-21T05:02:02.088Z [DEBUG] [UserRepositoryLogger] Starting to run save...
+2026-09-21T05:02:02.091Z [DEBUG] [UserRepositoryLogger] Took 2.73ms to run save
+```
+
+Se essa mesma chamada demorar mais do que o `logSlowThresholdMs` (300ms por padrão), a segunda linha é promovida para `WARN` — e aparece até no nível padrão `WARN`, já que ela não está atrás do gate de `DEBUG`:
+
+```text
+2026-09-21T05:02:02.501Z [WARN] [UserRepositoryLogger] Took 412.16ms to run save (slower than the 300ms threshold)
+```
+
+O nome da operação nessas linhas (`save`, `findByEmail`, `getResultAndCount`, ...) é o método base, o método dinâmico ou o método terminal do query builder que foi chamado.
+
 [⬆️ Voltar ao topo](#top)

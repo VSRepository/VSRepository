@@ -8,7 +8,7 @@
 
 `@QueryMethod` ignora totalmente o engine de parsing por nome e executa uma instrução SQL raw através do método `query()` do adapter. Use placeholders para os valores passados via `args` — nunca interpole valores diretamente na string SQL.
 
-Existem três formas de escrever valores numa query raw, em ordem crescente de conveniência:
+Existem três formas de escrever valores numa query raw:
 
 - **A sintaxe nativa de placeholder do seu adapter** — o estilo `$1`, `$2`, ... usado nos exemplos abaixo é a convenção do PostgreSQL; o MySQL, por exemplo, usa `?`. Consulte a documentação do seu adapter para saber a sintaxe exata.
 - **Os placeholders nativos e agnósticos do VSRepository** — com `vsPlaceholders: true` nas options do construtor, strings cruas usam `?1`, `?2`, ... (base 1, estilo Spring Data JPA) independentemente do banco por trás do adapter. Veja [Placeholders agnósticos com `vsPlaceholders`](#placeholders-agnósticos-com-vsplaceholders).
@@ -38,16 +38,14 @@ Query methods aceitam `{ args, db? }` na chamada — `db` permite que participem
 
 ## Argumentos via spread com `spreadArgs`
 
-Por padrão, um `@QueryMethod` recebe seus valores de placeholder através de um único objeto `QueryMethodArg` (`method({ args: [...] })`). Defina `spreadArgs: true` para recebê-los como argumentos posicionais separados, no estilo do JpaRepository:
+Por padrão, um `@QueryMethod` recebe seus valores de placeholder através de um único objeto `QueryMethodArg` (`method({ args: [...] })`). Defina `spreadArgs: true` para recebê-los como argumentos posicionais separados:
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     @QueryMethod('SELECT * FROM "user" WHERE email = $1 AND "userType" = $2', {
         spreadArgs: true,
     })
-    declare findByEmailAndType: (
-        ...args: QueryArgs<[email: string, userType: string]>
-    ) => Promise<User[]>;
+    declare findByEmailAndType: (...args: QueryArgs<[email: string, userType: string]>) => Promise<User[]>;
 
     // Ao invés de usar o `QueryArgs`, você também pode simplesmente definir `DbArg` como último parâmetro
     @QueryMethod('SELECT * FROM "user" WHERE id = $1', { spreadArgs: true })
@@ -72,19 +70,14 @@ await userRepository.transaction(async tx => {
 Para SQL raw pontual que não justifica declarar um `@QueryMethod` na classe do repository, chame `query()` diretamente — ele está disponível em toda instância de `VSRepository` e usa o `query()` do adapter por baixo dos panos:
 
 ```typescript
-query<T = any>(query: string, options?: VSRepoQueryOptions<OrmTypes>): Promise<T>;
-query<T = any>(sql: VSSql, options?: Omit<VSRepoQueryOptions<OrmTypes>, "args">): Promise<T>;
-```
-
-```typescript
 const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE email = $1', {
     args: ["maria@email.com"],
 });
 
-const linhasAfetadas = await userRepository.query<number>(
-    'UPDATE "user" SET active = true WHERE id = $1',
-    { args: ["123"], modifying: true },
-);
+const linhasAfetadas = await userRepository.query<number>('UPDATE "user" SET active = true WHERE id = $1', {
+    args: ["123"],
+    modifying: true,
+});
 
 // Aqui só se espera uma linha, então `singleResult` transforma o array
 // em um único objeto (ou `null` quando nenhuma linha corresponde).
@@ -107,12 +100,12 @@ const linhasAfetadas = await userRepository.query<number>(
 );
 ```
 
-| Option         | Tipo      | Padrão                      | Descrição                                                                                                                                                                                                                                                                                                                                                                    |
-| -------------- | --------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `args`         | `any[]`   | `undefined`                 | Parâmetros posicionais injetados nos placeholders do SQL — a sintaxe dos placeholders depende do banco/driver usado pelo seu adapter (ou use `vsPlaceholders` para placeholders `?1`, veja abaixo). Nunca interpole valores diretamente na string SQL. Não é aceito quando `sql` é um fragmento `VSSql` — os valores dele já vêm parametrizados.                            |
-| `db`           | `any`     | Client padrão do repository | Client ou transação do banco em que essa query deve rodar.                                                                                                                                                                                                                                                                                                                  |
-| `modifying`    | `boolean` | `false`                     | Quando `true`, retorna o número de linhas afetadas.                                                                                                                                                                                                                                                                                                                          |
-| `singleResult` | `boolean` | `false`                     | Quando `true`, transforma um resultado em array no seu primeiro elemento (`null` se vazio). Não tem efeito em resultados que não são array (ex.: o número de linhas afetadas de uma query `modifying`).                                                                                                                                                                      |
+| Option         | Tipo      | Padrão                      | Descrição                                                                                                                                                                                                                                                                                                                                        |
+| -------------- | --------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `args`         | `any[]`   | `undefined`                 | Parâmetros posicionais injetados nos placeholders do SQL — a sintaxe dos placeholders depende do banco/driver usado pelo seu adapter (ou use `vsPlaceholders` para placeholders `?1`, veja abaixo). Nunca interpole valores diretamente na string SQL. Não é aceito quando `sql` é um fragmento `VSSql` — os valores dele já vêm parametrizados. |
+| `db`           | `any`     | Client padrão do repository | Client ou transação do banco em que essa query deve rodar.                                                                                                                                                                                                                                                                                       |
+| `modifying`    | `boolean` | `false`                     | Quando `true`, retorna o número de linhas afetadas.                                                                                                                                                                                                                                                                                              |
+| `singleResult` | `boolean` | `false`                     | Quando `true`, transforma um resultado em array no seu primeiro elemento (`null` se vazio). Não tem efeito em resultados que não são array (ex.: o número de linhas afetadas de uma query `modifying`).                                                                                                                                          |
 
 Assim como os métodos base, dinâmicos e query, `query()` aceita `db` em `options` para participar de um bloco `transaction()`.
 
@@ -127,9 +120,7 @@ class UserRepository extends VSRepository<User, string> {
     }
 
     @QueryMethod('SELECT * FROM "user" WHERE email = ?1 AND active = ?2', { spreadArgs: true })
-    declare findByEmailAndActive: (
-        ...args: QueryArgs<[email: string, active: boolean]>
-    ) => Promise<User[]>;
+    declare findByEmailAndActive: (email: string, active: boolean) => Promise<User[]>;
 }
 
 const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE email = ?1', {
@@ -137,14 +128,14 @@ const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE ema
 });
 ```
 
-Observações:
-
-- O mesmo índice pode aparecer mais de uma vez (`?1 ... ?1`) para reutilizar o mesmo argumento — cada ocorrência vira seu próprio par placeholder/valor na saída compilada.
-- Um `?N` dentro de um literal de string com aspas simples (ex.: `SELECT ... WHERE note = 'use ?1 literally'`) **não** é tratado como placeholder — ele passa intacto para o SQL e não consome nenhuma entrada de `args`. Escapes do SQL padrão são respeitados, então `''` dentro de um literal não o encerra (`'it''s ?1'` é ignorado por completo). Edge cases:
-  - Não existe mecanismo de escape **fora** de um literal: se uma query precisar de texto literal `?` + dígitos num contexto sem aspas, monte essa parte com um fragmento `VSSql`.
-  - O matching só dispara quando `?` é seguido **imediatamente** de um dígito, então operadores como `?` do PostgreSQL (existência de chave JSONB), `?|` e `?&` não são afetados.
-- Como `?1` é compilado via `adapter.getPlaceholder()`, o adapter precisa implementá-lo — o construtor lança um `VSRepoError` se `vsPlaceholders` estiver ligado e o adapter não implementar. `@QueryMethod` também resolve via `getPlaceholder()`, então vale a mesma exigência.
-- Isso é independente dos fragmentos `VSSql`: passar um `VSSql` para `query()` exige `getPlaceholder()` independentemente dessa option, e sempre compila através dela.
+> [!NOTE]
+>
+> - O mesmo índice pode aparecer mais de uma vez (`?1 ... ?1`) para reutilizar o mesmo argumento — cada ocorrência vira seu próprio par placeholder/valor na saída compilada.
+> - Um `?N` dentro de um literal de string com aspas simples (ex.: `SELECT ... WHERE note = 'use ?1 literally'`) **não** é tratado como placeholder — ele passa intacto para o SQL e não consome nenhuma entrada de `args`. Escapes do SQL padrão são respeitados, então `''` dentro de um literal não o encerra (`'it''s ?1'` é ignorado por completo). Edge cases:
+    - Não existe mecanismo de escape **fora** de um literal: se uma query precisar de texto literal `?` + dígitos num contexto sem aspas, monte essa parte com um fragmento `VSSql`.
+    - O matching só dispara quando `?` é seguido **imediatamente** de um dígito, então operadores como `?` do PostgreSQL (existência de chave JSONB), `?|` e `?&` não são afetados.
+> - Como `?1` é compilado via `adapter.getPlaceholder()`, o adapter precisa implementá-lo — o construtor lança um `VSRepoError` se `vsPlaceholders` estiver ligado e o adapter não implementar. `@QueryMethod` também resolve via `getPlaceholder()`, então vale a mesma exigência.
+> - Isso é independente dos fragmentos `VSSql`: passar um `VSSql` para `query()` exige `getPlaceholder()` independentemente dessa option, e sempre compila através dela.
 
 ## Fragmentos parametrizados com `VSSql`
 
@@ -220,9 +211,9 @@ const fragment = VSSql.sql`
 const users = await userRepository.query<User[]>(fragment);
 ```
 
-Observações:
-
-- Passar um fragmento `VSSql` para `query()` exige que o adapter implemente `getPlaceholder()` — caso contrário, `query()` lança um `VSRepoError`. As outras options do adapter (`modifying`, `singleResult`, `db`) continuam funcionando normalmente.
-- Valores interpolados via `${...}` (incluindo elementos de `join`) viram sempre parâmetros; só o `VSSql.raw` insere texto como está. Se você não puder descartar input do usuário para um nome de tabela/coluna, valide contra uma lista fixa antes de usar — `raw` não oferece nenhuma proteção.
+> [!NOTE]
+>
+> - Passar um fragmento `VSSql` para `query()` exige que o adapter implemente `getPlaceholder()` — caso contrário, `query()` lança um `VSRepoError`. As outras options do adapter (`modifying`, `singleResult`, `db`) continuam funcionando normalmente.
+> - Valores interpolados via `${...}` (incluindo elementos de `join`) viram sempre parâmetros; só o `VSSql.raw` insere texto como está. Se você não puder descartar input do usuário para um nome de tabela/coluna, valide contra uma lista fixa antes de usar — `raw` não oferece nenhuma proteção.
 
 [⬆️ Voltar ao topo](#top)
