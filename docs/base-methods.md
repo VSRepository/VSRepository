@@ -53,6 +53,7 @@ Available automatically on every `VSRepository` subclass:
 | `getDbClient()`                         | Returns the ORM client instance.                                                                                                                                                                      |
 | `query<T>(query, options?)`             | Executes a raw SQL statement directly against the database — accepts a plain string or a `VSSql` fragment. See [Ad-hoc raw queries with `query()`](./query-methods.md#ad-hoc-raw-queries-with-query). |
 | `createQueryBuilder(db?)`               | Creates a fluent [query builder](./query-builder.md#query-builder) for queries assembled at runtime.                                                                                                  |
+| `createRawQueryBuilder(db?)`            | Creates a fluent [raw query builder](./raw-query-builder.md#raw-query-builder) for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs.                  |
 
 Most of the above accept a `MethodOptions<Entity, OrmTypes>` object as their last argument (`select`, `relations`, `see`, `db`). A few — `total`, `has`, `removeList`, `sum`, `average`, `min`, `max`, and the soft-delete batch methods (`softRemoveList`/`restoreList`) — don't return/shape an `Entity`, so they accept the narrower `RestrictMethodOptions<Entity, OrmTypes>` instead (`see`, `db` only; no `select`/`relations`). `transaction`, `query`, and `getDbClient` accept their own options or none at all.
 
@@ -79,12 +80,20 @@ This unlocks four extra methods:
 | `restore(pk, options?)`         | Sets `deletedAt` back to `null`.      |
 | `restoreList(pks, options?)`    | Same, in batch — returns `{ count }`. |
 
-Every other method accepts a `see` option controlling visibility of soft-deleted rows:
+Every method accepts a `see` option controlling visibility of soft-deleted rows — including `softRemove`, `softRemoveList`, `restore` and `restoreList`:
 
 ```typescript
 await userRepository.getAll({ see: "active" }); // default — only non-deleted records
 await userRepository.getAll({ see: "removed" }); // only soft-deleted records
 await userRepository.getAll({ see: "all" }); // everything, ignoring soft-delete
+```
+
+The default for `see` is `"active"` on every method, **except** `softRemove`, `softRemoveList`, `restore` and `restoreList`, whose default is `"all"` — so by default they find the record whether or not it is already removed (for example, `restore` has to find a record that is already soft-deleted):
+
+```typescript
+await userRepository.restore(id); // same as { see: "all" } — finds the record even if removed
+await userRepository.restore(id, { see: "removed" }); // only restores it if it is soft-deleted
+await userRepository.softRemove(id, { see: "active" }); // only removes it if it is still active
 ```
 
 ---

@@ -75,7 +75,7 @@ class UserRepository extends VSRepository<User, string> {
 | `deleteManyReturningBy`    | `Entity[]`       | Field filters follow the prefix.                                                    |
 | `deleteManyReturningWhere` | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument.                                  |
 
-> `groupBy` is **not planned** — it doesn't map cleanly onto the ORM-agnostic contract. `aggregate` as a separate prefix is also unlikely to be implemented: the most common aggregate operations (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) are already available as dedicated base methods — see [Atomic and aggregate methods](./base-methods.md#atomic-and-aggregate-methods). For anything more complex, use a `@QueryMethod` with raw SQL.
+> `groupBy` is **not planned** — it doesn't map cleanly onto the ORM-agnostic contract. `aggregate` as a separate prefix is also unlikely to be implemented: the most common aggregate operations (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) are already available as dedicated base methods — see [Atomic and aggregate methods](./base-methods.md#atomic-and-aggregate-methods). For anything more complex — including `groupBy` — use a `@QueryMethod` with raw SQL or the [raw query builder](./raw-query-builder.md#raw-query-builder) (`createRawQueryBuilder()`), which exposes `groupBy`/`having` directly.
 
 ## Field filters
 

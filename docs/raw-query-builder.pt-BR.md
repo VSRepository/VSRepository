@@ -11,16 +11,16 @@
 ```typescript
 import { VSSql } from "vsrepo";
 
-const rows = await orderRepository
+const rows = await invoiceRepository
     .createRawQueryBuilder()
-    .select("o.id", "o.total", "u.name")
-    .from("order", "o")
-    .innerJoin("user", "u", "u.id = o.user_id")
+    .select("i.id", "i.total", "u.name")
+    .from("invoice", "i")
+    .innerJoin("user", "u", "u.id = i.user_id")
     .where(VSSql.sql`u.active = ${true}`)
-    .andWhere("o.deleted_at is null")
-    .groupBy("o.id", "u.name")
+    .andWhere("i.deleted_at is null")
+    .groupBy("i.id", "u.name")
     .having(VSSql.sql`count(*) > ${1}`)
-    .orderBy("o.total", "desc")
+    .orderBy("i.total", "desc")
     .limit(20)
     .offset(0)
     .execute<{ id: string; total: number; name: string }[]>();
@@ -54,16 +54,16 @@ Toda cláusula aceita uma string crua e confiável (um identificador para `selec
 
 ```typescript
 // Builder de subquery passado diretamente
-const recentOrders = orderRepository
+const recentInvoices = invoiceRepository
     .createRawQueryBuilder()
     .select("*")
-    .from("order")
+    .from("invoice")
     .where(VSSql.sql`created_at > now() - interval '7 days'`);
 
-const perUser = await orderRepository
+const perUser = await invoiceRepository
     .createRawQueryBuilder()
     .select("user_id", VSSql.sql`count(*) AS total`)
-    .from(recentOrders, "recent")
+    .from(recentInvoices, "recent")
     .groupBy("user_id")
     .execute();
 
@@ -72,17 +72,17 @@ const qb = userRepository
     .createRawQueryBuilder()
     .select("u.id")
     .from("user", "u")
-    .innerJoin(sub => sub.select("user_id").from("order").groupBy("user_id"), "o", VSSql.sql`o.user_id = u.id`);
+    .innerJoin(sub => sub.select("user_id").from("invoice").groupBy("user_id"), "i", VSSql.sql`i.user_id = u.id`);
 ```
 
 Uma subquery também pode ser inserida diretamente num fragmento `VSSql` em qualquer lugar — mais comumente dentro de um `WHERE ... IN (...)` — via [`toVSSql()`](#executando-a-query):
 
 ```typescript
-const usersWithOrders = await userRepository
+const usersWithInvoices = await userRepository
     .createRawQueryBuilder()
     .select("*")
     .from("user")
-    .where(VSSql.sql`id IN (${orderRepository.createRawQueryBuilder().select("user_id").from("order").toVSSql()})`)
+    .where(VSSql.sql`id IN (${invoiceRepository.createRawQueryBuilder().select("user_id").from("invoice").toVSSql()})`)
     .execute();
 ```
 
@@ -91,9 +91,9 @@ const usersWithOrders = await userRepository
 `with(name, query, columns?)` adiciona um `WITH` (common table expression) que qualquer `from()`/`join()`/subquery posterior no mesmo builder pode referenciar por `name`, como se fosse uma tabela normal. Cada chamada adiciona uma CTE; chame de novo para adicionar mais — todas ficam listadas sob um único `WITH`, na ordem em que foram adicionadas. `query` aceita os mesmos valores que uma [subquery](#subqueries) (um `VSRawQueryBuilder`, uma função de subquery, ou um fragmento `VSSql`), e `columns` é uma lista explícita e opcional de colunas, renderizada como `name(col1, col2) AS (...)`:
 
 ```typescript
-const rows = await orderRepository
+const rows = await invoiceRepository
     .createRawQueryBuilder()
-    .with("big_spenders", qb => qb.select("user_id").from("order").groupBy("user_id").having("sum(total) > 1000"))
+    .with("big_spenders", qb => qb.select("user_id").from("invoice").groupBy("user_id").having("sum(total) > 1000"))
     .select("u.*")
     .from("user", "u")
     .innerJoin("big_spenders", "bs", "bs.user_id = u.id")
@@ -138,9 +138,9 @@ Uma única CTE recursiva já é suficiente para tornar a cláusula inteira `WITH
 `createRawQueryBuilder(db?)` aceita o client ou transaction em que rodar. Como nada é executado até `execute()` ser chamado, também dá pra montar a query primeiro e escolher onde ela roda depois com `setDb()`:
 
 ```typescript
-const qb = orderRepository.createRawQueryBuilder().select("*").from("order");
+const qb = invoiceRepository.createRawQueryBuilder().select("*").from("invoice");
 
-await orderRepository.transaction(async tx => {
+await invoiceRepository.transaction(async tx => {
     qb.setDb(tx); // a partir daqui, execute() roda dentro da transaction
     return qb.execute();
 });

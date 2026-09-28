@@ -13,7 +13,7 @@
 
 🇺🇸 You're reading the English version. [🇧🇷 Ler em português](./README.pt-BR.md)
 
-**ORM-agnostic** repository pattern library, with full **TypeScript** support. The core delegates every operation to a pluggable **adapter**, so the same repository API can work against Prisma, Drizzle, or any other ORM/database that implements the adapter contract. Coming from the old [v1](https://github.com/jaobrabo123/VSRepository/tree/v1)? See [Migrating from v1](./docs/migrating-from-v1.md).
+VSRepository is an **ORM-agnostic repository pattern library for TypeScript**. It provides a consistent repository API, derived query methods, query builders, transactions, and other persistence concerns through pluggable **ORM adapters**.
 
 VSRepository lets you create strongly-typed repositories with:
 

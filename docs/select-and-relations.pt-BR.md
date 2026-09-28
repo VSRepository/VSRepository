@@ -35,6 +35,16 @@ const usuarioComEndereco = await userRepository.get(id, {
 >     });
 >     ```
 >
+> - **Drizzle (`@vsrepo/drizzle-adapter` / `VSRepoDrizzleAdapter`, atualmente em alpha)** — `select` é convertido para o `columns` do Drizzle e `relations` para o `with`. **Se `select` estiver presente, `relations` é ignorado** (assim como no Prisma), mas campos de relação dentro do próprio `select` são movidos automaticamente para o `with`:
+>     ```typescript
+>     // Drizzle: relations é ignorado quando select existe
+>     await userRepository.get(id, {
+>         select: { id: true, name: true, address: { city: true } }, // address vai para o `with`
+>         relations: { posts: true }, // ← ignorado
+>     });
+>     ```
+>     Os detalhes (como o reconhecimento de relações marcadas como `true` dentro do `select`) e as limitações conhecidas estão na documentação do [`VSRepoDrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter), que é a referência oficial. Como o adapter ainda está em alpha, esse comportamento pode mudar.
+>
 > Adapters customizados podem mapear `relations` de forma diferente — consulte a documentação do adapter para a semântica exata.
 
 ## Tipagem de retorno restrita com `InferMethodReturn`

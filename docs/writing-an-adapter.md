@@ -10,7 +10,7 @@ Because the core is ORM-agnostic and ships without a bundled adapter, adding sup
 
 ## What you're implementing
 
-Before the contract itself, it's worth being clear about **what an adapter actually does**, because the answer is narrower than it first looks.
+Before the contract itself, it's worth being clear about **what an adapter actually does**: its scope is well defined, but that doesn't mean the work is small — depending on the ORM, writing a complete adapter can take a lot of work.
 
 `VSRepository` owns all of the abstraction. Given a call like `userRepository.get("user-1", { relations: { address: true } })`, the repository:
 
@@ -20,7 +20,7 @@ Before the contract itself, it's worth being clear about **what an adapter actua
 - logs the operation and times it,
 - and then calls **exactly one** method on your adapter, with the resolved `where` and options.
 
-Everything above is ORM-agnostic and shared by every adapter. What remains for you is the last step: turning a `VSRepoWhere<T>` plus an `AdapterMethodOptions<T>` into a real read or write against your database, and turning the result back into a `T`. Your adapter is the **only** code in the stack that knows your ORM exists.
+Everything above is ORM-agnostic and shared by every adapter. What remains for you is the last step — and that is where most of the effort lives: turning a `VSRepoWhere<T>` plus an `AdapterMethodOptions<T>` into a real read or write against your database, and turning the result back into a `T`. Your adapter is the **only** code in the stack that knows your ORM exists.
 
 The types you'll meet throughout the contract are all documented in [Utility types](./utility-types.md):
 
@@ -34,105 +34,23 @@ The types you'll meet throughout the contract are all documented in [Utility typ
 
 ## The `VSRepoAdapter` contract
 
-```typescript
-export abstract class VSRepoAdapter<T> {
-    abstract runInTransaction<R>(fn: (tx: any) => Promise<R>, options?: VSRepoTransactionOptions): Promise<R>;
-    abstract getDbClient(): any;
-    abstract query<T = any>(query: string, options?: AdapterQueryOptions): Promise<T>;
-    abstract findOne(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T | null>;
-    abstract findOneOrThrow(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T>;
-    abstract findMany(
-        where: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T> & { distinct?: (keyof T)[] },
-    ): Promise<T[]>;
-    abstract save(obj: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<T>;
-    abstract saveMany(objs: DeepPartial<T>[], options?: AdapterMethodOptions<T>): Promise<T[]>;
-    abstract create(objs: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<T>;
-    abstract createMany(
-        objs: DeepPartial<T>[],
-        options?: AdapterMethodOptions<T> & { ignoreConflicts?: boolean },
-    ): Promise<CountResult>;
-    abstract createManyReturning(
-        objs: DeepPartial<T>[],
-        options?: AdapterMethodOptions<T> & { ignoreConflicts?: boolean },
-    ): Promise<T[]>;
-    abstract delete(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T>;
-    abstract deleteMany(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<CountResult>;
-    abstract deleteManyReturning(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T[]>;
-    abstract update(where: VSRepoWhere<T>, obj: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<T>;
-    abstract updateMany(
-        where: VSRepoWhere<T>,
-        obj: DeepPartial<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<CountResult>;
-    abstract updateManyReturning(
-        where: VSRepoWhere<T>,
-        obj: DeepPartial<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T[]>;
-    abstract count(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<number>;
-    abstract exists(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<boolean>;
-    abstract merge<K>(where: VSRepoWhere<T>, obj: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<K & T>;
-    abstract upsert(
-        where: VSRepoWhere<T>,
-        create: DeepPartial<T>,
-        update: DeepPartial<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T>;
-    abstract incrementOne<K extends NumericKeys<T>>(
-        field: K,
-        value: NonNullable<T[K]>,
-        where: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T>;
-    abstract decrementOne<K extends NumericKeys<T>>(
-        field: K,
-        value: NonNullable<T[K]>,
-        where: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T>;
-    abstract multiplyOne<K extends NumericKeys<T>>(
-        field: K,
-        value: NonNullable<T[K]>,
-        where: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T>;
-    abstract divideOne<K extends NumericKeys<T>>(
-        field: K,
-        value: NonNullable<T[K]>,
-        where: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<T>;
-    abstract sum(
-        field: NumericKeys<T>,
-        where?: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<number | null>;
-    abstract average(
-        field: NumericKeys<T>,
-        where?: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<number | null>;
-    abstract min(
-        field: NumericKeys<T>,
-        where?: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<number | null>;
-    abstract max(
-        field: NumericKeys<T>,
-        where?: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T>,
-    ): Promise<number | null>;
-    getPkName?(): string;
-    getPlaceholder?(index: number): string;
-}
-```
+The contract is the abstract class `VSRepoAdapter<T>`. Every method below is `abstract`, except the two optional ones at the end. This is an overview — the exact signatures and JSDoc for every method live in [`src/VSRepoAdapter.ts`](https://github.com/jaobrabo123/VSRepository/blob/main/src/VSRepoAdapter.ts), which is the source of truth for the contract:
+
+| Group                     | Methods                                                                                      | Role                                                                                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Infrastructure            | `runInTransaction`, `getDbClient`, `query`                                                   | The ORM's native transaction, access to the ORM client, and raw SQL execution (used by `query()`/`@QueryMethod`).                         |
+| Reads                     | `findOne`, `findOneOrThrow`, `findMany`, `count`, `exists`                                   | Receive an already-resolved `VSRepoWhere<T>` and `AdapterMethodOptions<T>`. `findMany` also accepts `distinct`.                           |
+| Writes                    | `save`, `saveMany`, `create`, `createMany`, `createManyReturning`, `upsert`, `merge`         | Creation, upsert and in-memory merge. `createMany`/`createManyReturning` accept `ignoreConflicts`; `merge` does **not** persist anything. |
+| Updates and deletes       | `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning` | Variants that return the entity, a list, or just `{ count }` (`CountResult`).                                                             |
+| Atomic                    | `incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`                                   | Arithmetic update evaluated server-side against the row's current value, restricted to `NumericKeys<T>`.                                  |
+| Aggregations              | `sum`, `average`, `min`, `max`                                                               | Return `number \| null` — `null` when no record matches the filter.                                                                       |
+| Optional (not `abstract`) | `getPkName?()`, `getPlaceholder?(index)`                                                     | See below.                                                                                                                                |
 
 The optional `getPkName()` lets the adapter declare the entity's primary-key field to the repository. When instantiating a `VSRepository`, you can omit `pkName` from the constructor options and it will be read from `adapter.getPkName()`. If you omit it and the adapter doesn't implement `getPkName()`, the constructor throws a `VSRepoError`.
 
 The optional `getPlaceholder?(index)` declares the placeholder syntax your database/driver expects for the Nth (0-based) bound parameter in a raw query — e.g. PostgreSQL returns `` `$${index + 1}` `` (`$1`, `$2`, ...), while SQLite/MySQL ignore `index` and always return `"?"`. Implementing it is what unlocks the parameterized query features: `query()` can then accept a `VSSql` fragment, and `vsPlaceholders: true` compiles VSRepository's own `?1`, `?2`, ... placeholders — both through `getPlaceholder()`. Without it, passing a `VSSql` fragment, or enabling `vsPlaceholders`, throws a `VSRepoError`. See [Query methods](./query-methods.md#parameterized-fragments-with-vssql).
 
-`VSRepository` never talks to the ORM directly — it only calls these methods with an already-resolved `VSRepoWhere<T>` and `AdapterMethodOptions<T>`. Once an adapter implements this contract, every base method, dynamic method, and query method works against it automatically.
+`VSRepository` never talks to the ORM directly — it only calls these methods with an already-resolved `VSRepoWhere<T>` and `AdapterMethodOptions<T>`. Once an adapter implements this contract, every base method, dynamic method, and query method works against it automatically — but getting to a correct, complete implementation takes careful translation of each method's behavior to the ORM.
 
 Two rules cover the method bodies:
 
@@ -154,6 +72,14 @@ Two rules cover the method bodies:
     ```
 
 For a full, working implementation, see the external [`VSRepoPrisma7Adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) repo.
+
+## Relation persistence depends on the adapter
+
+The core doesn't know how to persist relations: a `save`/`create`/`update`/`upsert` with a relation field in the payload (for example, `{ name: "Ana", address: { city: "Recife" } }`) reaches the adapter exactly like that, and it's up to the adapter to decide how to turn it into ORM writes — nested `create`/`connectOrCreate`/`disconnect` in Prisma, inserts and updates performed imperatively in Drizzle, and so on.
+
+Adapters such as [`VSRepoPrisma7Adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) and [`VSRepoDrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) do this through a `relations` config on the constructor, which describes, for each relation field, its cardinality (`oto`/`otm`/`mto`/`mtm`), how to treat items that already exist or are missing from the payload (`restriction`), whether the relation accepts `null` (`nullable`), and the foreign-key columns involved. Note that this _write_ config is different from the `relations` passed in a method's options, which only controls eager loading on reads (see [`select` and `relations`](./select-and-relations.md)).
+
+It is of great importance that your adapter implements something similar: without it, whoever uses the adapter has to persist every relation by hand, item by item, and loses much of what `VSRepository` gives them. It is **not mandatory** — an adapter that forwards the payload to the ORM without handling relations still fulfills the contract — but if you choose not to implement it, state that clearly in the adapter's documentation.
 
 ## Translating the generic arguments into your ORM
 
@@ -239,5 +165,7 @@ That's the same pipeline the core itself uses — see [`.github/workflows/publis
 | Registration           | A PR adding a row to the official table in [Adapter status](./adapters.md#adapter-status).                                                                                          |
 
 To request it, open an issue with the link to your repository and a short note on which ORM versions you support.
+
+If you want to contribute a new official adapter **directly** — rather than maintaining your own adapter and asking for it to be promoted later — get in touch at [joaodev.azevedo@outlook.com](mailto:joaodev.azevedo@outlook.com).
 
 [⬆️ Back to top](#top)

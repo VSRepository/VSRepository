@@ -11,16 +11,16 @@
 ```typescript
 import { VSSql } from "vsrepo";
 
-const rows = await orderRepository
+const rows = await invoiceRepository
     .createRawQueryBuilder()
-    .select("o.id", "o.total", "u.name")
-    .from("order", "o")
-    .innerJoin("user", "u", "u.id = o.user_id")
+    .select("i.id", "i.total", "u.name")
+    .from("invoice", "i")
+    .innerJoin("user", "u", "u.id = i.user_id")
     .where(VSSql.sql`u.active = ${true}`)
-    .andWhere("o.deleted_at is null")
-    .groupBy("o.id", "u.name")
+    .andWhere("i.deleted_at is null")
+    .groupBy("i.id", "u.name")
     .having(VSSql.sql`count(*) > ${1}`)
-    .orderBy("o.total", "desc")
+    .orderBy("i.total", "desc")
     .limit(20)
     .offset(0)
     .execute<{ id: string; total: number; name: string }[]>();
@@ -54,16 +54,16 @@ Every clause accepts a raw, trusted string (an identifier for `select`/`from`/`g
 
 ```typescript
 // Subquery builder passed directly
-const recentOrders = orderRepository
+const recentInvoices = invoiceRepository
     .createRawQueryBuilder()
     .select("*")
-    .from("order")
+    .from("invoice")
     .where(VSSql.sql`created_at > now() - interval '7 days'`);
 
-const perUser = await orderRepository
+const perUser = await invoiceRepository
     .createRawQueryBuilder()
     .select("user_id", VSSql.sql`count(*) AS total`)
-    .from(recentOrders, "recent")
+    .from(recentInvoices, "recent")
     .groupBy("user_id")
     .execute();
 
@@ -72,17 +72,17 @@ const qb = userRepository
     .createRawQueryBuilder()
     .select("u.id")
     .from("user", "u")
-    .innerJoin(sub => sub.select("user_id").from("order").groupBy("user_id"), "o", VSSql.sql`o.user_id = u.id`);
+    .innerJoin(sub => sub.select("user_id").from("invoice").groupBy("user_id"), "i", VSSql.sql`i.user_id = u.id`);
 ```
 
 A subquery can also be spliced directly into a `VSSql` fragment anywhere — most commonly inside a `WHERE ... IN (...)` — via [`toVSSql()`](#running-the-query):
 
 ```typescript
-const usersWithOrders = await userRepository
+const usersWithInvoices = await userRepository
     .createRawQueryBuilder()
     .select("*")
     .from("user")
-    .where(VSSql.sql`id IN (${orderRepository.createRawQueryBuilder().select("user_id").from("order").toVSSql()})`)
+    .where(VSSql.sql`id IN (${invoiceRepository.createRawQueryBuilder().select("user_id").from("invoice").toVSSql()})`)
     .execute();
 ```
 
@@ -91,9 +91,9 @@ const usersWithOrders = await userRepository
 `with(name, query, columns?)` adds a `WITH` (common table expression) that any later `from()`/`join()`/subquery in the same builder can reference by `name`, just like a real table. Each call adds one CTE; call it again to add more — they're all listed under a single `WITH`, in the order added. `query` accepts the same values as a [subquery](#subqueries) (a `VSRawQueryBuilder`, a subquery function, or a `VSSql` fragment), and `columns` is an optional explicit column list, rendered as `name(col1, col2) AS (...)`:
 
 ```typescript
-const rows = await orderRepository
+const rows = await invoiceRepository
     .createRawQueryBuilder()
-    .with("big_spenders", qb => qb.select("user_id").from("order").groupBy("user_id").having("sum(total) > 1000"))
+    .with("big_spenders", qb => qb.select("user_id").from("invoice").groupBy("user_id").having("sum(total) > 1000"))
     .select("u.*")
     .from("user", "u")
     .innerJoin("big_spenders", "bs", "bs.user_id = u.id")
@@ -138,9 +138,9 @@ One recursive CTE is enough to make the whole clause `WITH RECURSIVE`, even when
 `createRawQueryBuilder(db?)` accepts the client or transaction to run in. Since nothing runs until `execute()` is called, you can also build the query first and choose where it runs later with `setDb()`:
 
 ```typescript
-const qb = orderRepository.createRawQueryBuilder().select("*").from("order");
+const qb = invoiceRepository.createRawQueryBuilder().select("*").from("invoice");
 
-await orderRepository.transaction(async tx => {
+await invoiceRepository.transaction(async tx => {
     qb.setDb(tx); // from here on, execute() runs inside the transaction
     return qb.execute();
 });

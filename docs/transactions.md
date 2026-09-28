@@ -75,7 +75,7 @@ try {
 
 ## Query builder inside a transaction
 
-A [query builder](./query-builder.md#query-builder) can be pointed at a transaction the same way — either by creating it with `createQueryBuilder(tx)`, or lazily with `setDb(tx)` once the transaction has started, which lets you build the query before the transaction even exists:
+A [query builder](./query-builder.md#query-builder) — or a [raw query builder](./raw-query-builder.md#transactions-and-setdb) — can be pointed at a transaction the same way — either by creating it with `createQueryBuilder(tx)`, or lazily with `setDb(tx)` once the transaction has started, which lets you build the query before the transaction even exists:
 
 ```typescript
 const qb = userRepository.createQueryBuilder().where({ active: true });
@@ -83,6 +83,17 @@ const qb = userRepository.createQueryBuilder().where({ active: true });
 await userRepository.transaction(async tx => {
     qb.setDb(tx);
     return qb.getResult();
+});
+```
+
+The [raw query builder](./raw-query-builder.md#raw-query-builder) works exactly the same way: create it with `createRawQueryBuilder(tx)`, or point it at the transaction later with `setDb(tx)`, and call `execute()` inside the callback:
+
+```typescript
+const rawQb = userRepository.createRawQueryBuilder().select("id", "name").from("user");
+
+await userRepository.transaction(async tx => {
+    rawQb.setDb(tx);
+    return rawQb.execute();
 });
 ```
 

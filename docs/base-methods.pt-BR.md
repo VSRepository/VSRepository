@@ -53,6 +53,7 @@ Disponíveis automaticamente em toda subclasse de `VSRepository`:
 | `getDbClient()`                         | Retorna a instância do client do ORM.                                                                                                                                                                          |
 | `query<T>(query, options?)`             | Executa uma instrução SQL raw diretamente contra o banco — aceita uma string crua ou um fragmento `VSSql`. Veja [Queries raw pontuais com `query()`](./query-methods.pt-BR.md#queries-raw-pontuais-com-query). |
 | `createQueryBuilder(db?)`               | Cria um [query builder](./query-builder.pt-BR.md#query-builder) fluente para queries montadas em tempo de execução.                                                                                            |
+| `createRawQueryBuilder(db?)`            | Cria um [raw query builder](./raw-query-builder.pt-BR.md#raw-query-builder) fluente para queries `SELECT` escritas à mão, específicas demais para o query builder — joins, subqueries, CTEs.             |
 
 A maioria dos métodos acima aceita um objeto `MethodOptions<Entity, OrmTypes>` como último argumento (`select`, `relations`, `see`, `db`). Alguns — `total`, `has`, `removeList`, `sum`, `average`, `min`, `max`, e os métodos em lote de soft-delete (`softRemoveList`/`restoreList`) — não retornam/moldam uma `Entity`, então aceitam o tipo mais restrito `RestrictMethodOptions<Entity, OrmTypes>` (só `see`, `db`; sem `select`/`relations`). `transaction`, `query` e `getDbClient` recebem options próprias ou nenhuma.
 
@@ -79,12 +80,20 @@ Isso libera quatro métodos extras:
 | `restore(pk, options?)`         | Volta `deletedAt` para `null`.          |
 | `restoreList(pks, options?)`    | O mesmo, em lote — retorna `{ count }`. |
 
-Todo o restante dos métodos aceita uma option `see` que controla a visibilidade de registros com soft-delete:
+Todos os métodos aceitam uma option `see` que controla a visibilidade de registros com soft-delete — inclusive `softRemove`, `softRemoveList`, `restore` e `restoreList`:
 
 ```typescript
 await userRepository.getAll({ see: "active" }); // padrão — apenas registros não removidos
 await userRepository.getAll({ see: "removed" }); // apenas registros com soft-delete
 await userRepository.getAll({ see: "all" }); // todos, ignorando o soft-delete
+```
+
+O padrão de `see` é `"active"` em todos os métodos, **exceto** `softRemove`, `softRemoveList`, `restore` e `restoreList`, cujo padrão é `"all"` — assim, por padrão, eles conseguem encontrar o registro independentemente de ele estar ou não removido (por exemplo, `restore` precisa achar um registro que já tem soft-delete):
+
+```typescript
+await userRepository.restore(id); // equivale a { see: "all" } — acha o registro mesmo removido
+await userRepository.restore(id, { see: "removed" }); // só restaura se ele estiver com soft-delete
+await userRepository.softRemove(id, { see: "active" }); // só remove se ele ainda estiver ativo
 ```
 
 ---

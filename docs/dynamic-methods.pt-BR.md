@@ -75,7 +75,7 @@ class UserRepository extends VSRepository<User, string> {
 | `deleteManyReturningBy`    | `Entity[]`       | Filtros de campo seguem o prefixo.                                                        |
 | `deleteManyReturningWhere` | `Entity[]`       | Recebe um `VSRepoWhere<T>` como primeiro argumento.                                       |
 
-> `groupBy` **não está planejado** — ele não se encaixa bem no contrato agnóstico de ORM. Um prefixo `aggregate` separado também dificilmente será implementado: as operações de agregação mais comuns (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) já estão disponíveis como métodos base dedicados — veja [Métodos atômicos e de agregação](./base-methods.pt-BR.md#métodos-atômicos-e-de-agregação). Para qualquer coisa mais complexa, use um `@QueryMethod` com SQL raw.
+> `groupBy` **não está planejado** — ele não se encaixa bem no contrato agnóstico de ORM. Um prefixo `aggregate` separado também dificilmente será implementado: as operações de agregação mais comuns (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) já estão disponíveis como métodos base dedicados — veja [Métodos atômicos e de agregação](./base-methods.pt-BR.md#métodos-atômicos-e-de-agregação). Para qualquer coisa mais complexa — incluindo `groupBy` — use um `@QueryMethod` com SQL raw ou o [raw query builder](./raw-query-builder.pt-BR.md#raw-query-builder) (`createRawQueryBuilder()`), que expõe `groupBy`/`having` diretamente.
 
 ## Filtros de campo
 
