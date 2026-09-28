@@ -22,7 +22,9 @@ const usuarioComEndereco = await userRepository.get(id, {
 - `relations` carrega registros relacionados; cada campo de relação recebe um `boolean` ou um objeto `relations` aninhado.
 - Se `select` e `relations` podem ser combinados depende do adapter (veja abaixo).
 
-> [!WARN] **Comportamento de `relations` depende do adapter:**
+> [!WARN]
+>
+> **Comportamento de `relations` depende do adapter:**
 >
 > O core apenas repassa `MethodOptions.select` e `MethodOptions.relations` ao adapter — cada adapter decide como traduzi-los para o ORM subjacente:
 >

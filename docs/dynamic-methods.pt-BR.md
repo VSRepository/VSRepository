@@ -163,7 +163,9 @@ declare findByProductsSome: () => Promise<User[]>;
 | `Distinct<Campo>And<Campo>...`             | Embute campos `distinct` fixos diretamente no nome do método (só válido em métodos da família `findBy`/`findWhere`).                                                                                                                   |
 | `IgnoreConflicts`                          | No `createMany`/`createManyReturning`, ignora registros que violariam uma constraint única, em vez de lançar erro.                                                                                                                     |
 
-> [!WARN] **Ordem dos parâmetros:** `pagination` e `order` sempre vêm **antes** do último argumento opcional `MethodOptions<T>`. Quando `order` e `pagination` estão presentes juntos, a ordem relativa entre eles segue o nome do sufixo (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
+> [!WARN]
+>
+> **Ordem dos parâmetros:** `pagination` e `order` sempre vêm **antes** do último argumento opcional `MethodOptions<T>`. Quando `order` e `pagination` estão presentes juntos, a ordem relativa entre eles segue o nome do sufixo (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
 >
 > Usar `Paginated`/`Ordered`/`OrderBy`, `Distinct` ou `IgnoreConflicts` num prefixo que não os suporta (ex.: `Distinct` em `findOneBy`, `Paginated` em `existsBy`, `IgnoreConflicts` em `create`) lança um `VSRepoError` (`RESOLVER`) ao construir o repository, em vez de virar silenciosamente parte do nome do campo.
 
@@ -190,7 +192,9 @@ declare createManyReturningIgnoreConflicts: (data: DeepPartial<User>[]) => Promi
 declare findOne: (options?: MethodOptions<User>) => Promise<User | null>;
 ```
 
-> [!WARN] **Precedência entre `Distinct` e `OrderBy`:** quando os dois são usados no mesmo nome de método, **`Distinct` deve vir antes de `OrderBy`**:
+> [!WARN]
+>
+> **Precedência entre `Distinct` e `OrderBy`:** quando os dois são usados no mesmo nome de método, **`Distinct` deve vir antes de `OrderBy`**:
 >
 > ```typescript
 > @DynamicMethod()
@@ -315,6 +319,7 @@ class UserRepository extends VSRepository<User, string> {
 ```
 
 > [!NOTE]
+>
 > Chamar `resolveDynamicMethods()` de novo depois que os métodos dinâmicos já foram resolvidos (seja porque você chamou manualmente mais de uma vez, seja por engano em cima de uma resolução eager) não lança erro — ela só reexecuta a resolução, sobrescrevendo os métodos com closures equivalentes. Como isso normalmente é redundante e indica um engano, o repository registra um `WARN` no logger interno nesse caso.
 
 [⬆️ Voltar ao topo](#top)
