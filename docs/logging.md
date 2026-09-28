@@ -25,7 +25,7 @@ super({
 | `DEBUG`          | Verbose internal details, including every resolved query — very useful for debugging dynamic methods. |
 | `INFO`           | High-level lifecycle events, such as repository initialization.                                       |
 | `WARN` (default) | Recoverable issues and slow operations (see `logSlowThresholdMs`, defaults to 300ms).                 |
-| `ERROR`          | Failures raised while executing an operation.                                                         |
+| `ERROR`          | Validation and guard-clause failures, logged right before the `VSRepoError` is thrown.                |
 
 The [query builder](./query-builder.md#query-builder-logs) uses the same logger: at `DEBUG` it also traces every chained call and the resolved query of each terminal method, and each terminal method is timed like any other operation.
 
