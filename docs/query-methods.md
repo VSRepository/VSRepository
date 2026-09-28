@@ -131,9 +131,7 @@ const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE ema
 > [!NOTE]
 >
 > - The same index may appear more than once (`?1 ... ?1`) to reuse the same argument — each occurrence becomes its own placeholder/value pair in the compiled output.
-> - A `?N` inside a single-quoted string literal (e.g. `SELECT ... WHERE note = 'use ?1 literally'`) is **not** treated as a placeholder — it is passed through to the SQL untouched and consumes no `args` entry. Standard SQL escapes are respected, so `''` inside a literal does not end it (`'it''s ?1'` is fully skipped). Edge cases:
-    - There is no escape mechanism **outside** a literal: if a query needs literal `?` + digits text in an unquoted context, build that part with a `VSSql` fragment instead.
-    - Matching only triggers on `?` immediately followed by a digit, so operators like PostgreSQL's `?` (JSONB key existence), `?|` and `?&` are unaffected.
+> - A `?N` inside a single-quoted string literal (e.g. `SELECT ... WHERE note = 'use ?1 literally'`) is **not** treated as a placeholder — it is passed through to the SQL untouched and consumes no `args` entry. Standard SQL escapes are respected, so `''` inside a literal does not end it (`'it''s ?1'` is fully skipped). Edge cases: - There is no escape mechanism **outside** a literal: if a query needs literal `?` + digits text in an unquoted context, build that part with a `VSSql` fragment instead. - Matching only triggers on `?` immediately followed by a digit, so operators like PostgreSQL's `?` (JSONB key existence), `?|` and `?&` are unaffected.
 > - Because `?1` is compiled through `adapter.getPlaceholder()`, the adapter must implement it — the constructor throws a `VSRepoError` if `vsPlaceholders` is enabled and the adapter doesn't. `@QueryMethod` also resolves through `getPlaceholder()`, so the same requirement applies.
 > - This is independent of `VSSql` fragments: passing a `VSSql` to `query()` requires `getPlaceholder()` regardless of this option, and always compiles through it.
 

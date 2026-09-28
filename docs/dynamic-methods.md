@@ -163,7 +163,7 @@ declare findByProductsSome: () => Promise<User[]>;
 | `Distinct<Field>And<Field>...`             | Bakes fixed `distinct` fields directly into the method name (only valid on `findBy`/`findWhere`-family methods).                                                                                                         |
 | `IgnoreConflicts`                          | On `createMany`/`createManyReturning`, skips records that would violate a unique constraint instead of throwing.                                                                                                         |
 
-> ⚠️ **Parameter order:** `pagination` and `order` are always placed **before** the optional `MethodOptions<T>` last argument. When both `order` and `pagination` are present, their relative order follows the suffix name (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
+> [!WARN] **Parameter order:** `pagination` and `order` are always placed **before** the optional `MethodOptions<T>` last argument. When both `order` and `pagination` are present, their relative order follows the suffix name (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
 >
 > Using `Paginated`/`Ordered`/`OrderBy`, `Distinct` or `IgnoreConflicts` on a prefix that doesn't support them (e.g. `Distinct` on `findOneBy`, `Paginated` on `existsBy`, `IgnoreConflicts` on `create`) throws a `VSRepoError` (`RESOLVER`) when the repository is constructed, rather than silently becoming part of the field name.
 
@@ -190,7 +190,7 @@ declare createManyReturningIgnoreConflicts: (data: DeepPartial<User>[]) => Promi
 declare findOne: (options?: MethodOptions<User>) => Promise<User | null>;
 ```
 
-> ⚠️ **Precedence between `Distinct` and `OrderBy`:** when both are used in the same method name, **`Distinct` must come before `OrderBy`**:
+> [!WARN] **Precedence between `Distinct` and `OrderBy`:** when both are used in the same method name, **`Distinct` must come before `OrderBy`**:
 >
 > ```typescript
 > @DynamicMethod()

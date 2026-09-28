@@ -153,16 +153,16 @@ An official adapter is published under the `@vsrepo` scope on npm, which the pro
 
 That's the same pipeline the core itself uses — see [`.github/workflows/publish.yml`](https://github.com/jaobrabo123/VSRepository/blob/main/.github/workflows/publish.yml). Access is granted once the checklist below passes.
 
-| Requirement            | What it means                                                                                                                                                                       |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Full contract          | Every abstract method of `VSRepoAdapter`, including the 8 atomic/aggregate operations (`incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max`). |
-| Contract tests         | A fake client plus a suite asserting _which_ adapter methods the repository calls and _with which arguments_.                                                                       |
-| Integration tests      | **Tests against a real database**, exercising the SQL your adapter actually generates.                                                                                              |
-| `getPlaceholder()`     | Implemented, otherwise `query()`, `VSSql` fragments and `vsPlaceholders` don't work.                                                                                                |
-| Peer dependencies      | The ORM and the core `vsrepo` declared as `peerDependencies`.                                                                                                                       |
-| Independent repo       | Its own repository, versioned and released independently of the core.                                                                                                               |
-| Maturity dist-tag      | `latest` once the adapter is production-ready; `alpha`/`beta` while it isn't. Never publish a work-in-progress as `latest`.                                                         |
-| Registration           | A PR adding a row to the official table in [Adapter status](./adapters.md#adapter-status).                                                                                          |
+| Requirement        | What it means                                                                                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full contract      | Every abstract method of `VSRepoAdapter`, including the 8 atomic/aggregate operations (`incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max`). |
+| Contract tests     | A fake client plus a suite asserting _which_ adapter methods the repository calls and _with which arguments_.                                                                       |
+| Integration tests  | **Tests against a real database**, exercising the SQL your adapter actually generates.                                                                                              |
+| `getPlaceholder()` | Implemented, otherwise `query()`, `VSSql` fragments and `vsPlaceholders` don't work.                                                                                                |
+| Peer dependencies  | The ORM and the core `vsrepo` declared as `peerDependencies`.                                                                                                                       |
+| Independent repo   | Its own repository, versioned and released independently of the core.                                                                                                               |
+| Maturity dist-tag  | `latest` once the adapter is production-ready; `alpha`/`beta` while it isn't. Never publish a work-in-progress as `latest`.                                                         |
+| Registration       | A PR adding a row to the official table in [Adapter status](./adapters.md#adapter-status).                                                                                          |
 
 To request it, open an issue with the link to your repository and a short note on which ORM versions you support.
 

@@ -22,11 +22,12 @@ const usuarioComEndereco = await userRepository.get(id, {
 - `relations` carrega registros relacionados; cada campo de relação recebe um `boolean` ou um objeto `relations` aninhado.
 - Se `select` e `relations` podem ser combinados depende do adapter (veja abaixo).
 
-> ⚠️ **Comportamento de `relations` depende do adapter:**
+> [!WARN] **Comportamento de `relations` depende do adapter:**
 >
 > O core apenas repassa `MethodOptions.select` e `MethodOptions.relations` ao adapter — cada adapter decide como traduzi-los para o ORM subjacente:
 >
 > - **Prisma 7 (`@vsrepo/prisma7-adapter` / `VSRepoPrisma7Adapter`)** — `relations` é convertido para `include` do Prisma (`parsePrismaInclude`). **Se `select` estiver presente, `relations` é ignorado** porque o Prisma não permite `select` + `include` na mesma query:
+>
 >     ```typescript
 >     // Prisma7: relations é ignorado quando select existe
 >     await userRepository.get(id, {
