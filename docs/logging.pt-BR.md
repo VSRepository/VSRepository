@@ -25,7 +25,7 @@ super({
 | `DEBUG`         | Detalhes internos verbosos, incluindo toda query resolvida — muito útil para debugar métodos dinâmicos. |
 | `INFO`          | Eventos de alto nível do ciclo de vida, como a inicialização do repository.                             |
 | `WARN` (padrão) | Problemas recuperáveis e operações lentas (veja `logSlowThresholdMs`, padrão de 300ms).                 |
-| `ERROR`         | Falhas lançadas durante a execução de uma operação.                                                     |
+| `ERROR`         | Falhas de validação e de guarda, registradas em `ERROR` logo antes do `VSRepoError` ser lançado.        |
 
 O [query builder](./query-builder.pt-BR.md#logs-do-query-builder) usa o mesmo logger: em `DEBUG` ele também registra cada chamada encadeada e a query resolvida de cada método terminal, e cada método terminal tem o tempo medido como qualquer outra operação.
 

@@ -131,9 +131,7 @@ const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE ema
 > [!NOTE]
 >
 > - O mesmo índice pode aparecer mais de uma vez (`?1 ... ?1`) para reutilizar o mesmo argumento — cada ocorrência vira seu próprio par placeholder/valor na saída compilada.
-> - Um `?N` dentro de um literal de string com aspas simples (ex.: `SELECT ... WHERE note = 'use ?1 literally'`) **não** é tratado como placeholder — ele passa intacto para o SQL e não consome nenhuma entrada de `args`. Escapes do SQL padrão são respeitados, então `''` dentro de um literal não o encerra (`'it''s ?1'` é ignorado por completo). Edge cases:
-    - Não existe mecanismo de escape **fora** de um literal: se uma query precisar de texto literal `?` + dígitos num contexto sem aspas, monte essa parte com um fragmento `VSSql`.
-    - O matching só dispara quando `?` é seguido **imediatamente** de um dígito, então operadores como `?` do PostgreSQL (existência de chave JSONB), `?|` e `?&` não são afetados.
+> - Um `?N` dentro de um literal de string com aspas simples (ex.: `SELECT ... WHERE note = 'use ?1 literally'`) **não** é tratado como placeholder — ele passa intacto para o SQL e não consome nenhuma entrada de `args`. Escapes do SQL padrão são respeitados, então `''` dentro de um literal não o encerra (`'it''s ?1'` é ignorado por completo). Edge cases: - Não existe mecanismo de escape **fora** de um literal: se uma query precisar de texto literal `?` + dígitos num contexto sem aspas, monte essa parte com um fragmento `VSSql`. - O matching só dispara quando `?` é seguido **imediatamente** de um dígito, então operadores como `?` do PostgreSQL (existência de chave JSONB), `?|` e `?&` não são afetados.
 > - Como `?1` é compilado via `adapter.getPlaceholder()`, o adapter precisa implementá-lo — o construtor lança um `VSRepoError` se `vsPlaceholders` estiver ligado e o adapter não implementar. `@QueryMethod` também resolve via `getPlaceholder()`, então vale a mesma exigência.
 > - Isso é independente dos fragmentos `VSSql`: passar um `VSSql` para `query()` exige `getPlaceholder()` independentemente dessa option, e sempre compila através dela.
 

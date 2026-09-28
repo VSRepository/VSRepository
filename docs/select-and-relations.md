@@ -22,11 +22,14 @@ const userWithAddress = await userRepository.get(id, {
 - `relations` eagerly loads related records; each relation field takes a `boolean` or a nested `relations` object.
 - Whether `select` and `relations` can be combined depends on the adapter (see below).
 
-> ⚠️ **Adapter-dependent behavior for `relations`:**
+> [!WARNING]
+>
+> **Adapter-dependent behavior for `relations`:**
 >
 > The core only forwards `MethodOptions.select` and `MethodOptions.relations` to the adapter — each adapter decides how to translate them to the underlying ORM:
 >
 > - **Prisma 7 (`@vsrepo/prisma7-adapter` / `VSRepoPrisma7Adapter`)** — `relations` is converted to Prisma `include` (`parsePrismaInclude`). **If `select` is present, `relations` is ignored** because Prisma does not allow `select` + `include` in the same query:
+>
 >     ```typescript
 >     // Prisma7: relations is ignored when select exists
 >     await userRepository.get(id, {
