@@ -13,7 +13,7 @@
 
 🇺🇸 You're reading the English version. [🇧🇷 Ler em português](./README.pt-BR.md)
 
-**ORM-agnostic** repository pattern library, with full **TypeScript** support and automatic **type inference**. The core delegates every operation to a pluggable **adapter**, so the same repository API can work against Prisma, Drizzle, or any other ORM/database that implements the adapter contract. Coming from the old [v1](https://github.com/jaobrabo123/VSRepository/tree/v1)? See [Migrating from v1](./docs/migrating-from-v1.md).
+**ORM-agnostic** repository pattern library, with full **TypeScript** support. The core delegates every operation to a pluggable **adapter**, so the same repository API can work against Prisma, Drizzle, or any other ORM/database that implements the adapter contract. Coming from the old [v1](https://github.com/jaobrabo123/VSRepository/tree/v1)? See [Migrating from v1](./docs/migrating-from-v1.md).
 
 VSRepository lets you create strongly-typed repositories with:
 
@@ -54,7 +54,7 @@ type User = UserGetPayload<{ include: { address: true } }>;
 class UserRepository extends VSRepository<User, string> {
     constructor() {
         super({
-            adapter: new Prisma7Adapter<User>(prisma, { tableName: "user", pkName: "id" }),
+            adapter: new Prisma7Adapter(prisma, { tableName: "user", pkName: "id" }),
             softRemoveKey: "deletedAt",
             defaultOrdering: { createdAt: "desc" },
         });
@@ -153,6 +153,6 @@ The full status and how to install each one: [Adapter status](./docs/adapters.md
 
 ## Contributing
 
-Contributions are welcome — adapters, bug reports and documentation alike. The core is ORM-agnostic, so ORM-specific work belongs in your own adapter package — the `@vsrepo` scope is reserved for official ones; see the scope rules before opening a PR.
+Contributions are welcome — adapters, bug reports and documentation alike. The core is ORM-agnostic, so ORM-specific work belongs in your own adapter package; see the scope rules before opening a PR.
 
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** — how to report a bug, request a feature, and submit a pull request.

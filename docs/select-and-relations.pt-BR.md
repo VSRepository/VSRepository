@@ -22,8 +22,6 @@ const usuarioComEndereco = await userRepository.get(id, {
 - `relations` carrega registros relacionados; cada campo de relação recebe um `boolean` ou um objeto `relations` aninhado.
 - Se `select` e `relations` podem ser combinados depende do adapter (veja abaixo).
 
-> **Como difere da v1:** as projeções eram nomeadas e reutilizáveis (`selectModels`/`defaultSelectModel`). Isso não existe mais — cada chamada passa seu próprio `select`/`relations`. Veja [Migrando da v1](./migrating-from-v1.pt-BR.md) para o detalhamento completo.
-
 > ⚠️ **Comportamento de `relations` depende do adapter:**
 >
 > O core apenas repassa `MethodOptions.select` e `MethodOptions.relations` ao adapter — cada adapter decide como traduzi-los para o ORM subjacente:

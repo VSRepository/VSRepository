@@ -6,7 +6,7 @@
 
 # Raw query builder
 
-`createRawQueryBuilder(db?)` returns a fluent, ORM-agnostic SQL builder for hand-written **`SELECT`** queries whose SQL is too specific (window functions, vendor-specific syntax, ad-hoc subqueries, CTEs, ...) to express through [`createQueryBuilder()`](./query-builder.md)'s `where`/`relations` model. It's available on every `VSRepository` instance and goes through the same adapter as every other method:
+`createRawQueryBuilder(db?)` returns a fluent, ORM-agnostic SQL builder for hand-written **`SELECT`** queries whose SQL is too specific (window functions, vendor-specific syntax, ad-hoc subqueries, CTEs, ...) to express through [`createQueryBuilder()`](./query-builder.md)'s model. It's available on every `VSRepository` instance and goes through the same adapter as every other method:
 
 ```typescript
 import { VSSql } from "vsrepo";
@@ -26,7 +26,7 @@ const rows = await orderRepository
     .execute<{ id: string; total: number; name: string }[]>();
 ```
 
-Nothing reaches the database until [`execute()`](#running-the-query) is called. The builder is **mutable**: every chained call changes the same instance and returns it, so use [`clone()`](#reusing-and-cloning-a-builder) to derive variations from a common base. `VSRawQueryBuilder` and `VSRawQueryBuilderTarget`/`VSRawQueryBuilderCteQuery` are exported from `vsrepo` in case you need to type a builder or a subquery function.
+Nothing reaches the database until [`execute()`](#running-the-query) is called. The builder is **mutable**: every chained call changes the same instance and returns it, so use [`clone()`](#reusing-and-cloning-a-builder) to derive variations from a common base.
 
 Requires the adapter to implement `getPlaceholder()` — same requirement as [`VSSql`](./query-methods.md#parameterized-fragments-with-vssql) — since `toSql()`/`execute()` compile the query through it. Calling either without it throws a `VSRepoError`.
 
@@ -183,7 +183,7 @@ try {
     userRepository.createRawQueryBuilder().limit(-1);
 } catch (error) {
     if (error instanceof VSRepoError && error.type === VSRepoErrorType.QUERY_BUILDER) {
-        console.error(error.message); // [VSRepository] Error: limit: Invalid value: Expected >=0 but received -1
+        console.error(error.message);
     }
 }
 ```

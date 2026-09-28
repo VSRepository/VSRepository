@@ -13,7 +13,7 @@
 
 🇧🇷 Você está lendo a versão em português. [🇺🇸 Read in English](./README.md)
 
-Biblioteca de repository pattern **agnóstica de ORM**, com suporte completo a **TypeScript** e **type inference** automático. O núcleo delega toda operação a um **adapter** plugável, permitindo que a mesma API de repository funcione com Prisma, Drizzle ou qualquer outro ORM/banco que implemente o contrato de adapter. Vindo da [v1](https://github.com/jaobrabo123/VSRepository/tree/v1)? Veja [Migrando da v1](./docs/migrating-from-v1.pt-BR.md).
+Biblioteca de repository pattern **agnóstica de ORM**, com suporte completo a **TypeScript**. O núcleo delega toda operação a um **adapter** plugável, permitindo que a mesma API de repository funcione com Prisma, Drizzle ou qualquer outro ORM/banco que implemente o contrato de adapter. Vindo da [v1](https://github.com/jaobrabo123/VSRepository/tree/v1)? Veja [Migrando da v1](./docs/migrating-from-v1.pt-BR.md).
 
 O VSRepository permite criar repositories fortemente tipados com:
 
@@ -54,7 +54,7 @@ type User = UserGetPayload<{ include: { address: true } }>;
 class UserRepository extends VSRepository<User, string> {
     constructor() {
         super({
-            adapter: new Prisma7Adapter<User>(prisma, { tableName: "user", pkName: "id" }),
+            adapter: new Prisma7Adapter(prisma, { tableName: "user", pkName: "id" }),
             softRemoveKey: "deletedAt",
             defaultOrdering: { createdAt: "desc" },
         });
@@ -153,6 +153,6 @@ O status completo e como instalar cada um: [Status dos adapters](./docs/adapters
 
 ## Contribuindo
 
-Contribuições são bem-vindas — adapters, reports de bug e documentação. O core é agnóstico de ORM, então trabalho específico de ORM pertence ao seu próprio pacote de adapter — o escopo `@vsrepo` é reservado para os oficiais; veja as regras de escopo antes de abrir um PR.
+Contribuições são bem-vindas — adapters, reports de bug e documentação. O core é agnóstico de ORM, então trabalho específico de ORM pertence ao seu próprio pacote de adapter; veja as regras de escopo antes de abrir um PR.
 
 - **[CONTRIBUTING.pt-BR.md](./CONTRIBUTING.pt-BR.md)** — como reportar um bug, pedir uma feature e enviar um pull request.

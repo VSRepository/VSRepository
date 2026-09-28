@@ -19,9 +19,9 @@ const { result, count } = await userRepository
     .getResultAndCount();
 ```
 
-Nothing reaches the database until a **terminal method** (`getResult()`, `getCount()`, ...) is called. The builder is **mutable**: every chained call changes the same instance and returns it, so use [`clone()`](#reusing-and-cloning-a-builder) to derive variations from a common base. The `VSQueryBuilder<Entity>` class is exported from `vsrepo` in case you need to type a builder (e.g. as a function parameter).
+Nothing reaches the database until a **terminal method** (`getResult()`, `getCount()`, ...) is called. The builder is **mutable**: every chained call changes the same instance and returns it, so use [`clone()`](#reusing-and-cloning-a-builder) to derive variations from a common base.
 
-For queries whose SQL is too specific for this builder's `where`/`relations` model — window functions, vendor-specific syntax, ad-hoc subqueries, CTEs — see the [Raw query builder](./raw-query-builder.md) instead.
+For queries whose SQL is too specific for this builder's model — window functions, vendor-specific syntax, ad-hoc subqueries, CTEs — see the [Raw query builder](./raw-query-builder.md) instead.
 
 ## Building the query
 
@@ -143,7 +143,7 @@ try {
     userRepository.createQueryBuilder().limit(-1);
 } catch (error) {
     if (error instanceof VSRepoError && error.type === VSRepoErrorType.QUERY_BUILDER) {
-        console.error(error.message); // [VSRepository] Error: limit: Invalid value: Expected >=0 but received -1
+        console.error(error.message);
     }
 }
 ```

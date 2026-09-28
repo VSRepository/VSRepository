@@ -68,17 +68,6 @@ A opção `fbMode` — que permitia o `findBy` da v1 retornar o primeiro registr
 
 **Novos na v2** (não existiam na v1): `findOneOrThrow`, `findOneOrThrowWhere`, `updateWhere`, `upsertWhere`, `deleteWhere` e `deleteManyReturning*`. Veja [Prefixos disponíveis](./dynamic-methods.pt-BR.md#prefixos-disponíveis).
 
-## Funcionalidades removidas
-
-- **`patchList`** — removido. Para uma atualização parcial em lote, use um dynamic method `updateManyWhere`/`updateManyReturningWhere`.
-- **`requiredWhere` / `pushWhere`** — removidos. Restam apenas `softRemoveKey` + `see`.
-- **`selectModels` / `defaultSelectModel` (projeções nomeadas)** — removidos. Passe `select`/`relations` em cada chamada (veja [`select` e `relations`](./select-and-relations.pt-BR.md#select-e-relations)).
-- **`includeModels`** — removido junto com as projeções nomeadas. Use a option `relations` em cada chamada.
-- **CLI `vsrepo generate`** — não faz mais parte do núcleo; os tipos vêm das suas entidades/tipos do ORM diretamente.
-- **Options de config de métodos dinâmicos** — `map`, `fbMode`, `whereType`, `selectModel`, `pushWhere`, `injectPagination` e a opção funcional `query` foram removidas. Restam apenas `proxyTo` e `injectOrdering` (veja [Options do decorador](./dynamic-methods.pt-BR.md#options-do-decorador)).
-- **Config de `baseMethods`** (`active`, `defaultSelect`, `ignoreRequiredWhere`) — removida; os métodos base estão sempre ativos.
-- **`findUniqueBy` / `findUniqueOrThrowBy`** — removidos; use `findOneBy`/`findOneOrThrowBy`.
-
 ## Para onde cada conceito foi
 
 | Conceito da v1                                 | Substituição na v2                                                   | Guia atual                                                                                                         |

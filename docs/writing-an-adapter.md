@@ -14,7 +14,7 @@ Before the contract itself, it's worth being clear about **what an adapter actua
 
 `VSRepository` owns all of the abstraction. Given a call like `userRepository.get("user-1", { relations: { address: true } })`, the repository:
 
-- resolves the primary key into a `VSRepoWhere<T>` (`{ id: { equals: "user-1" } }`),
+- resolves the primary key into a `VSRepoWhere<T>` (`{ id: "user-1" }`),
 - merges in the soft-delete filter implied by `softRemoveKey`/`see`,
 - validates the options,
 - logs the operation and times it,
@@ -236,7 +236,6 @@ That's the same pipeline the core itself uses — see [`.github/workflows/publis
 | Peer dependencies      | The ORM and the core `vsrepo` declared as `peerDependencies`.                                                                                                                       |
 | Independent repo       | Its own repository, versioned and released independently of the core.                                                                                                               |
 | Maturity dist-tag      | `latest` once the adapter is production-ready; `alpha`/`beta` while it isn't. Never publish a work-in-progress as `latest`.                                                         |
-| Docs in both languages | English and Portuguese, changed together — the same rule the core follows.                                                                                                          |
 | Registration           | A PR adding a row to the official table in [Adapter status](./adapters.md#adapter-status).                                                                                          |
 
 To request it, open an issue with the link to your repository and a short note on which ORM versions you support.

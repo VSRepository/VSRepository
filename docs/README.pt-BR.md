@@ -4,7 +4,7 @@
 
 [← Voltar para o README principal](../README.pt-BR.md)
 
-Guias detalhados e com bastante exemplos para cada funcionalidade do VSRepository. Para o quickstart e status dos adapters, veja o [README principal](../README.pt-BR.md). Vindo da v1? A referência completa v1 → v2 vive em [Migrando da v1](./migrating-from-v1.pt-BR.md).
+Guias detalhados para cada funcionalidade do VSRepository. Para o quickstart e status dos adapters, veja o [README principal](../README.pt-BR.md). Vindo da v1? A referência completa v1 → v2 vive em [Migrando da v1](./migrating-from-v1.pt-BR.md).
 
 | Guia                                                                | Cobre                                                                                                                                                                                   |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

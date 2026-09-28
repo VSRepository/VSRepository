@@ -4,7 +4,7 @@
 
 [← Back to the main README](../README.md)
 
-Detailed, example-heavy guides for each VSRepository feature. For the quickstart and adapter status, see the [main README](../README.md). Coming from v1? The complete v1 → v2 reference lives in [Migrating from v1](./migrating-from-v1.md).
+Detailed guides for each VSRepository feature. For the quickstart and adapter status, see the [main README](../README.md). Coming from v1? The complete v1 → v2 reference lives in [Migrating from v1](./migrating-from-v1.md).
 
 | Guide                                                          | Covers                                                                                                                                                                |
 | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

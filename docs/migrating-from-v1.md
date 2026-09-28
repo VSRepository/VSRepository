@@ -68,17 +68,6 @@ The `fbMode` option — which let v1's `findBy` return the first match instead o
 
 **New in v2** (did not exist in v1): `findOneOrThrow`, `findOneOrThrowWhere`, `updateWhere`, `upsertWhere`, `deleteWhere`, and `deleteManyReturning*`. See [Available prefixes](./dynamic-methods.md#available-prefixes).
 
-## Removed features
-
-- **`patchList`** — removed. For a batch partial update, use a `updateManyWhere`/`updateManyReturningWhere` dynamic method instead.
-- **`requiredWhere` / `pushWhere`** — removed. Only `softRemoveKey` + `see` remain.
-- **`selectModels` / `defaultSelectModel` (named projections)** — removed. Pass `select`/`relations` per call instead (see [`select` and `relations`](./select-and-relations.md#select-and-relations)).
-- **`includeModels`** — removed together with the named projections. Use the `relations` option per call instead.
-- **`vsrepo generate` CLI** — no longer part of the core; types come from your entity/ORM types directly.
-- **Dynamic-method config options** — `map`, `fbMode`, `whereType`, `selectModel`, `pushWhere`, `injectPagination` and the functional `query` option were removed. Only `proxyTo` and `injectOrdering` remain (see [Decorator options](./dynamic-methods.md#decorator-options)).
-- **`baseMethods` configuration** (`active`, `defaultSelect`, `ignoreRequiredWhere`) — removed; base methods are always active.
-- **`findUniqueBy` / `findUniqueOrThrowBy`** — removed; use `findOneBy`/`findOneOrThrowBy`.
-
 ## Where each concept now lives
 
 | v1 concept                                | v2 replacement                                                       | Current guide                                                                                       |

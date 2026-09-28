@@ -14,7 +14,7 @@ Antes do contrato em si, vale deixar claro **o que um adapter realmente faz**, p
 
 O `VSRepository` é dono de toda a abstração. Dado uma chamada como `userRepository.get("user-1", { relations: { address: true } })`, o repository:
 
-- resolve a primary key em um `VSRepoWhere<T>` (`{ id: { equals: "user-1" } }`),
+- resolve a primary key em um `VSRepoWhere<T>` (`{ id: "user-1" }`),
 - junta o filtro de soft-delete implícito por `softRemoveKey`/`see`,
 - valida as options,
 - loga a operação e mede o tempo,
@@ -236,7 +236,6 @@ Um adapter oficial é publicado sob o escopo `@vsrepo` no npm, que o projeto con
 | Peer dependencies      | O ORM e o core `vsrepo` declarados como `peerDependencies`.                                                                                                                                 |
 | Repositório próprio    | No seu próprio repositório, versionado e released de forma independente do core.                                                                                                            |
 | Dist-tag de maturidade | `latest` quando o adapter estiver pronto para produção; `alpha`/`beta` enquanto não estiver. Nunca publique trabalho em andamento como `latest`.                                            |
-| Docs nos dois idiomas  | Inglês e português, alterados juntos — a mesma regra que o core segue.                                                                                                                      |
 | Registro               | Um PR adicionando uma linha na tabela oficial em [Status dos adapters](./adapters.pt-BR.md#status-dos-adapters).                                                                            |
 
 Para solicitar, abra uma issue com o link do seu repositório e uma nota curta sobre quais versões de ORM você suporta.

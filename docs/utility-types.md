@@ -8,33 +8,6 @@
 
 Beyond the entity-shaping types covered above (`VSRepoSelect`, `VSRepoRelations`, `VSRepoWhere`), VSRepository exports a set of utility types. They show up throughout the sections above, but here's a consolidated reference. All of them are part of the public API and can be imported directly:
 
-```typescript
-import type {
-    MethodOptions,
-    RestrictMethodOptions,
-    InferMethodReturn,
-    InferMethodType,
-    Pagination,
-    Ordering,
-    OrderByField,
-    SortDirection,
-    SeeMode,
-    DeepPartial,
-    CountResult,
-    QueryMethodArg,
-    QueryArgs,
-    KeysOfType,
-    NumericKeys,
-    NumericLike,
-    DecimalLike,
-    Primitive,
-    VSRepoWhere,
-    VSRepoOrmTypes,
-    VSRepoTransactionOptions,
-    TransactionIsolationLevel,
-} from "vsrepo";
-```
-
 | Type                                                | Description                                                                                                                                                                                                                           | Used by                                                                                                                                                                                                                |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MethodOptions<T, K>`                               | Options accepted as the last argument by all dynamic methods and most base methods: `select`, `relations`, `see`, `db`.                                                                                                               | [Base methods](./base-methods.md#base-methods), [Dynamic methods](./dynamic-methods.md#dynamic-methods).                                                                                                               |
@@ -46,7 +19,7 @@ import type {
 | `SeeMode`                                           | `"active" \| "removed" \| "all"` — controls visibility of soft-deleted records.                                                                                                                                                       | [Soft-delete](./base-methods.md#soft-delete).                                                                                                                                                                          |
 | `DeepPartial<T>`                                    | Recursively makes every property of `T` optional, including nested objects and array elements.                                                                                                                                        | `save`, `saveList`, `patch`, `merge`, and all the dynamic writing methods.                                                                                                                                             |
 | `CountResult`                                       | `{ count: number }` — the shape returned by batch operations.                                                                                                                                                                         | `removeList`, `softRemoveList`, `restoreList`, `createMany`, `deleteMany`, `updateMany`.                                                                                                                               |
-| `QueryMethodArg<T>`                                 | `{ args?: T, db? }` — positional SQL parameters (the placeholder syntax depends on the database/driver behind your adapter: `$1`, `$2`, ... for PostgreSQL, `?` for MySQL) and transaction client for `@QueryMethod`.                 | [Query methods (raw SQL)](./query-methods.md#query-methods-raw-sql).                                                                                                                                                   |
+| `QueryMethodArg<T, O>`                                 | `{ args?: T, db? }` — positional SQL parameters (the placeholder syntax depends on the database/driver behind your adapter: `$1`, `$2`, ... for PostgreSQL, `?` for MySQL) and transaction client for `@QueryMethod`.                 | [Query methods (raw SQL)](./query-methods.md#query-methods-raw-sql).                                                                                                                                                   |
 | `QueryArgs<T, O>`                                   | Types the spread parameter list of a `@QueryMethod` declared with `{ spreadArgs: true }`: `T`'s values in order, followed by an optional trailing `DbArg<O>` built via `withDb()`.                                                    | [Spread arguments with `spreadArgs`](./query-methods.md#spread-arguments-with-spreadargs).                                                                                                                             |
 | `KeysOfType<T, K>`                                  | Extracts the keys of `T` whose value type is assignable to `K`.                                                                                                                                                                       | Constrains `pkName` in [Constructor options](./base-methods.md#constructor-options) to fields of the entity matching the configured primary-key type.                                                                  |
 | `NumericKeys<T>`                                    | Extracts the keys of `T` whose (non-nullable) value type is assignable to `NumericLike`. Nullable numeric fields (`number \| null`) are included.                                                                                     | Constrains `field` in [Atomic and aggregate methods](./base-methods.md#atomic-and-aggregate-methods) (`increment`, `sum`, etc).                                                                                        |

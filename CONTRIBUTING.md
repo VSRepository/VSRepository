@@ -50,7 +50,7 @@ The core **never imports an ORM**. Support for Prisma 7 and Drizzle ships as sep
 - [Writing your own adapter](./docs/writing-an-adapter.md) — the contract, method by method
 - [Publishing an adapter](./docs/writing-an-adapter.md#publishing-an-adapter) — publishing your own under any scope, and the checklist for an official `@vsrepo/*-adapter`
 
-You never need permission to publish an adapter under a name you control. Getting one published under the `@vsrepo` scope is a separate, gated step: open an issue with your repository link, and after your repository is approved for publication on npm, open a PR adding a single row to the table in [`docs/adapters.md`](./docs/adapters.md) (and its `.pt-BR.md` counterpart).
+You never need permission to publish an adapter under a name you control. Getting one published under the `@vsrepo` scope is a separate, gated step: open an issue with your repository link, and after your repository is approved for publication on npm, open a PR adding a row to the table in [`docs/adapters.md`](./docs/adapters.md) (and its `.pt-BR.md` counterpart).
 
 ## Reporting a bug
 
@@ -100,12 +100,12 @@ Please don't open a public issue for a vulnerability. Report it privately to [jo
 ```text
 src/
   index.ts           # public entry point — the single `vsrepo` export surface
-  VSRepository.ts    # the repository class: base methods, transactions, query builders
+  VSRepository.ts    # the repository class: base methods, transactions
   VSRepoAdapter.ts   # the abstract adapter contract every ORM integration implements
   decorators/        # @DynamicMethod and @QueryMethod
   errors/            # VSRepoError and VSRepoAdapterError
   internal/          # metadata keys, enums, the name parser, loggers, query builders, VSSql
-  types/             # every exported type
+  types/             # types
 test/
   implementation/    # Jest — runtime behaviour, against a fake adapter
   typing/            # tsc --noEmit only — compile-time assertions
@@ -126,9 +126,6 @@ docs/                # the bilingual documentation
 ## Building and consuming locally
 
 ```bash
-# Compile src/ into dist/
-bun run build
-
 # Produce the installable tarball (prepack -> bun run build runs automatically)
 npm pack
 

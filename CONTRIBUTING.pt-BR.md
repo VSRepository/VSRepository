@@ -50,7 +50,7 @@ O core **nunca importa um ORM**. O suporte a Prisma 7 e Drizzle é distribuído 
 - [Escrevendo seu próprio adapter](./docs/writing-an-adapter.pt-BR.md) — o contrato, método a método
 - [Publicando um adapter](./docs/writing-an-adapter.pt-BR.md#publicando-um-adapter) — publicando o seu em qualquer escopo, e o checklist para um `@vsrepo/*-adapter` oficial
 
-Você nunca precisa de permissão para publicar um adapter com um nome que você controla. Publicar sob o escopo `@vsrepo` é um passo separado e com gate: abra uma issue com o link do seu repositório e, depois que o seu repositório for aprovado para publicação no npm, abra um PR adicionando **uma** linha na tabela de [`docs/adapters.pt-BR.md`](./docs/adapters.pt-BR.md) (e na versão em inglês).
+Você nunca precisa de permissão para publicar um adapter com um nome que você controla. Publicar sob o escopo `@vsrepo` é um passo separado e com gate: abra uma issue com o link do seu repositório e, depois que o seu repositório for aprovado para publicação no npm, abra um PR adicionando uma linha na tabela de [`docs/adapters.pt-BR.md`](./docs/adapters.pt-BR.md) (e na versão em inglês).
 
 ## Reportando um bug
 
@@ -100,12 +100,12 @@ Por favor, não abra uma issue pública para uma vulnerabilidade. Reporte em pri
 ```text
 src/
   index.ts           # entry point público — a superfície de export única do `vsrepo`
-  VSRepository.ts    # a classe de repository: métodos base, transações, query builders
+  VSRepository.ts    # a classe de repository: métodos base, transações
   VSRepoAdapter.ts   # o contrato abstrato de adapter que toda integração de ORM implementa
   decorators/        # @DynamicMethod e @QueryMethod
   errors/            # VSRepoError e VSRepoAdapterError
   internal/          # chaves de metadata, enums, o parser de nomes, loggers, query builders, VSSql
-  types/             # todo tipo exportado
+  types/             # tipos
 test/
   implementation/    # Jest — comportamento em runtime, contra um adapter falso
   typing/            # só tsc --noEmit — asserções em tempo de compilação
@@ -126,9 +126,6 @@ O `src/index.ts` é a única superfície pública: tudo que não é re-exportado
 ## Build e consumo local
 
 ```bash
-# Compilar src/ em dist/
-bun run build
-
 # Gerar o tarball instalável (prepack -> bun run build roda automaticamente)
 npm pack
 

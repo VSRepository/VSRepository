@@ -22,8 +22,6 @@ const userWithAddress = await userRepository.get(id, {
 - `relations` eagerly loads related records; each relation field takes a `boolean` or a nested `relations` object.
 - Whether `select` and `relations` can be combined depends on the adapter (see below).
 
-> **How it differs from v1:** projections used to be named and reusable (`selectModels`/`defaultSelectModel`). That's gone — every call passes its own `select`/`relations`. See [Migrating from v1](./migrating-from-v1.md) for the full breakdown.
-
 > ⚠️ **Adapter-dependent behavior for `relations`:**
 >
 > The core only forwards `MethodOptions.select` and `MethodOptions.relations` to the adapter — each adapter decides how to translate them to the underlying ORM:
