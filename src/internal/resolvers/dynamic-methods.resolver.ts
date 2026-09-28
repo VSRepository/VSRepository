@@ -1017,7 +1017,7 @@ export class DynamicMethodsResolver<T, K> {
 
                     throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
                 } else if (args.length > dynamicMethodInfo.argsCount) {
-                    const optionsArg = args[args.length - 1];
+                    const optionsArg = args[dynamicMethodInfo.argsCount];
                     methodOptions = this.validator.validateMethodOptions(optionsArg);
                 } else {
                     args.push("1");
@@ -1046,10 +1046,10 @@ export class DynamicMethodsResolver<T, K> {
                     return result;
                 } catch (err) {
                     this.logger.endPerformLog(start);
-                    this.logger.logError(
-                        `Failed to run dynamic method '${String(originalKey)}' (-> ${dynamicMethodInfo.method})`,
-                        err,
-                    );
+                    // this.logger.logError(
+                    //     `Failed to run dynamic method '${String(originalKey)}' (-> ${dynamicMethodInfo.method})`,
+                    //     err,
+                    // );
 
                     throw err;
                 }
