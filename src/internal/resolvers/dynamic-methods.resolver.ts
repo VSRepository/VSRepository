@@ -1023,6 +1023,8 @@ export class DynamicMethodsResolver<T, K> {
                     args.push("1");
                 }
 
+                args = args.slice(0, dynamicMethodInfo.argsCount + 1);
+
                 const vsrepoArgs = instance._vsrepocache.get(originalKey)!(args, methodOptions);
 
                 const start = this.logger.startPerformLog(
