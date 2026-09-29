@@ -223,6 +223,26 @@ declare buscarPorEmail: (email: string, options?: MethodOptions<User>) => Promis
 declare findByStatus: (status: string) => Promise<User[]>;
 ```
 
+## Herdando de outro repository
+
+`@DynamicMethod` e `@QueryMethod` funcionam com herança de classes. Uma subclasse herda todos os métodos dinâmicos e query methods do pai, e pode declarar outros próprios:
+
+```typescript
+class UserRepository extends VSRepository<User, string> {
+    @DynamicMethod()
+    declare findByEmail: (email: string) => Promise<User[]>;
+}
+
+class AdminRepository extends UserRepository {
+    // AdminRepository tem `findByEmail` (herdado) e `findByUserType` (próprio)
+    @DynamicMethod()
+    declare findByUserType: (userType: string) => Promise<User[]>;
+}
+```
+
+> [!NOTE]
+> Antes da **2.7.3**, os métodos declarados numa subclasse também eram registrados na classe pai e em todas as classes irmãs, e redeclarar um método na subclasse mudava a forma como o pai o resolvia. Se você estendia repositories decorados, atualize para obter o comportamento correto.
+
 ## Tipagem de retorno restrita com `InferMethodType`
 
 Normalmente você escreve à mão a assinatura de um método dinâmico, e o retorno é o que você declarar (em geral a entidade inteira). `InferMethodType<Args, Return, OrmTypes?>` declara o método para você e infere o retorno **a cada chamada** a partir do `select`/`relations` passados — com as mesmas regras do [`InferMethodReturn`](./select-and-relations.pt-BR.md#tipagem-de-retorno-restrita-com-infermethodreturn):
