@@ -1,6 +1,6 @@
 {
   "name": "vsrepo",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "ORM-agnostic repository pattern library",
   "homepage": "https://github.com/jaobrabo123/VSRepository#readme",
   "repository": {

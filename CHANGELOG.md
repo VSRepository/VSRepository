@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.7.2] - 2026-09-29
+
+### Fixed
+- Corrects the typing of the `VSRepoAdapter` `merge` to correctly return `Promise<(K & T) | null>`, correctly aligning with the behavior of the `VSRepository` `merge` which returns `null` when not found.
+
+## [2.7.2] - 2026-09-29 (Português)
+
+### Corrigido
+- Corrige a tipagem do método `merge` do `VSRepoAdapter` para retornar corretamente `Promise<(K & T) | null>`, alinhando corretamente ao comportamento do `merge` do `VSRepository` que retorna `null` quando não encontrado
+
 ## [2.7.1] - 2026-09-28
 
 ### Fixed
