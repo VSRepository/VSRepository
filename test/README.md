@@ -57,6 +57,10 @@ Cada arquivo cobre uma área do core:
   `{ between: [min, max] }`, não `gte`/`lte`; `IgnoreCase` num filtro de relação fica irmão de
   `_with`, não aninhado dentro do filtro do campo). Cada valor esperado foi conferido rodando o
   parser de verdade antes de virar asserção fixa — não é uma suposição de como "deveria" funcionar.
+- `decorators-inheritance.test.ts` — herança entre repositories decorados: a subclasse herda os métodos do pai
+  (`@DynamicMethod` e `@QueryMethod`, em vários níveis e sem decorators próprios) e nunca altera o pai nem as
+  classes irmãs — inclusive ao redeclarar um método com outras options. Trava o contrato dos decorators de escrever
+  numa lista própria da classe em vez da lista herdada.
 - `soft-delete.test.ts` — `softRemove`, `softRemoveList`, `restore`, `restoreList`, e o filtro
   automático aplicado pelos métodos base conforme `options.see` (`"active"` | `"removed"` | `"all"`).
 - `transactions.test.ts` — delegação de `transaction()` para `adapter.runInTransaction`, e
