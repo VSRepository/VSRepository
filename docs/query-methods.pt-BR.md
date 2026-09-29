@@ -36,6 +36,8 @@ class UserRepository extends VSRepository<User, string> {
 
 Query methods aceitam `{ args, db? }` na chamada — `db` permite que participem de um bloco `transaction()`, assim como os métodos base e dinâmicos.
 
+Query methods são herdados pelas subclasses assim como os métodos dinâmicos — veja [Herdando de outro repository](./dynamic-methods.pt-BR.md#herdando-de-outro-repository).
+
 ## Argumentos via spread com `spreadArgs`
 
 Por padrão, um `@QueryMethod` recebe seus valores de placeholder através de um único objeto `QueryMethodArg` (`method({ args: [...] })`). Defina `spreadArgs: true` para recebê-los como argumentos posicionais separados:

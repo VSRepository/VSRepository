@@ -223,6 +223,26 @@ declare buscarPorEmail: (email: string, options?: MethodOptions<User>) => Promis
 declare findByStatus: (status: string) => Promise<User[]>;
 ```
 
+## Inheriting from another repository
+
+`@DynamicMethod` and `@QueryMethod` work across class inheritance. A subclass inherits every dynamic and query method of its parent, and can declare more of its own:
+
+```typescript
+class UserRepository extends VSRepository<User, string> {
+    @DynamicMethod()
+    declare findByEmail: (email: string) => Promise<User[]>;
+}
+
+class AdminRepository extends UserRepository {
+    // AdminRepository has `findByEmail` (inherited) and `findByUserType` (its own)
+    @DynamicMethod()
+    declare findByUserType: (userType: string) => Promise<User[]>;
+}
+```
+
+> [!NOTE]
+> Before **2.7.3**, the methods declared in a subclass were also registered on its parent class and on every sibling class, and redeclaring a method in a subclass changed how the parent resolved it. If you extended decorated repositories, upgrade to get the correct behavior.
+
 ## Strict return typing with `InferMethodType`
 
 Normally you write a dynamic method's signature by hand, and its return is whatever you declare (usually the whole entity). `InferMethodType<Args, Return, OrmTypes?>` declares the method for you and infers the return **on each call** from the `select`/`relations` you pass — with the same rules as [`InferMethodReturn`](./select-and-relations.md#strict-return-typing-with-infermethodreturn):

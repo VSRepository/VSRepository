@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.7.3] - 2026-09-29
+
+### Fixed
+- `@DynamicMethod` and `@QueryMethod` no longer leak the methods declared in a subclass into its parent class and its sibling classes. The decorators read the list of declared methods with `Reflect.getMetadata`, which walks the prototype chain, and appended to it — so a subclass's first decorator pushed into the very array owned by its parent, and every class in the hierarchy ended up sharing one list. The visible effects were a parent (or sibling) repository resolving methods it never declared, and redeclaring a method in a subclass (e.g. with a different `injectOrdering`) also changing how the parent resolved it. Each class now writes to its own list, seeded with a copy of what it inherits: a subclass still inherits every dynamic and query method of its parent, at any depth, but never alters it. Repositories that don't extend another decorated repository are unaffected
+
+### Documentation
+- New [Inheriting from another repository](./docs/dynamic-methods.md#inheriting-from-another-repository) section in the Dynamic methods guide (linked from the Query methods guide), describing how `@DynamicMethod`/`@QueryMethod` behave across class inheritance
+
+## [2.7.3] - 2026-09-29 (Português)
+
+### Corrigido
+- `@DynamicMethod` e `@QueryMethod` não vazam mais os métodos declarados numa subclasse para a classe pai nem para as classes irmãs. Os decorators liam a lista de métodos declarados com `Reflect.getMetadata`, que percorre a cadeia de protótipos, e acrescentavam nela — então o primeiro decorator de uma subclasse empurrava para o próprio array do pai, e todas as classes da hierarquia acabavam compartilhando uma única lista. Os efeitos visíveis eram um repository pai (ou irmão) resolvendo métodos que nunca declarou, e redeclarar um método numa subclasse (ex.: com outro `injectOrdering`) também alterando a forma como o pai o resolvia. Agora cada classe escreve na sua própria lista, iniciada com uma cópia do que herda: a subclasse continua herdando todos os métodos dinâmicos e query methods do pai, em qualquer profundidade, mas nunca o altera. Repositories que não estendem outro repository decorado não são afetados
+
+### Documentação
+- Nova seção [Herdando de outro repository](./docs/dynamic-methods.pt-BR.md#herdando-de-outro-repository) no guia de Métodos dinâmicos (com link a partir do guia de Query methods), descrevendo como `@DynamicMethod`/`@QueryMethod` se comportam com herança de classes
+
 ## [2.7.2] - 2026-09-29
 
 ### Fixed

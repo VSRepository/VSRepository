@@ -1,6 +1,7 @@
 import { VSRepoError } from "../errors/VSRepoError";
 import { QUERY_METHODS_KEY } from "../internal/constants/query-methods-key.constant";
 import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum";
+import { getOwnMetadataList } from "../internal/utils/own-metadata-list.util";
 import { DecoratorsValidator } from "../internal/validators/decorators.validator";
 import type { QueryMethodOptions } from "../types/decorators/query-method-options.type";
 import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type";
@@ -43,7 +44,7 @@ export function QueryMethod(value: string, options?: QueryMethodOptions): Proper
     const validatedConfig: QueryMethodOptions = DecoratorsValidator.validateQueryMethodOptions(options);
 
     return (target: object, propertyKey: string | symbol) => {
-        const methods: VSRepoQuery[] = Reflect.getMetadata(QUERY_METHODS_KEY, target) ?? [];
+        const methods = getOwnMetadataList<VSRepoQuery>(QUERY_METHODS_KEY, target);
 
         methods.push({ ...validatedConfig, value, propertyKey });
 
