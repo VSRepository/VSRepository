@@ -26,6 +26,7 @@ super({
 | `INFO`           | High-level lifecycle events, such as repository initialization.                                       |
 | `WARN` (default) | Recoverable issues and slow operations (see `logSlowThresholdMs`, defaults to 300ms).                 |
 | `ERROR`          | Validation and guard-clause failures, logged right before the `VSRepoError` is thrown.                |
+| `NONE`           | Completely disables logs.                                                                             |
 
 The [query builder](./query-builder.md#query-builder-logs) uses the same logger: at `DEBUG` it also traces every chained call and the resolved query of each terminal method, and each terminal method is timed like any other operation.
 
