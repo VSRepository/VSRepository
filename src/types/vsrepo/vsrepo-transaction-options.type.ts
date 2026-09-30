@@ -7,7 +7,7 @@ import { TransactionIsolationLevel } from "../../internal/enums/transaction-isol
  */
 export type VSRepoTransactionOptions = {
     /** Isolation level to use for the transaction. Defaults to the underlying ORM's default. */
-    isolationLevel?: TransactionIsolationLevel;
+    isolationLevel?: TransactionIsolationLevel | `${TransactionIsolationLevel}`;
     /** Maximum time (in ms) the transaction is allowed to run before being aborted. */
     timeoutMs?: number;
 };
