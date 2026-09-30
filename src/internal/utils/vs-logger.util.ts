@@ -22,6 +22,7 @@ const LEVEL_LABEL: Record<VSLogLevel, string> = {
     [VSLogLevel.INFO]: "INFO",
     [VSLogLevel.WARN]: "WARN",
     [VSLogLevel.ERROR]: "ERROR",
+    [VSLogLevel.NONE]: "never",
 };
 
 const LEVEL_COLOR: Record<VSLogLevel, string> = {
@@ -29,10 +30,10 @@ const LEVEL_COLOR: Record<VSLogLevel, string> = {
     [VSLogLevel.INFO]: ANSI.cyan,
     [VSLogLevel.WARN]: ANSI.yellow,
     [VSLogLevel.ERROR]: ANSI.red,
+    [VSLogLevel.NONE]: "never",
 };
 
 export class VSLogger {
-    // * Acima disso, uma operação concluída é logada como WARN ao invés de DEBUG
     private static readonly DEFAULT_SLOW_OPERATION_MS = 300;
     private readonly slowOperationThresholdMs: number | false;
 
@@ -140,8 +141,8 @@ export class VSLogger {
     }
 
     startPerformLog(operation: string): PerformData | undefined {
-        // * O timestamp é sempre capturado (é barato) para permitir detectar operações
-        // * lentas mesmo fora do DEBUG; a linha "Starting to X..." em si só aparece em DEBUG.
+        if (this.logLevel > VSLogLevel.DEBUG) return;
+
         this.logDebug(`Starting to ${operation}...`);
 
         return {

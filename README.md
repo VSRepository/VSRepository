@@ -5,7 +5,7 @@
     <img src="https://img.shields.io/npm/v/vsrepo?style=flat-square" alt="npm version"/>
     <img src="https://img.shields.io/npm/l/vsrepo?style=flat-square" alt="npm license"/>
     <img src="https://img.shields.io/npm/dt/vsrepo?style=flat-square" alt="npm downloads"/>
-    <img src="https://img.shields.io/badge/inspired%20by-JpaRepository-E73121?style=flat-square" alt="inspired by JpaRepository"/>
+    <img src="https://img.shields.io/badge/inspired%20by-Spring%20Data%20JPA-E6DB33F?style=flat-square" alt="inspired by Spring Data JPA"/>
   </p>
 </div>
 
@@ -13,7 +13,7 @@
 
 🇺🇸 You're reading the English version. [🇧🇷 Ler em português](./README.pt-BR.md)
 
-VSRepository is an **ORM-agnostic repository pattern library for TypeScript**. It provides a consistent repository API, derived query methods, query builders, transactions, and other persistence concerns through pluggable **ORM adapters**.
+VSRepository is an **ORM-agnostic repository pattern library for TypeScript**. Inspired by **Spring Data JPA**, it provides a consistent abstraction layer with support for **derived query methods**, **query builders**, **native soft-delete**, and other features. All of this is powered by **adapters**, allowing VSRepository to work with different ORMs.
 
 VSRepository lets you create strongly-typed repositories with:
 

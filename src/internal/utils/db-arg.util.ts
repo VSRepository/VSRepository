@@ -2,9 +2,9 @@ import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 
 /**
  * Wraps a database client or transaction so it can be recognized, at
- * runtime, as the trailing `db` override in a {@link QueryArgs} spread call —
+ * runtime, as the trailing `db` override in a `QueryArgs` spread call —
  * as opposed to a regular positional query argument. Build one with
- * {@link withDb} rather than constructing it directly.
+ * `withDb` rather than constructing it directly.
  *
  * @publicApi
  */
