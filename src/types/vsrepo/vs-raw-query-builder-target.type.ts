@@ -1,5 +1,5 @@
-import { VSRawQueryBuilder } from "../../internal/utils/vs-raw-query-builder.util";
-import { VSSql } from "../../internal/utils/vs-sql.util";
+import { VSRawQueryBuilder } from "../../internal/utils/vs-raw-query-builder.util.js";
+import { VSSql } from "../../internal/utils/vs-sql.util.js";
 
 /** Anything that can be used where a table/column reference is expected.
  *

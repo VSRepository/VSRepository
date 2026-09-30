@@ -1,4 +1,4 @@
-import { Primitive } from "./primitive.type";
+import { Primitive } from "./primitive.type.js";
 
 /**
  * Sort direction accepted by `Ordering`. Case-insensitive: both the

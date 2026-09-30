@@ -1,10 +1,10 @@
-import { VSRepoError } from "../errors/VSRepoError";
-import { QUERY_METHODS_KEY } from "../internal/constants/query-methods-key.constant";
-import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum";
-import { getOwnMetadataList } from "../internal/utils/own-metadata-list.util";
-import { DecoratorsValidator } from "../internal/validators/decorators.validator";
-import type { QueryMethodOptions } from "../types/decorators/query-method-options.type";
-import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type";
+import { VSRepoError } from "../errors/VSRepoError.js";
+import { QUERY_METHODS_KEY } from "../internal/constants/query-methods-key.constant.js";
+import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum.js";
+import { getOwnMetadataList } from "../internal/utils/get-own-metadata-list.util.js";
+import { DecoratorsValidator } from "../internal/validators/decorators.validator.js";
+import type { QueryMethodOptions } from "../types/decorators/query-method-options.type.js";
+import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
 
 /**
  * Property decorator used to declare a raw SQL query method on a `VSRepository`

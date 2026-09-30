@@ -1,4 +1,4 @@
-import { Primitive } from "../utils/primitive.type";
+import { Primitive } from "../utils/primitive.type.js";
 
 /**
  * Extracts the keys of `T` that represent relation fields (i.e. objects or

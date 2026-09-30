@@ -1,25 +1,25 @@
 import * as v from "valibot";
-import { VSRepoOptions } from "../../types/vsrepo/vsrepo-options.type";
-import { VSLogLevel } from "../enums/vs-log-level.enum";
-import { VSRepoError } from "../../errors/VSRepoError";
-import orderingSchema from "./schemas/ordering.schema";
-import { MethodOptions } from "../../types/utils/methods-options.type";
-import { QueryMethodArg } from "../../types/utils/query-method-arg.type";
-import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum";
-import { VSRepoTransactionOptions } from "../../types/vsrepo/vsrepo-transaction-options.type";
-import { TransactionIsolationLevel } from "../enums/transaction-isolation-level.enum";
-import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type";
-import { Pagination } from "../../types/utils/pagination.type";
-import { Ordering } from "../../types/utils/ordering.type";
-import { VSLogger } from "../utils/vs-logger.util";
-import paginationSchema from "./schemas/pagination.schema";
-import whereSchema from "./schemas/where.schema";
-import { VSRepoWhere } from "../../types/vsrepo/vsrepo-where.type";
-import { VSRepoQueryOptions } from "../../types/vsrepo/vsrepo-query-options.type";
-import { NumericLike } from "../../types/utils/numeric-like.type";
-import { RestrictMethodOptions } from "../../types/utils/restrict-method-options.type";
-import selectSchema from "./schemas/select.schema";
-import relationsSchema from "./schemas/relations.schema";
+import { VSRepoOptions } from "../../types/vsrepo/vsrepo-options.type.js";
+import { VSLogLevel } from "../enums/vs-log-level.enum.js";
+import { VSRepoError } from "../../errors/VSRepoError.js";
+import orderingSchema from "./schemas/ordering.schema.js";
+import { MethodOptions } from "../../types/utils/methods-options.type.js";
+import { QueryMethodArg } from "../../types/utils/query-method-arg.type.js";
+import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { VSRepoTransactionOptions } from "../../types/vsrepo/vsrepo-transaction-options.type.js";
+import { TransactionIsolationLevel } from "../enums/transaction-isolation-level.enum.js";
+import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
+import { Pagination } from "../../types/utils/pagination.type.js";
+import { Ordering } from "../../types/utils/ordering.type.js";
+import { VSLogger } from "../utils/vs-logger.util.js";
+import paginationSchema from "./schemas/pagination.schema.js";
+import whereSchema from "./schemas/where.schema.js";
+import { VSRepoWhere } from "../../types/vsrepo/vsrepo-where.type.js";
+import { VSRepoQueryOptions } from "../../types/vsrepo/vsrepo-query-options.type.js";
+import { NumericLike } from "../../types/utils/numeric-like.type.js";
+import { RestrictMethodOptions } from "../../types/utils/restrict-method-options.type.js";
+import selectSchema from "./schemas/select.schema.js";
+import relationsSchema from "./schemas/relations.schema.js";
 
 export class VSRepoValidator<T, K, O extends VSRepoOrmTypes = VSRepoOrmTypes> {
     // * Setado depois pelo VSRepository, pois no momento em que validateConstructorOptions

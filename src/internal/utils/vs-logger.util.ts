@@ -1,5 +1,5 @@
-import { VSLogLevel } from "../enums/vs-log-level.enum";
-import { PerformData } from "../../types/utils/perform-data.type";
+import { VSLogLevel } from "../enums/vs-log-level.enum.js";
+import { PerformData } from "../../types/utils/perform-data.type.js";
 
 /**
  * ANSI escape codes used to colorize log output.

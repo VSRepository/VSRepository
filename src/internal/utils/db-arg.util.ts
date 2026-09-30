@@ -1,4 +1,4 @@
-import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type";
+import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 
 /**
  * Wraps a database client or transaction so it can be recognized, at

@@ -52,7 +52,7 @@ export type { Ordering, OrderByField, SortDirection } from "./types/utils/orderi
 export type { Pagination } from "./types/utils/pagination.type.js";
 export type { Primitive } from "./types/utils/primitive.type.js";
 export type { SeeMode } from "./types/utils/see-mode.type.js";
-export type { VSRepoQueryOptions } from "./types/vsrepo/vsrepo-query-options.type";
+export type { VSRepoQueryOptions } from "./types/vsrepo/vsrepo-query-options.type.js";
 export type { DecimalLike } from "./types/utils/decimal-like.type.js";
 export type { NumericKeys } from "./types/utils/numeric-keys.type.js";
 export type { NumericLike } from "./types/utils/numeric-like.type.js";

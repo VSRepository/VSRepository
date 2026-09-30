@@ -1,4 +1,4 @@
-import { NumericLike } from "./numeric-like.type";
+import { NumericLike } from "./numeric-like.type.js";
 
 /**
  * Extracts the keys of `T` whose (non-nullable) value type is assignable to

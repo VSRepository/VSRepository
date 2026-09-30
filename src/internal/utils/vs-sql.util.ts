@@ -1,5 +1,5 @@
-import { VSRepoError } from "../../errors/VSRepoError";
-import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum";
+import { VSRepoError } from "../../errors/VSRepoError.js";
+import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
 
 /**
  * An ORM-agnostic, composable SQL fragment that compiles down to whatever placeholder

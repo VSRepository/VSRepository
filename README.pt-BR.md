@@ -135,7 +135,7 @@ O status completo e como instalar cada um: [Status dos adapters](./docs/adapters
 
 ## Requisitos
 
-- Node.js 18+
+- Node.js 22+
 - TypeScript, com **decorators legacy/experimentais** habilitados (necessário para `@DynamicMethod`/`@QueryMethod`):
 
 ```json

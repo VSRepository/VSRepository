@@ -1,4 +1,4 @@
-import { Primitive } from "../utils/primitive.type";
+import { Primitive } from "../utils/primitive.type.js";
 
 /**
  * Selection shape accepted by the `select` option of repository/adapter methods.

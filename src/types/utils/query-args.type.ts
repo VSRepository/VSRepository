@@ -1,5 +1,5 @@
-import { DbArg } from "../../internal/utils/db-arg.util";
-import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type";
+import { DbArg } from "../../internal/utils/db-arg.util.js";
+import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
 
 /**
  * Types the parameter list of a `@QueryMethod` declared with

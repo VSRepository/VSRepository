@@ -1,4 +1,4 @@
-import { Primitive } from "../utils/primitive.type";
+import { Primitive } from "../utils/primitive.type.js";
 
 /**
  * Operators available to filter a single scalar field's value.

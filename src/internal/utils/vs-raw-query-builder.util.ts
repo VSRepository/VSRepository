@@ -1,11 +1,11 @@
-import { VSRepoError } from "../../errors/VSRepoError";
-import { VSRawQueryBuilderCteQuery } from "../../types/vsrepo/vs-raw-query-builder-cte-query.type";
-import { VSRawQueryBuilderTarget } from "../../types/vsrepo/vs-raw-query-builder-target.type";
-import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type";
-import { VSRepoAdapter } from "../../VSRepoAdapter";
-import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum";
-import { VSLogger } from "./vs-logger.util";
-import { VSSql } from "./vs-sql.util";
+import { VSRepoError } from "../../errors/VSRepoError.js";
+import { VSRawQueryBuilderCteQuery } from "../../types/vsrepo/vs-raw-query-builder-cte-query.type.js";
+import { VSRawQueryBuilderTarget } from "../../types/vsrepo/vs-raw-query-builder-target.type.js";
+import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
+import { VSRepoAdapter } from "../../VSRepoAdapter.js";
+import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { VSLogger } from "./vs-logger.util.js";
+import { VSSql } from "./vs-sql.util.js";
 
 type JoinType = "INNER" | "LEFT" | "RIGHT" | "FULL";
 type Connector = "AND" | "OR";

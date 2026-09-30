@@ -1,6 +1,6 @@
-import { AdapterErrorCode } from "../internal/enums/adapter-error-code.enum";
-import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum";
-import { VSRepoError } from "./VSRepoError";
+import { AdapterErrorCode } from "../internal/enums/adapter-error-code.enum.js";
+import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum.js";
+import { VSRepoError } from "./VSRepoError.js";
 
 /**
  * Error raised when a `VSRepoAdapter` fails while talking to the underlying

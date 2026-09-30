@@ -4,8 +4,7 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "target": "esnext",
-    "types": ["node"],
-    "sourceMap": true,
+    "types": ["vitest/globals", "node"],
     "noUncheckedIndexedAccess": true,
     "experimentalDecorators": true,
     "noImplicitOverride": true,
@@ -17,5 +16,6 @@
     "resolvePackageJsonExports": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "noImplicitReturns": true,
   },
 }

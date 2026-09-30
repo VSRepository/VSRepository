@@ -1,4 +1,4 @@
-import { TransactionIsolationLevel } from "../../internal/enums/transaction-isolation-level.enum";
+import { TransactionIsolationLevel } from "../../internal/enums/transaction-isolation-level.enum.js";
 
 /**
  * Options accepted by `VSRepository.transaction()`.

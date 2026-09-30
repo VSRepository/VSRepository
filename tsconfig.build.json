@@ -5,8 +5,9 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": false,
-    "sourceMap": true,
+    "sourceMap": false,
     "stripInternal": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }

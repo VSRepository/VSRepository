@@ -1,4 +1,4 @@
-import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum";
+import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum.js";
 
 /**
  * Base error thrown by VSRepository for any invalid usage, configuration, or

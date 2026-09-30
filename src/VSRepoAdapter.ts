@@ -1,10 +1,10 @@
-import { AdapterMethodOptions } from "./types/adapter/adapter-method-options.type";
-import { AdapterQueryOptions } from "./types/adapter/adapter-query-options.type";
-import { CountResult } from "./types/utils/count-result.type";
-import { DeepPartial } from "./types/utils/deep-partial.type";
-import { NumericKeys } from "./types/utils/numeric-keys.type";
-import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type";
-import { VSRepoWhere } from "./types/vsrepo/vsrepo-where.type";
+import { AdapterMethodOptions } from "./types/adapter/adapter-method-options.type.js";
+import { AdapterQueryOptions } from "./types/adapter/adapter-query-options.type.js";
+import { CountResult } from "./types/utils/count-result.type.js";
+import { DeepPartial } from "./types/utils/deep-partial.type.js";
+import { NumericKeys } from "./types/utils/numeric-keys.type.js";
+import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
+import { VSRepoWhere } from "./types/vsrepo/vsrepo-where.type.js";
 
 /**
  * Contract implemented by ORM-specific adapters (e.g. Prisma, TypeORM) that

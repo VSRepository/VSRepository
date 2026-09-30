@@ -1,5 +1,5 @@
-import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type";
-import { DbArg } from "./db-arg.util";
+import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
+import { DbArg } from "./db-arg.util.js";
 
 /**
  * Wraps a database client or transaction so it can be passed as the
@@ -11,7 +11,7 @@ import { DbArg } from "./db-arg.util";
  * @example
  * ```typescript
  * await userRepository.transaction(async (tx) => {
- *     await userRepository.findByEmailAndType("joao@email.com", "admin", withDb(tx));
+ *     await userRepository.findByEmailAndRole("joao@email.com", "admin", withDb(tx));
  * });
  * ```
  *

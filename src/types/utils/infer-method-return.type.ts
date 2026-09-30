@@ -1,5 +1,5 @@
-import { RelationKeys } from "../vsrepo/vsrepo-relations.type";
-import { SeeMode } from "./see-mode.type";
+import { RelationKeys } from "../vsrepo/vsrepo-relations.type.js";
+import { SeeMode } from "./see-mode.type.js";
 
 /**
  * Loose structural constraint for the `Options` accepted by {@link InferMethodReturn}.

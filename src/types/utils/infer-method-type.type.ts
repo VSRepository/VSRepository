@@ -1,8 +1,8 @@
-import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type";
-import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type";
-import { VSRepoSelect } from "../vsrepo/vsrepo-select.type";
-import { InferMethodReturn } from "./infer-method-return.type";
-import { MethodOptions } from "./methods-options.type";
+import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
+import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
+import { VSRepoSelect } from "../vsrepo/vsrepo-select.type.js";
+import { InferMethodReturn } from "./infer-method-return.type.js";
+import { MethodOptions } from "./methods-options.type.js";
 
 /** Entity type behind a method's return: `E`, `E | null`, `E[]` or `E[] | null` all give `E`. */
 type EntityOf<R> = NonNullable<R> extends readonly (infer U)[] ? U : NonNullable<R>;

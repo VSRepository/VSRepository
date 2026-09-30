@@ -1,4 +1,4 @@
-import { VSRepoOrmTypes } from "./vsrepo-orm-types.type";
+import { VSRepoOrmTypes } from "./vsrepo-orm-types.type.js";
 
 /**
  * Options accepted by `VSRepository.query()`.

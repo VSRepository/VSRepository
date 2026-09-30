@@ -1,4 +1,4 @@
-import { Ordering } from "../utils/ordering.type";
+import { Ordering } from "../utils/ordering.type.js";
 
 /**
  * Options accepted by the `@DynamicMethod` decorator.

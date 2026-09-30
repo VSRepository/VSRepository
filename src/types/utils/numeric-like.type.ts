@@ -1,4 +1,4 @@
-import { DecimalLike } from "./decimal-like.type";
+import { DecimalLike } from "./decimal-like.type.js";
 
 /**
  * Union of value types accepted as "numeric" by the atomic

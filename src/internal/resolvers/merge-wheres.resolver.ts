@@ -1,6 +1,6 @@
 import merge from "deepmerge";
-import { SeeMode } from "../../types/utils/see-mode.type";
-import { VSRepoWhere } from "../../types/vsrepo/vsrepo-where.type";
+import { SeeMode } from "../../types/utils/see-mode.type.js";
+import { VSRepoWhere } from "../../types/vsrepo/vsrepo-where.type.js";
 
 export class MergeWheresResolver<T> {
     constructor(private readonly softRemoveKey?: keyof T) {}

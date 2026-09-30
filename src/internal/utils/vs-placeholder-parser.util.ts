@@ -1,6 +1,6 @@
-import { VSRepoError } from "../../errors/VSRepoError";
-import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum";
-import { VSSql } from "./vs-sql.util";
+import { VSRepoError } from "../../errors/VSRepoError.js";
+import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { VSSql } from "./vs-sql.util.js";
 
 export class VSPlaceholdersParser {
     /**

@@ -1,4 +1,4 @@
-import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type";
+import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
 
 /**
  * Single argument accepted by a method declared with `@QueryMethod`.

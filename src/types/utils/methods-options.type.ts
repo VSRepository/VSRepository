@@ -1,7 +1,7 @@
-import { SeeMode } from "./see-mode.type";
-import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type";
-import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type";
-import { VSRepoSelect } from "../vsrepo/vsrepo-select.type";
+import { SeeMode } from "./see-mode.type.js";
+import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
+import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
+import { VSRepoSelect } from "../vsrepo/vsrepo-select.type.js";
 
 /**
  * Options accepted by the base methods exposed by `VSRepository`

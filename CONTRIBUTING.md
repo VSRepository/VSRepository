@@ -11,7 +11,7 @@ Contributions are very welcome — especially adapters, bug reports and document
 
 | Tool       | Version |
 | ---------- | ------- |
-| Node.js    | 18+     |
+| Node.js    | 22+     |
 | Bun        | latest  |
 | TypeScript | 6.x     |
 

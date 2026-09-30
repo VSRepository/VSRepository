@@ -1,7 +1,7 @@
-import { VSRepoAdapter } from "../../VSRepoAdapter";
-import { VSLogLevel } from "../../internal/enums/vs-log-level.enum";
-import { KeysOfType } from "../utils/keys-of-type.type";
-import { Ordering } from "../utils/ordering.type";
+import { VSRepoAdapter } from "../../VSRepoAdapter.js";
+import { VSLogLevel } from "../../internal/enums/vs-log-level.enum.js";
+import { KeysOfType } from "../utils/keys-of-type.type.js";
+import { Ordering } from "../utils/ordering.type.js";
 
 /**
  * Configuration passed to the `VSRepository` constructor.
