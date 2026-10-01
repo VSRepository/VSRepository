@@ -21,22 +21,22 @@ Repositories diferentes podem compartilhar a mesma transação, desde que seus a
 `transaction()` aceita um `VSRepoTransactionOptions` opcional como segundo argumento:
 
 ```typescript
-import { TransactionIsolationLevel } from "vsrepo";
+import { VSRepoIsolationLevel } from "vsrepo";
 
 await userRepository.transaction(
     async tx => {
         await userRepository.save({ name: "Maria", email: "maria@email.com" }, { db: tx });
     },
-    { isolationLevel: TransactionIsolationLevel.SERIALIZABLE, timeoutMs: 5000 },
+    { isolationLevel: VSRepoIsolationLevel.SERIALIZABLE, timeoutMs: 5000 },
 );
 ```
 
 | Option           | Type                        | Descrição                                                                          |
 | ---------------- | --------------------------- | ---------------------------------------------------------------------------------- |
-| `isolationLevel` | `TransactionIsolationLevel` | Nível de isolamento usado na transação. O padrão é o default do ORM por trás dela. |
+| `isolationLevel` | `VSRepoIsolationLevel` | Nível de isolamento usado na transação. O padrão é o default do ORM por trás dela. |
 | `timeoutMs`      | `number`                    | Tempo máximo (em ms) que a transação pode rodar antes de ser abortada.             |
 
-`TransactionIsolationLevel` espelha os níveis de isolamento SQL padrão: `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE`. O suporte a um determinado nível depende do adapter/ORM e do banco de dados por trás dele.
+`VSRepoIsolationLevel` espelha os níveis de isolamento SQL padrão: `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE`. O suporte a um determinado nível depende do adapter/ORM e do banco de dados por trás dele.
 
 ## Valor de retorno e propagação de erro
 

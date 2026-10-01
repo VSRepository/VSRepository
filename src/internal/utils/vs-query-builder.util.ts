@@ -67,14 +67,14 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         private db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"],
         private readonly adapter: VSRepoAdapter<Entity>,
         private readonly mergeWheresResolver: MergeWheresResolver<Entity>,
-        private readonly logger?: VSLogger,
+        private readonly logger: VSLogger,
     ) {}
 
     private failValidation(issue: v.GenericIssue | undefined, fallbackPath = "options"): never {
         const path = issue?.path?.length ? issue.path.map(p => String(p.key)).join(".") : fallbackPath;
         const message = `${path}: ${issue?.message ?? "validation failed"}`;
 
-        this.logger?.logError(`Validation failed (${VSRepoErrorType.QUERY_BUILDER}): ${message}`);
+        this.logger.logError(`Validation failed (${VSRepoErrorType.QUERY_BUILDER}): ${message}`);
 
         throw new VSRepoError(message, VSRepoErrorType.QUERY_BUILDER);
     }
@@ -93,19 +93,19 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
 
     // * Log de debug dos passos do builder e das queries. O objeto só é serializado se o nível for DEBUG
     private trace(message: string, obj?: unknown): void {
-        this.logger?.logDebug(`VSQueryBuilder: ${message}`, obj);
+        this.logger.logDebug(`VSQueryBuilder: ${message}`, obj);
     }
 
     // * Nunca logar o `db` aqui (client/transação do ORM), só os parâmetros da query
     private async execute<R>(operation: string, params: Record<string, unknown>, run: () => Promise<R>): Promise<R> {
         this.trace(operation, { see: this.seeMode, ...params });
 
-        const start = this.logger?.startPerformLog(`run query builder ${operation}`);
+        const start = this.logger.startPerformLog(`run query builder ${operation}`);
 
         try {
             return await run();
         } finally {
-            this.logger?.endPerformLog(start);
+            this.logger.endPerformLog(start);
         }
     }
 

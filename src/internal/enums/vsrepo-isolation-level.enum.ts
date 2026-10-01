@@ -4,7 +4,7 @@
  *
  * @publicApi
  */
-export enum TransactionIsolationLevel {
+export enum VSRepoIsolationLevel {
     /** Allows dirty reads: a transaction may see uncommitted changes from other transactions. */
     READ_UNCOMMITTED = "ReadUncommitted",
     /** Prevents dirty reads; non-repeatable reads and phantom reads may still occur. */

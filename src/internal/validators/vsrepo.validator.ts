@@ -7,7 +7,7 @@ import { MethodOptions } from "../../types/utils/methods-options.type.js";
 import { QueryMethodArg } from "../../types/utils/query-method-arg.type.js";
 import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
 import { VSRepoTransactionOptions } from "../../types/vsrepo/vsrepo-transaction-options.type.js";
-import { TransactionIsolationLevel } from "../enums/transaction-isolation-level.enum.js";
+import { VSRepoIsolationLevel } from "../enums/vsrepo-isolation-level.enum.js";
 import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 import { Pagination } from "../../types/utils/pagination.type.js";
 import { Ordering } from "../../types/utils/ordering.type.js";
@@ -146,7 +146,7 @@ export class VSRepoValidator<T, K, O extends VSRepoOrmTypes = VSRepoOrmTypes> {
 
     private transactionOptionsSchema = v.object({
         timeoutMs: v.optional(v.number()),
-        isolationLevel: v.optional(v.enum(TransactionIsolationLevel)),
+        isolationLevel: v.optional(v.enum(VSRepoIsolationLevel)),
     });
 
     validateTransactionOptions(options: unknown): VSRepoTransactionOptions {
