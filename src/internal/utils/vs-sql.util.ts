@@ -1,5 +1,7 @@
 import { VSRepoError } from "../../errors/VSRepoError.js";
+import { GetPlaceholderFn } from "../../types/utils/get-placeholder-fn.type.js";
 import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { getVsPlaceholder } from "./placeholder-fns.util.js";
 
 /**
  * An ORM-agnostic, composable SQL fragment that compiles down to whatever placeholder
@@ -63,8 +65,10 @@ export class VSSql {
      * parameter in the returned `args` array. Used internally by
      * `VSRepository.query()`; only call this directly if you need the raw
      * `{ text, args }` pair for something else (e.g. logging).
+     *
+     * @param getPlaceholder An implementation of `GetPlaceholderFn` - defaults to `getVsPlaceholder`
      */
-    compile(getPlaceholder: (index: number) => string): { text: string; args: unknown[] } {
+    compile(getPlaceholder: GetPlaceholderFn = getVsPlaceholder): { text: string; args: unknown[] } {
         let text = this.chunks[0] ?? "";
 
         for (let i = 0; i < this.values.length; i++) {
@@ -113,7 +117,7 @@ export class VSSql {
      */
     static raw(text: string): VSSql {
         if (typeof text !== "string") {
-            throw new VSRepoError("'VSSql.raw' expects 'text' to be a string", VSRepoErrorType.BASE);
+            throw new VSRepoError("'VSSql.raw' expects 'text' to be a string", VSRepoErrorType.VSSQL);
         }
 
         return new VSSql([text], []);
@@ -142,7 +146,7 @@ export class VSSql {
      */
     static join(values: readonly unknown[], separator = ", ", prefix = "", suffix = ""): VSSql {
         if (!Array.isArray(values) || values.length === 0) {
-            throw new VSRepoError("'VSSql.join' expects 'values' to be a non-empty array", VSRepoErrorType.BASE);
+            throw new VSRepoError("'VSSql.join' expects 'values' to be a non-empty array", VSRepoErrorType.VSSQL);
         }
 
         const chunks: string[] = [prefix];
