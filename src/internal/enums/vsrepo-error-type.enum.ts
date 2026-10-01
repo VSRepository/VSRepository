@@ -18,4 +18,6 @@ export enum VSRepoErrorType {
     ADAPTER = "ADAPTER",
     /** An invalid argument was passed to a `VSQueryBuilder` method (e.g. a negative `limit`) */
     QUERY_BUILDER = "QUERY_BUILDER",
+    /** Invalid usage of the `VSSql` class */
+    VSSQL = "VSSQL",
 }
