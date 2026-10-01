@@ -79,11 +79,11 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     constructor(
         private db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"],
         private readonly adapter: VSRepoAdapter<any>,
-        private readonly logger?: VSLogger,
+        private readonly logger: VSLogger,
     ) {}
 
     private trace(message: string, obj?: unknown): void {
-        this.logger?.logDebug(`VSRawQueryBuilder: ${message}`, obj);
+        this.logger.logDebug(`VSRawQueryBuilder: ${message}`, obj);
     }
 
     private static validateNonEmptyString(value: string, context: string): void {
@@ -533,12 +533,12 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
         this.trace("execute", { query: text, args });
 
-        const start = this.logger?.startPerformLog("run raw query builder execute");
+        const start = this.logger.startPerformLog("run raw query builder execute");
 
         try {
             return await this.adapter.query<T>(text, { args, db: this.db, modifying: false });
         } finally {
-            this.logger?.endPerformLog(start);
+            this.logger.endPerformLog(start);
         }
     }
 }

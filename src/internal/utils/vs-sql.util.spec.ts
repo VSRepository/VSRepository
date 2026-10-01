@@ -215,4 +215,30 @@ describe("VSSql", () => {
             }
         });
     });
+
+    describe("create", () => {
+        it("should return an instance of VSSql", () => {
+            const instance = VSSql.create(["select * from user where id = "], [1]);
+
+            expect(instance).toBeInstanceOf(VSSql);
+        });
+
+        it("should correctly compile a sql", () => {
+            const instance = VSSql.create(["select * from user where id = "], [1]);
+
+            const result = instance.compile();
+
+            expect(result.text).toBe("select * from user where id = ?1");
+            expect(result.args).toEqual([1]);
+        });
+
+        it("should not throw an error but compile a problably wrong sql", () => {
+            const instance = VSSql.create(["select * from user where id = "], [1, 2, 3]);
+
+            const result = instance.compile();
+
+            expect(result.text).toBe("select * from user where id = ?1?2?3");
+            expect(result.args).toEqual([1, 2, 3]);
+        });
+    });
 });

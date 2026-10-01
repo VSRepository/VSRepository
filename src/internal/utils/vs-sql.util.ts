@@ -39,6 +39,13 @@ export class VSSql {
     ) {}
 
     /**
+     * @internal
+     */
+    static create(chunks: readonly string[], values: readonly unknown[]): VSSql {
+        return new VSSql(chunks, values);
+    }
+
+    /**
      * Appends `value` to the in-progress `chunks`/`values` pair: a nested
      * `VSSql` is spliced in (its own text merged into the current trailing
      * chunk, its own parameters appended in order), anything else becomes a
