@@ -20,11 +20,7 @@ export class VSPlaceholdersParser {
      * is *not* interpreted as a placeholder — it is passed through to the SQL
      * untouched and consumes no `args` entry. Standard SQL escapes are
      * respected: `''` inside a literal does not end it, so a literal like
-     * `'it''s ?1'` is fully skipped. There is no escape mechanism outside a
-     * literal — if a query needs literal `?` + digits text in an unquoted
-     * context, build that part with a `VSSql` fragment instead. Matching only
-     * triggers on `?` immediately followed by a digit, so operators like
-     * PostgreSQL's `?`, `?|` and `?&` are unaffected.
+     * `'it''s ?1'` is fully skipped.
      *
      * @internal
      */

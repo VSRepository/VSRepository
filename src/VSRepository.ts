@@ -108,13 +108,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         this.defaultOrdering = optionsValidated.defaultOrdering;
         this.vsPlaceholders = optionsValidated.vsPlaceholders ?? false;
 
-        if (this.vsPlaceholders && !this.adapter.getPlaceholder) {
-            throw new VSRepoError(
-                "'vsPlaceholders' is enabled but your adapter did not implement the 'getPlaceholder' method; try updating your adapter to a newer version or disable 'vsPlaceholders'.",
-                VSRepoErrorType.VALIDATOR,
-            );
-        }
-
         this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softRemoveKey);
         this.logger = new VSLogger(
             optionsValidated.logLevel ?? VSLogLevel.WARN,
@@ -289,13 +282,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /**
-     * Returns a fluent {@link VSRawQueryBuilder}, for hand-written `SELECT` queries whose SQL is
+     * Returns a fluent `VSRawQueryBuilder`, for hand-written `SELECT` queries whose SQL is
      * too specific (window functions, vendor-specific syntax, ad-hoc subqueries, ...) for
-     * {@link VSRepository.createQueryBuilder}'s `where`/`relations` model.
-     *
-     * Goes through the same adapter as every other method, and requires the adapter to implement
-     * `getPlaceholder()` (see {@link VSSql}). Nothing runs until
-     * {@link VSRawQueryBuilder.execute} is called.
+     * `VSRepository.createQueryBuilder`'s model.
      *
      * @param db Client or transaction to run in. Defaults to the repository's own client — see
      * `VSRawQueryBuilder.setDb()` to change it later, or run inside a `transaction()`.
@@ -324,8 +313,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      * avoid SQL injection; the placeholder syntax depends on the
      * database/driver behind your adapter — or a `VSSql` fragment built with
      * `VSSql.sql`/`raw`/`join`/`empty`, which is parameterized automatically
-     * and compiled using your adapter's own placeholder syntax (requires the
-     * adapter to implement `getPlaceholder()`; see {@link VSSql}).
+     * and compiled using your adapter's own placeholder syntax.
      *
      * Set `options.modifying: true` for `INSERT`/`UPDATE`/`DELETE` statements.
      * Set `options.singleResult: true` to collapse an array result into its
@@ -377,14 +365,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                   : undefined;
 
         if (sqlFragment) {
-            if (!this.adapter.getPlaceholder) {
-                this.fail(
-                    "Your adapter did not implement the 'getPlaceholder' method, required to compile a 'VSSql' fragment or a 'vsPlaceholders' query; try updating your adapter to a newer version.",
-                    VSRepoErrorType.VALIDATOR,
-                );
-            }
-
-            const compiled = sqlFragment.compile(index => this.adapter.getPlaceholder!(index));
+            const compiled = sqlFragment.compile(index => this.adapter.getPlaceholder(index));
             query = compiled.text;
             args = compiled.args;
         } else if (typeof queryOrSql === "string") {

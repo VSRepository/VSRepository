@@ -196,7 +196,7 @@ export abstract class VSRepoAdapter<T> {
     public getPkName?(): string;
 
     /**
-     * Optional method for the adapter to declare the placeholder syntax its
+     * Method for the adapter to declare the placeholder syntax its
      * database/driver expects in a raw `query()` string, given the 0-based
      * position of the parameter in the `args` array (e.g. Postgres would
      * return `` `$${index + 1}` ``, SQLite/MySQL would ignore `index` and
@@ -206,5 +206,5 @@ export abstract class VSRepoAdapter<T> {
      * fragment (built with `VSSql.sql`/`raw`/`join`/`empty`) in addition to a
      * plain string: without it, passing a `VSSql` fragment throws.
      */
-    public getPlaceholder?(index: number): string;
+    public abstract getPlaceholder(index: number): string;
 }

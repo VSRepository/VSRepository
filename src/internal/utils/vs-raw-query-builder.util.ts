@@ -30,13 +30,13 @@ interface CteClause {
 /**
  * Fluent, SQL-agnostic builder for hand-written **`SELECT`** queries whose shape is only known
  * at runtime, but whose SQL is too specific (window functions, CTEs referenced elsewhere,
- * vendor-specific syntax, ...) to express through {@link VSQueryBuilder}'s `where`/`relations`
- * model. Compiles down to a single {@link VSSql} fragment — get one from
+ * vendor-specific syntax, ...) to express through `VSQueryBuilder`'s model.
+ * Compiles down to a single `VSSql` fragment — get one from
  * `VSRepository.createRawQueryBuilder()`.
  *
- * Nothing reaches the database until {@link VSRawQueryBuilder.execute} is called. The builder is
+ * Nothing reaches the database until `VSRawQueryBuilder.execute` is called. The builder is
  * **mutable**: every chained call changes the same instance and returns it. Use
- * {@link VSRawQueryBuilder.clone} to derive variations from a common base.
+ * `VSRawQueryBuilder.clone` to derive variations from a common base.
  *
  * @example
  * ```typescript
@@ -501,15 +501,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     private compileForAdapter(): { text: string; args: unknown[] } {
-        if (!this.adapter.getPlaceholder) {
-            throw new VSRepoError(
-                "Your adapter did not implement the 'getPlaceholder' method, required to compile a " +
-                    "'VSRawQueryBuilder'; try updating your adapter to a newer version.",
-                VSRepoErrorType.QUERY_BUILDER,
-            );
-        }
-
-        return this.toVSSql().compile(index => this.adapter.getPlaceholder!(index));
+        return this.toVSSql().compile(index => this.adapter.getPlaceholder(index));
     }
 
     /**

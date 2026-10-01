@@ -58,8 +58,8 @@ describe("VSSql", () => {
         });
 
         it("should work with any custom GetPlaceholderFn", () => {
-            const someIdentifier = randomBytes(1).toString("hex");
-            const someBase = randomInt(0, 5);
+            const someIdentifier = "LOL";
+            const someBase = 0;
             const anyCustomFn: GetPlaceholderFn = index => `${someIdentifier}-${index + someBase}`;
 
             const id = crypto.randomUUID();

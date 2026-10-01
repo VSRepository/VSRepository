@@ -51,14 +51,6 @@ export type VSRepoOptions<T, K> = {
      * `?1`, `?2`, ... (1-based, Spring Data JPA style). The same index may be
      * repeated (`?1 ... ?1`) to reuse the same argument more than once.
      *
-     * Compiled via `adapter.getPlaceholder()`, so the adapter must implement
-     * it — the constructor throws a `VSRepoError` if it's enabled and the
-     * adapter doesn't.
-     *
-     * This is independent of passing a `VSSql` fragment directly to
-     * `VSRepository.query()`, which always requires `getPlaceholder()`
-     * regardless of this option.
-     *
      * @default false
      */
     vsPlaceholders?: boolean;
