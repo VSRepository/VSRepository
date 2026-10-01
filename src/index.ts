@@ -22,6 +22,14 @@ export { AdapterErrorCode } from "./internal/enums/adapter-error-code.enum.js";
 
 // Public functions
 export { withDb } from "./internal/utils/with-db.util.js";
+export {
+    getVsPlaceholder,
+    getCockroachPlaceholder,
+    getMySqlPlaceholder,
+    getPostgresPlaceholder,
+    getSqlServerPlaceholder,
+    getSqlitePlaceholder,
+} from "./internal/utils/placeholder-fns.util.js";
 
 // Public types
 export type { VSRepoOptions } from "./types/vsrepo/vsrepo-options.type.js";
@@ -60,6 +68,7 @@ export type { RestrictMethodOptions } from "./types/utils/restrict-method-option
 export type { QueryArgs } from "./types/utils/query-args.type.js"; // * Talvez esse tipo seja descontinuado
 export type { VSRawQueryBuilderTarget } from "./types/vsrepo/vs-raw-query-builder-target.type.js";
 export type { VSRawQueryBuilderCteQuery } from "./types/vsrepo/vs-raw-query-builder-cte-query.type.js";
+export type { GetPlaceholderFn } from "./types/utils/get-placeholder-fn.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";
