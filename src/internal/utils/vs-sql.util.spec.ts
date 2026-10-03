@@ -1,4 +1,3 @@
-import { randomBytes, randomInt } from "node:crypto";
 import { getSqlitePlaceholder } from "./placeholder-fns.util.js";
 import { VSSql } from "./vs-sql.util.js";
 import { GetPlaceholderFn } from "../../types/utils/get-placeholder-fn.type.js";

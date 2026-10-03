@@ -109,11 +109,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         this.vsPlaceholders = optionsValidated.vsPlaceholders ?? false;
 
         this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softRemoveKey);
-        this.logger = new VSLogger(
-            optionsValidated.logLevel ?? VSLogLevel.WARN,
-            this.constructor.name + "Logger",
-            optionsValidated.logSlowThresholdMs,
-        );
+        this.logger = new VSLogger(optionsValidated.logLevel ?? VSLogLevel.WARN, this.constructor.name + "Logger");
         this.validator.setLogger(this.logger);
 
         this.logger.logInfo(

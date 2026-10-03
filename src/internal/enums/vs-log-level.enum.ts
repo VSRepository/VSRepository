@@ -11,7 +11,7 @@ export enum VSLogLevel {
     DEBUG,
     /** High-level lifecycle events, such as repository initialization. */
     INFO,
-    /** Recoverable issues and slow operations (see `logSlowThresholdMs`). */
+    /** Recoverable issues. */
     WARN,
     /** Failures raised while executing an operation. */
     ERROR,
