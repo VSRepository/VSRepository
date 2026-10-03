@@ -132,7 +132,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
         VSRawQueryBuilder.validateNonEmptyString(alias, "alias");
 
-        return VSSql.sql`${base} AS ${VSSql.raw(alias)}`;
+        return VSSql.sql`${base} ${VSSql.raw(alias)}`;
     }
 
     private resolveCteQuery(query: VSRawQueryBuilderCteQuery): VSSql {
@@ -229,11 +229,11 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Same as {@link VSRawQueryBuilder.with}, but marks the whole `WITH` clause as `RECURSIVE`
+     * Same as `VSRawQueryBuilder.with`, but marks the whole `WITH` clause as `RECURSIVE`
      * (required by the SQL standard for a CTE that references itself in its own body — usually
      * a `VSSql` fragment with a `... UNION ALL SELECT ... FROM name ...` shape). One recursive
      * CTE is enough to make the whole clause `WITH RECURSIVE`, even when combined with other,
-     * non-recursive ones added via {@link VSRawQueryBuilder.with}.
+     * non-recursive ones added via `VSRawQueryBuilder.with`.
      *
      * @example
      * ```typescript
@@ -301,8 +301,8 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
     /**
      * Adds a `WHERE` condition. The first call sets the filter; every later call (`where` or
-     * {@link VSRawQueryBuilder.andWhere}) is `AND`-combined with it, each wrapped in parentheses.
-     * Use {@link VSRawQueryBuilder.orWhere} to `OR`-combine instead.
+     * `VSRawQueryBuilder.andWhere`) is `AND`-combined with it, each wrapped in parentheses.
+     * Use `VSRawQueryBuilder.orWhere` to `OR`-combine instead.
      */
     where(condition: string | VSSql): this {
         this.whereConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "where") });
@@ -310,7 +310,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         return this;
     }
 
-    /** Alias for {@link VSRawQueryBuilder.where} — `AND`-combines `condition` with the existing filter. */
+    /** Alias for `VSRawQueryBuilder.where` — `AND`-combines `condition` with the existing filter. */
     andWhere(condition: string | VSSql): this {
         this.whereConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "andWhere") });
 
@@ -325,7 +325,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Adds columns to `GROUP BY`. Each call appends; call {@link VSRawQueryBuilder.clone} from a
+     * Adds columns to `GROUP BY`. Each call appends; call `VSRawQueryBuilder.clone` from a
      * common base if you need independent variations.
      */
     groupBy(...columns: (string | VSSql)[]): this {
@@ -336,7 +336,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
     /**
      * Adds a `HAVING` condition, `AND`-combined with any previous one (same semantics as
-     * {@link VSRawQueryBuilder.where}). Use {@link VSRawQueryBuilder.orHaving} to `OR`-combine.
+     * `VSRawQueryBuilder.where`). Use `VSRawQueryBuilder.orHaving` to `OR`-combine.
      */
     having(condition: string | VSSql): this {
         this.havingConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "having") });
@@ -344,7 +344,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         return this;
     }
 
-    /** Alias for {@link VSRawQueryBuilder.having} — `AND`-combines `condition` with the existing `HAVING` filter. */
+    /** Alias for `VSRawQueryBuilder.having` — `AND`-combines `condition` with the existing `HAVING` filter. */
     andHaving(condition: string | VSSql): this {
         this.havingConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "andHaving") });
 
@@ -394,9 +394,9 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * Sets the client or transaction the query runs on, replacing the one given to
      * `createRawQueryBuilder()`.
      *
-     * It's lazy — it only matters when {@link VSRawQueryBuilder.execute} runs — so a builder can
+     * It's lazy — it only matters when `VSRawQueryBuilder.execute` runs — so a builder can
      * be created before a transaction and pointed at it from inside, or a
-     * {@link VSRawQueryBuilder.clone} can be pointed at another client without touching the
+     * `VSRawQueryBuilder.clone` can be pointed at another client without touching the
      * original builder.
      *
      * @example
@@ -451,7 +451,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Compiles every configured clause into a single {@link VSSql} fragment, in the order
+     * Compiles every configured clause into a single `VSSql` fragment, in the order
      * `WITH` (CTEs) -> `SELECT` -> `FROM` -> `JOIN`s -> `WHERE` -> `GROUP BY` -> `HAVING` -> `ORDER BY`
      * -> `LIMIT` -> `OFFSET`. Nothing runs by itself — splice the result into another `VSSql`
      * fragment as a subquery, or pass it to `VSRepository.query()`.
@@ -507,8 +507,8 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     /**
      * Compiles the builder down to a plain SQL string, rendered with the adapter's own
      * placeholder syntax (e.g. `$1`, `$2`, ...). Values themselves are **not** interpolated into
-     * the string — use {@link VSRawQueryBuilder.toVSSql} (`.compile()`) or
-     * {@link VSRawQueryBuilder.execute} if you also need the parameter values/to run the query.
+     * the string — use `VSRawQueryBuilder.toVSSql` (`.compile()`) or
+     * `VSRawQueryBuilder.execute` if you also need the parameter values/to run the query.
      */
     toSql(): string {
         return this.compileForAdapter().text;

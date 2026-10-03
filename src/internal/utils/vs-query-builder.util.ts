@@ -91,12 +91,10 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         return this.mergeWheresResolver.resolve(this.seeMode, this.whereFilter ?? {});
     }
 
-    // * Log de debug dos passos do builder e das queries. O objeto só é serializado se o nível for DEBUG
     private trace(message: string, obj?: unknown): void {
         this.logger.logDebug(`VSQueryBuilder: ${message}`, obj);
     }
 
-    // * Nunca logar o `db` aqui (client/transação do ORM), só os parâmetros da query
     private async execute<R>(operation: string, params: Record<string, unknown>, run: () => Promise<R>): Promise<R> {
         this.trace(operation, { see: this.seeMode, ...params });
 

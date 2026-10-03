@@ -61,10 +61,7 @@ export class VSLogger {
         return `${ansiColor}${text}${ANSI.reset}`;
     }
 
-    // * Evita quebrar em BigInt (comum em counts/ids do Prisma)
     private stringfy(obj: any): string {
-        // const seen = new WeakSet<object>();
-
         return JSON.stringify(
             obj,
             (_key, value) => {
@@ -73,11 +70,6 @@ export class VSLogger {
                 if (value instanceof Error) {
                     return { name: value.name, message: value.message, stack: value.stack };
                 }
-
-                // if (typeof value === "object" && value !== null) {
-                //     if (seen.has(value)) return "[Circular]";
-                //     seen.add(value);
-                // }
 
                 return value;
             },
