@@ -399,4 +399,143 @@ describe("VSRawQueryBuilder", () => {
             expect(result.args).toEqual(["João", 18]);
         });
     });
+
+    describe("orderBy", () => {
+        it("should return a sql with de provided order", () => {
+            const result = qb.from("user").orderBy("id", "ASC").toSql();
+
+            expect(result).toBe("SELECT * FROM user ORDER BY id ASC");
+        });
+
+        it("should work with no direction provided", () => {
+            const result = qb.from("user").orderBy("id").toSql();
+
+            expect(result).toBe("SELECT * FROM user ORDER BY id");
+        });
+
+        it("should accept VSSql as column", () => {
+            const result = qb
+                .from("user")
+                .orderBy(VSSql.sql`id`, "DESC")
+                .toSql();
+
+            expect(result).toBe("SELECT * FROM user ORDER BY id DESC");
+        });
+
+        it.each([
+            { direction: "asc", uppercased: "ASC" },
+            { direction: "desc", uppercased: "DESC" },
+        ] as const)("should convert $direction to $uppercased", ({ direction, uppercased }) => {
+            const result = qb
+                .from("user")
+                .orderBy(VSSql.sql`id`, direction)
+                .toSql();
+
+            expect(result).toBe(`SELECT * FROM user ORDER BY id ${uppercased}`);
+        });
+
+        it("should throw VSRepoError with type VSRepoErrorType.QUERY_BUILDER", () => {
+            let thrown: any;
+
+            try {
+                const _result = qb.orderBy("");
+                throw new Error("never");
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+
+        it("should combine with an pre-existing orderBy", () => {
+            const result = qb
+                .from("user")
+                .orderBy("name")
+                .orderBy(VSSql.sql`id`, "DESC")
+                .orderBy(VSSql.sql`age`)
+                .toSql();
+
+            expect(result).toBe("SELECT * FROM user ORDER BY name, id DESC, age");
+        });
+
+        it("should accept OrderTuple array as the first param", () => {
+            const result = qb
+                .from("user")
+                .orderBy([["name", "asc"], [VSSql.sql`id`, "DESC"], [VSSql.sql`age`]])
+                .toSql();
+
+            expect(result).toBe("SELECT * FROM user ORDER BY name ASC, id DESC, age");
+        });
+    });
+
+    describe("limit/offset", () => {
+        it.each([
+            { name: "LIMIT", method: (param: number) => qb.from("user").limit(param) },
+            { name: "OFFSET", method: (param: number) => qb.from("user").offset(param) },
+        ])("should set the provided param as $name", ({ method, name }) => {
+            const result = method(10).toVSSql().compile();
+
+            expect(result.text).toBe(`SELECT * FROM user ${name} ?1`);
+            expect(result.args).toEqual([10]);
+        });
+
+        it.each([
+            { name: "LIMIT", method: (param: number) => qb.from("user").limit(20).limit(30).limit(param) },
+            { name: "OFFSET", method: (param: number) => qb.from("user").offset(20).offset(30).offset(param) },
+        ])("should replace any pre-existing $name", ({ method, name }) => {
+            const result = method(10).toVSSql().compile();
+
+            expect(result.text).toBe(`SELECT * FROM user ${name} ?1`);
+            expect(result.args).toEqual([10]);
+        });
+
+        it.each([
+            { name: "LIMIT", method: (param: number) => qb.from("user").limit(param) },
+            { name: "OFFSET", method: (param: number) => qb.from("user").offset(param) },
+        ])("should throw if the provided $name is not integer", ({ method }) => {
+            let thrown: any;
+
+            try {
+                const _result = method(10.5);
+                throw new Error("never");
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+
+        it.each([
+            { name: "LIMIT", method: (param: number) => qb.from("user").limit(param) },
+            { name: "OFFSET", method: (param: number) => qb.from("user").offset(param) },
+        ])("should throw if the provided $name is negative", ({ method }) => {
+            let thrown: any;
+
+            try {
+                const _result = method(-5);
+                throw new Error("never");
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+
+        it("should combine LIMIT with OFFSET if both are provided", () => {
+            const result = qb.from("user").limit(20).offset(40).toVSSql().compile();
+
+            expect(result.text).toBe(`SELECT * FROM user LIMIT ?1 OFFSET ?2`);
+            expect(result.args).toEqual([20, 40]);
+        });
+
+        it("should ignore the order LIMIT and OFFSET are provided", () => {
+            const result = qb.from("user").offset(40).limit(20).toVSSql().compile();
+
+            expect(result.text).toBe(`SELECT * FROM user LIMIT ?1 OFFSET ?2`);
+            expect(result.args).toEqual([20, 40]);
+        });
+    });
 });
