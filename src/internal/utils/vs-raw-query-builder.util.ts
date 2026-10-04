@@ -1,4 +1,6 @@
 import { VSRepoError } from "../../errors/VSRepoError.js";
+import { OrderTuple } from "../../types/utils/order-tuple.type.js";
+import { SortDirection } from "../../types/utils/ordering.type.js";
 import { VSRawQueryBuilderCteQuery } from "../../types/vsrepo/vs-raw-query-builder-cte-query.type.js";
 import { VSRawQueryBuilderTarget } from "../../types/vsrepo/vs-raw-query-builder-target.type.js";
 import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
@@ -359,13 +361,20 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Adds a column to `ORDER BY`. Each call appends, in order, so call it once per column for a
-     * multi-column ordering.
+     * Adds a column or a list of columns to `ORDER BY`.
      */
-    orderBy(column: string | VSSql, direction?: "asc" | "desc" | "ASC" | "DESC"): this {
-        const base = VSRawQueryBuilder.toFragment(column, "orderBy");
+    orderBy(column: string | VSSql, direction?: SortDirection): this;
+    orderBy(orders: OrderTuple[]): this;
+    orderBy(columnOrOrders: string | VSSql | OrderTuple[], direction?: SortDirection): this {
+        const orders: OrderTuple[] = Array.isArray(columnOrOrders) ? columnOrOrders : [[columnOrOrders, direction]];
 
-        this.orderByClauses.push(direction ? VSSql.sql`${base} ${VSSql.raw(direction.toUpperCase())}` : base);
+        for (let i = 0; i < orders.length; i++) {
+            const order = orders[i]!;
+
+            const base = VSRawQueryBuilder.toFragment(order[0], "orderBy");
+
+            this.orderByClauses.push(order[1] ? VSSql.sql`${base} ${VSSql.raw(order[1].toUpperCase())}` : base);
+        }
 
         return this;
     }
@@ -528,9 +537,14 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         const start = this.logger.startPerformLog("run raw query builder execute");
 
         try {
-            return await this.adapter.query<T>(text, { args, db: this.db, modifying: false });
-        } finally {
+            const result = await this.adapter.query<T>(text, { args, db: this.db, modifying: false });
             this.logger.endPerformLog(start);
+
+            return result;
+        } catch (err) {
+            this.logger.endPerformLog(start);
+
+            throw err;
         }
     }
 }

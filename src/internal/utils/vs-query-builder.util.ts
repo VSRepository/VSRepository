@@ -101,9 +101,14 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         const start = this.logger.startPerformLog(`run query builder ${operation}`);
 
         try {
-            return await run();
-        } finally {
+            const result = await run();
             this.logger.endPerformLog(start);
+
+            return result;
+        } catch (err) {
+            this.logger.endPerformLog(start);
+
+            throw err;
         }
     }
 

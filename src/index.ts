@@ -69,6 +69,7 @@ export type { QueryArgs } from "./types/utils/query-args.type.js"; // * Talvez e
 export type { VSRawQueryBuilderTarget } from "./types/vsrepo/vs-raw-query-builder-target.type.js";
 export type { VSRawQueryBuilderCteQuery } from "./types/vsrepo/vs-raw-query-builder-cte-query.type.js";
 export type { GetPlaceholderFn } from "./types/utils/get-placeholder-fn.type.js";
+export type { OrderTuple } from "./types/utils/order-tuple.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";
