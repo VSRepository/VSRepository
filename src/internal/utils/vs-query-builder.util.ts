@@ -112,22 +112,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         }
     }
 
-    private setOptions(options: Omit<AdapterMethodOptions<Entity>, "db">): void {
-        this.options = options;
-    }
-
-    private setWhereFilter(whereFilter?: VSRepoWhere<Entity>): void {
-        this.whereFilter = whereFilter;
-    }
-
-    private setDistinct(distinct?: KeysOfType<Entity, Primitive>[]): void {
-        this.distinct = distinct;
-    }
-
-    private setSeeMode(seeMode: SeeMode): void {
-        this.seeMode = seeMode;
-    }
-
     /**
      * Sets the client or transaction the query runs on, replacing the one given to `createQueryBuilder()`.
      *
@@ -290,10 +274,10 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
             this.logger,
         );
 
-        qbClone.setOptions(structuredClone(this.options));
-        qbClone.setWhereFilter(this.whereFilter);
-        qbClone.setDistinct(this.distinct);
-        qbClone.setSeeMode(this.seeMode);
+        qbClone.options = structuredClone(this.options);
+        qbClone.whereFilter = this.whereFilter;
+        qbClone.distinct = this.distinct;
+        qbClone.seeMode = this.seeMode;
 
         this.trace("clone");
 

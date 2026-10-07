@@ -9,8 +9,8 @@ import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
 import { VSLogger } from "./vs-logger.util.js";
 import { VSSql } from "./vs-sql.util.js";
 
-type JoinType = "INNER" | "LEFT" | "RIGHT" | "FULL";
-type Connector = "AND" | "OR";
+type JoinType = "inner" | "left" | "right" | "full";
+type Connector = "and" | "or";
 
 interface JoinClause {
     type: JoinType;
@@ -30,7 +30,7 @@ interface CteClause {
 }
 
 /**
- * Fluent, SQL-agnostic builder for hand-written **`SELECT`** queries whose shape is only known
+ * Fluent, SQL-agnostic builder for hand-written **`select`** queries whose shape is only known
  * at runtime, but whose SQL is too specific (window functions, CTEs referenced elsewhere,
  * vendor-specific syntax, ...) to express through `VSQueryBuilder`'s model.
  * Compiles down to a single `VSSql` fragment — get one from
@@ -99,7 +99,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
     /** Converts a raw string into a `VSSql.raw` fragment (validating it isn't empty/blank first,
      * since that would silently compile into broken SQL — e.g. a trailing comma or an empty
-     * `WHERE ()`) or passes an already-built `VSSql` fragment through untouched.
+     * `where ()`) or passes an already-built `VSSql` fragment through untouched.
      *
      * @param context Name of the calling method/argument, used in the `VSRepoError` message. */
     private static toFragment(value: string | VSSql, context: string): VSSql {
@@ -146,7 +146,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
         for (let i = 1; i < conditions.length; i++) {
             const { connector, sql } = conditions[i]!;
-            result = connector === "AND" ? VSSql.sql`${result} AND (${sql})` : VSSql.sql`${result} OR (${sql})`;
+            result = connector === "and" ? VSSql.sql`${result} and (${sql})` : VSSql.sql`${result} or (${sql})`;
         }
 
         return result;
@@ -165,10 +165,10 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * Sets the columns to select, replacing any previous `select`. Each column is either a raw,
      * trusted string (an identifier, passed through as-is — like `VSSql.raw`, never pass
      * user-controlled input) or a `VSSql` fragment for anything parameterized or aliased
-     * (**VSSql.sql\`count(*) AS total\`**).
+     * (**VSSql.sql\`count(*) as total\`**).
      *
      * @param columns One or more columns/expressions. `select()` with no arguments is equivalent
-     * to `SELECT *`.
+     * to `select *`.
      */
     select(...columns: (string | VSSql)[]): this {
         this.selectColumns = columns.length
@@ -179,11 +179,11 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Sets the `FROM` target, replacing any previous one.
+     * Sets the `from` target, replacing any previous one.
      *
      * @param target A raw table name, a `VSSql` fragment, or another `VSRawQueryBuilder`
      * (compiled inline as a subquery, wrapped in parentheses).
-     * @param alias Optional alias, appended as `AS alias` (raw, trusted text).
+     * @param alias Optional alias, appended as `as alias` (raw, trusted text).
      */
     from(target: VSRawQueryBuilderTarget, alias?: string): this {
         this.fromTarget = this.resolveTarget(target, "from", alias);
@@ -207,13 +207,13 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Adds a `WITH` (common table expression). Each call adds one CTE; call it
-     * again to add more — they're all listed under a single `WITH`, in the order added.
+     * Adds a `with` (common table expression). Each call adds one CTE; call it
+     * again to add more — they're all listed under a single `with`, in the order added.
      *
      * @param name Name the CTE is referenced by elsewhere in the query (raw, trusted text).
      * @param query The CTE's body: a `VSRawQueryBuilder`, a subquery function, or a `VSSql` fragment — needed for
-     * anything a single `SELECT` builder can't express (e.g. a `UNION`).
-     * @param columns Optional explicit column list, rendered as `name(col1, col2) AS (...)`.
+     * anything a single `select` builder can't express (e.g. a `union`).
+     * @param columns Optional explicit column list, rendered as `name(col1, col2) as (...)`.
      *
      * @example
      * ```typescript
@@ -231,10 +231,10 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Same as `VSRawQueryBuilder.with`, but marks the whole `WITH` clause as `RECURSIVE`
+     * Same as `VSRawQueryBuilder.with`, but marks the whole `with` clause as `recursive`
      * (required by the SQL standard for a CTE that references itself in its own body — usually
-     * a `VSSql` fragment with a `... UNION ALL SELECT ... FROM name ...` shape). One recursive
-     * CTE is enough to make the whole clause `WITH RECURSIVE`, even when combined with other,
+     * a `VSSql` fragment with a `... union all select ... from name ...` shape). One recursive
+     * CTE is enough to make the whole clause `with recursive`, even when combined with other,
      * non-recursive ones added via `VSRawQueryBuilder.with`.
      *
      * @example
@@ -244,10 +244,10 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      *     .withRecursive(
      *         "subordinates",
      *         VSSql.sql`
-     *             SELECT id, manager_id, 1 AS depth FROM employee WHERE id = ${managerId}
-     *             UNION ALL
-     *             SELECT e.id, e.manager_id, s.depth + 1 FROM employee e
-     *             INNER JOIN subordinates s ON e.manager_id = s.id
+     *             select id, manager_id, 1 as depth from employee where id = ${managerId}
+     *             union all
+     *             select e.id, e.manager_id, s.depth + 1 from employee e
+     *             inner join subordinates s on e.manager_id = s.id
      *         `,
      *         ["id", "manager_id", "depth"],
      *     )
@@ -274,60 +274,60 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Adds an `INNER JOIN`.
+     * Adds an `inner join`.
      */
     innerJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("INNER", target, alias, on);
+        return this.addJoin("inner", target, alias, on);
     }
 
     /**
-     * Adds a `LEFT JOIN`.
+     * Adds a `left join`.
      */
     leftJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("LEFT", target, alias, on);
+        return this.addJoin("left", target, alias, on);
     }
 
     /**
-     * Adds a `RIGHT JOIN`.
+     * Adds a `right join`.
      */
     rightJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("RIGHT", target, alias, on);
+        return this.addJoin("right", target, alias, on);
     }
 
     /**
-     * Adds a `FULL JOIN`.
+     * Adds a `full join`.
      */
     fullJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("FULL", target, alias, on);
+        return this.addJoin("full", target, alias, on);
     }
 
     /**
-     * Adds a `WHERE` condition. The first call sets the filter; every later call (`where` or
-     * `VSRawQueryBuilder.andWhere`) is `AND`-combined with it, each wrapped in parentheses.
-     * Use `VSRawQueryBuilder.orWhere` to `OR`-combine instead.
+     * Adds a `where` condition. The first call sets the filter; every later call (`where` or
+     * `VSRawQueryBuilder.andWhere`) is `and`-combined with it, each wrapped in parentheses.
+     * Use `VSRawQueryBuilder.orWhere` to `or`-combine instead.
      */
     where(condition: string | VSSql): this {
-        this.whereConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "where") });
+        this.whereConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "where") });
 
         return this;
     }
 
-    /** Alias for `VSRawQueryBuilder.where` — `AND`-combines `condition` with the existing filter. */
+    /** Alias for `VSRawQueryBuilder.where` — `and`-combines `condition` with the existing filter. */
     andWhere(condition: string | VSSql): this {
-        this.whereConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "andWhere") });
+        this.whereConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "andWhere") });
 
         return this;
     }
 
-    /** `OR`-combines `condition` with the existing `WHERE` filter. */
+    /** `or`-combines `condition` with the existing `where` filter. */
     orWhere(condition: string | VSSql): this {
-        this.whereConditions.push({ connector: "OR", sql: VSRawQueryBuilder.toFragment(condition, "orWhere") });
+        this.whereConditions.push({ connector: "or", sql: VSRawQueryBuilder.toFragment(condition, "orWhere") });
 
         return this;
     }
 
     /**
-     * Adds columns to `GROUP BY`. Each call appends; call `VSRawQueryBuilder.clone` from a
+     * Adds columns to `group by`. Each call appends; call `VSRawQueryBuilder.clone` from a
      * common base if you need independent variations.
      */
     groupBy(...columns: (string | VSSql)[]): this {
@@ -337,31 +337,31 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Adds a `HAVING` condition, `AND`-combined with any previous one (same semantics as
-     * `VSRawQueryBuilder.where`). Use `VSRawQueryBuilder.orHaving` to `OR`-combine.
+     * Adds a `having` condition, `and`-combined with any previous one (same semantics as
+     * `VSRawQueryBuilder.where`). Use `VSRawQueryBuilder.orHaving` to `or`-combine.
      */
     having(condition: string | VSSql): this {
-        this.havingConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "having") });
+        this.havingConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "having") });
 
         return this;
     }
 
-    /** Alias for `VSRawQueryBuilder.having` — `AND`-combines `condition` with the existing `HAVING` filter. */
+    /** Alias for `VSRawQueryBuilder.having` — `and`-combines `condition` with the existing `having` filter. */
     andHaving(condition: string | VSSql): this {
-        this.havingConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "andHaving") });
+        this.havingConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "andHaving") });
 
         return this;
     }
 
-    /** `OR`-combines `condition` with the existing `HAVING` filter. */
+    /** `or`-combines `condition` with the existing `having` filter. */
     orHaving(condition: string | VSSql): this {
-        this.havingConditions.push({ connector: "OR", sql: VSRawQueryBuilder.toFragment(condition, "orHaving") });
+        this.havingConditions.push({ connector: "or", sql: VSRawQueryBuilder.toFragment(condition, "orHaving") });
 
         return this;
     }
 
     /**
-     * Adds a column or a list of columns to `ORDER BY`.
+     * Adds a column or a list of columns to `order by`.
      */
     orderBy(column: string | VSSql, direction?: SortDirection): this;
     orderBy(orders: OrderTuple[]): this;
@@ -453,16 +453,16 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         const ctes = this.cteClauses.map(({ name, columns, query }) => {
             const columnList = columns?.length ? VSSql.sql`(${VSSql.raw(columns.join(", "))}) ` : VSSql.empty;
 
-            return VSSql.sql`${VSSql.raw(name)} ${columnList}AS (${query})`;
+            return VSSql.sql`${VSSql.raw(name)} ${columnList}as (${query})`;
         });
 
-        return VSSql.sql`WITH ${this.recursiveWith ? VSSql.raw("RECURSIVE ") : VSSql.empty}${VSSql.join(ctes, ", ")}`;
+        return VSSql.sql`with ${this.recursiveWith ? VSSql.raw("recursive ") : VSSql.empty}${VSSql.join(ctes, ", ")}`;
     }
 
     /**
      * Compiles every configured clause into a single `VSSql` fragment, in the order
-     * `WITH` (CTEs) -> `SELECT` -> `FROM` -> `JOIN`s -> `WHERE` -> `GROUP BY` -> `HAVING` -> `ORDER BY`
-     * -> `LIMIT` -> `OFFSET`. Nothing runs by itself — splice the result into another `VSSql`
+     * `with` (CTEs) -> `select` -> `from` -> `join`s -> `where` -> `group by` -> `having` -> `order by`
+     * -> `limit` -> `offset`. Nothing runs by itself — splice the result into another `VSSql`
      * fragment as a subquery, or pass it to `VSRepository.query()`.
      */
     toVSSql(): VSSql {
@@ -472,34 +472,34 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
         const select = this.selectColumns.length ? VSSql.join(this.selectColumns, ", ") : VSSql.raw("*");
 
-        let query = VSSql.sql`SELECT ${select} FROM ${this.fromTarget}`;
+        let query = VSSql.sql`select ${select} from ${this.fromTarget}`;
 
         for (const { type, target, on } of this.joinClauses) {
-            query = VSSql.sql`${query} ${VSSql.raw(`${type} JOIN`)} ${target} ON ${on}`;
+            query = VSSql.sql`${query} ${VSSql.raw(`${type} join`)} ${target} on ${on}`;
         }
 
         if (this.whereConditions.length) {
-            query = VSSql.sql`${query} WHERE ${VSRawQueryBuilder.combine(this.whereConditions)}`;
+            query = VSSql.sql`${query} where ${VSRawQueryBuilder.combine(this.whereConditions)}`;
         }
 
         if (this.groupByColumns.length) {
-            query = VSSql.sql`${query} GROUP BY ${VSSql.join(this.groupByColumns, ", ")}`;
+            query = VSSql.sql`${query} group by ${VSSql.join(this.groupByColumns, ", ")}`;
         }
 
         if (this.havingConditions.length) {
-            query = VSSql.sql`${query} HAVING ${VSRawQueryBuilder.combine(this.havingConditions)}`;
+            query = VSSql.sql`${query} having ${VSRawQueryBuilder.combine(this.havingConditions)}`;
         }
 
         if (this.orderByClauses.length) {
-            query = VSSql.sql`${query} ORDER BY ${VSSql.join(this.orderByClauses, ", ")}`;
+            query = VSSql.sql`${query} order by ${VSSql.join(this.orderByClauses, ", ")}`;
         }
 
         if (this.limitValue !== undefined) {
-            query = VSSql.sql`${query} LIMIT ${this.limitValue}`;
+            query = VSSql.sql`${query} limit ${this.limitValue}`;
         }
 
         if (this.offsetValue !== undefined) {
-            query = VSSql.sql`${query} OFFSET ${this.offsetValue}`;
+            query = VSSql.sql`${query} offset ${this.offsetValue}`;
         }
 
         if (this.cteClauses.length) {
