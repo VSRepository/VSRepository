@@ -413,15 +413,16 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * const qb = orderRepository.createRawQueryBuilder().select("*").from("order");
      *
      * await orderRepository.transaction(async tx => {
-     *     qb.setDb(tx);
-     *     return qb.execute();
+     *     return qb.setDb(tx).execute();
      * });
      * ```
      */
-    setDb(db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): void {
+    setDb(db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): this {
         this.db = db;
 
         this.trace("db replaced");
+
+        return this;
     }
 
     /**
