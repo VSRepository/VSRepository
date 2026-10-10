@@ -68,11 +68,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private readonly defaultOrdering?: Ordering<Entity>;
     private readonly vsPlaceholders: boolean;
 
-    /**
-     * Whether `resolveDynamicMethods` has already run once for this instance.
-     * Used to warn on redundant re-resolutions (e.g. calling it manually
-     * more than once, or on top of an already-eager resolution).
-     */
     private dynamicMethodsResolved = false;
 
     /**
@@ -106,7 +101,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
         this.softRemoveKey = optionsValidated.softRemoveKey;
         this.defaultOrdering = optionsValidated.defaultOrdering;
-        this.vsPlaceholders = optionsValidated.vsPlaceholders ?? false;
+        this.vsPlaceholders = optionsValidated.vsPlaceholders ?? true;
 
         this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softRemoveKey);
         this.logger = new VSLogger(optionsValidated.logLevel ?? VSLogLevel.WARN, this.constructor.name + "Logger");
@@ -356,7 +351,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         const sqlFragment: VSSql | undefined =
             queryOrSql instanceof VSSql
                 ? queryOrSql
-                : typeof queryOrSql === "string" && this.vsPlaceholders
+                : this.vsPlaceholders
                   ? VSPlaceholdersParser.parse(queryOrSql, args ?? [])
                   : undefined;
 

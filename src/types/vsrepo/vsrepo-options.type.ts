@@ -37,13 +37,13 @@ export type VSRepoOptions<T, K> = {
      */
     lazyDynamicMethods?: boolean;
     /**
-     * When `true`, raw SQL strings passed to `VSRepository.query()` and
+     * When `true` (or omited), raw SQL strings passed to `VSRepository.query()` and
      * `@QueryMethod` stop using your database's native placeholder syntax
      * and instead use VSRepository's own agnostic, positional placeholders —
      * `?1`, `?2`, ... (1-based, Spring Data JPA style). The same index may be
      * repeated (`?1 ... ?1`) to reuse the same argument more than once.
      *
-     * @default false
+     * @default true
      */
     vsPlaceholders?: boolean;
 };

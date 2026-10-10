@@ -33,7 +33,7 @@ export class DynamicMethodsResolver<T, K> {
         private readonly mergeWheresResolver: MergeWheresResolver<T>,
         private readonly validator: VSRepoValidator<T, K>,
         private readonly defaultOrdering?: Ordering<T>,
-        private readonly vsPlaceholders: boolean = false,
+        private readonly vsPlaceholders: boolean = true,
     ) {}
 
     private static keywordTemplate = (keyword: string, allowAtTheEnd = false) =>
