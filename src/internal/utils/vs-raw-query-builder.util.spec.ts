@@ -1,6 +1,9 @@
+import { VSRepoAdapterError } from "../../errors/VSRepoAdapterError.js";
 import { VSRepoError } from "../../errors/VSRepoError.js";
 import { VSRepoAdapter } from "../../VSRepoAdapter.js";
+import { AdapterErrorCode } from "../enums/adapter-error-code.enum.js";
 import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { getSqlitePlaceholder, getVsPlaceholder } from "./placeholder-fns.util.js";
 import { VSLogger } from "./vs-logger.util.js";
 import { VSRawQueryBuilder } from "./vs-raw-query-builder.util.js";
 import { VSSql } from "./vs-sql.util.js";
@@ -12,7 +15,7 @@ describe("VSRawQueryBuilder", () => {
     let qb: VSRawQueryBuilder;
 
     beforeEach(() => {
-        adapter = { getPlaceholder: vi.fn(), query: vi.fn() } as any;
+        adapter = { getPlaceholder: vi.fn(getVsPlaceholder), query: vi.fn() } as any;
         logger = { logDebug: vi.fn(), startPerformLog: vi.fn(), endPerformLog: vi.fn() } as any;
         qb = new VSRawQueryBuilder(db, adapter, logger);
     });
@@ -597,12 +600,20 @@ describe("VSRawQueryBuilder", () => {
         it.each([
             {
                 method: (columns: string[]) =>
-                    qb.from("user").with("test", sub => sub.select("*").from("order"), columns),
+                    qb
+                        .from("user")
+                        .with("test", new VSRawQueryBuilder(db, adapter, logger).select("*").from("order"), columns),
                 name: "with",
             },
             {
                 method: (columns: string[]) =>
-                    qb.from("user").withRecursive("test", sub => sub.select("*").from("order"), columns),
+                    qb
+                        .from("user")
+                        .withRecursive(
+                            "test",
+                            new VSRawQueryBuilder(db, adapter, logger).select("*").from("order").toVSSql(),
+                            columns,
+                        ),
                 name: "withRecursive",
             },
         ])("$name should accept columns", ({ method, name }) => {
@@ -611,6 +622,359 @@ describe("VSRawQueryBuilder", () => {
             expect(result).toBe(
                 `with${name === "withRecursive" ? " recursive" : ""} test (id, name) as (select * from order) select * from user`,
             );
+        });
+    });
+
+    describe("innerJoin/leftJoin/rightJoin/fullJoin", () => {
+        it.each([
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").innerJoin("post", "p", "p.user_id = u.id"),
+                name: "inner",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").leftJoin("post", "p", "p.user_id = u.id"),
+                name: "left",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").rightJoin("post", "p", "p.user_id = u.id"),
+                name: "right",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").fullJoin("post", "p", "p.user_id = u.id"),
+                name: "full",
+            },
+        ] as const)("$name join should add the provided join", ({ method, name }) => {
+            const result = method().toSql();
+
+            expect(result).toBe(`select u.id, p.name from user u ${name} join post p on p.user_id = u.id`);
+        });
+
+        it.each([
+            {
+                method: (target: VSSql) =>
+                    qb.select("u.id", "p.name").from("user", "u").innerJoin(target, "p", "p.user_id = u.id"),
+                name: "inner",
+            },
+            {
+                method: (target: VSSql) =>
+                    qb.select("u.id", "p.name").from("user", "u").leftJoin(target, "p", "p.user_id = u.id"),
+                name: "left",
+            },
+            {
+                method: (target: VSSql) =>
+                    qb.select("u.id", "p.name").from("user", "u").rightJoin(target, "p", "p.user_id = u.id"),
+                name: "right",
+            },
+            {
+                method: (target: VSSql) =>
+                    qb.select("u.id", "p.name").from("user", "u").fullJoin(target, "p", "p.user_id = u.id"),
+                name: "full",
+            },
+        ] as const)("$name should accept a VSSql as target", ({ method, name }) => {
+            const result = method(VSSql.sql`post`).toSql();
+
+            expect(result).toBe(`select u.id, p.name from user u ${name} join post p on p.user_id = u.id`);
+        });
+
+        it.each([
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").innerJoin("", "p", "p.user_id = u.id"),
+                name: "inner",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").leftJoin("", "p", "p.user_id = u.id"),
+                name: "left",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").rightJoin("", "p", "p.user_id = u.id"),
+                name: "right",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").fullJoin("", "p", "p.user_id = u.id"),
+                name: "full",
+            },
+        ] as const)("$name should throw if the provided target is empty", ({ method }) => {
+            let thrown: any;
+
+            try {
+                method();
+                throw new Error("never");
+            } catch (err) {
+                thrown = err;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+
+        it.each([
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").innerJoin("post", "", "p.user_id = u.id"),
+                name: "inner",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").leftJoin("post", "", "p.user_id = u.id"),
+                name: "left",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").rightJoin("post", "", "p.user_id = u.id"),
+                name: "right",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").fullJoin("post", "", "p.user_id = u.id"),
+                name: "full",
+            },
+        ] as const)("$name should throw if the provided alias is empty", ({ method }) => {
+            let thrown: any;
+
+            try {
+                method();
+                throw new Error("never");
+            } catch (err) {
+                thrown = err;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+
+        it.each([
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").innerJoin("post", "p", ""),
+                name: "inner",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").leftJoin("post", "p", ""),
+                name: "left",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").rightJoin("post", "p", ""),
+                name: "right",
+            },
+            {
+                method: () => qb.select("u.id", "p.name").from("user", "u").fullJoin("post", "p", ""),
+                name: "full",
+            },
+        ] as const)("$name should throw if the provided 'on' is empty", ({ method }) => {
+            let thrown: any;
+
+            try {
+                method();
+                throw new Error("never");
+            } catch (err) {
+                thrown = err;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+    });
+
+    describe("setDb", () => {
+        it("should replace the instance's db", () => {
+            const db2 = { db: 234 };
+
+            vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
+
+            qb.setDb(db2);
+
+            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("db replaced"), undefined);
+            expect((qb as any).db).toBe(db2);
+        });
+
+        it("should call the adapter with the provided db", async () => {
+            const db2 = { db: 234 };
+
+            vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
+            vi.spyOn(adapter, "query").mockResolvedValue([]);
+
+            await qb.from("user").setDb(db2).execute();
+
+            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("db replaced"), undefined);
+            expect((qb as any).db).toBe(db2);
+
+            expect(adapter.query).toHaveBeenCalledWith(expect.any(String), { args: [], db: db2, modifying: false });
+        });
+
+        it("should return the adapter's instance", () => {
+            const db2 = { db: 234 };
+
+            const result = qb.setDb(db2);
+
+            expect(result).toBe(qb);
+        });
+    });
+
+    describe("clone", () => {
+        it("should return a clone of the qb", () => {
+            vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
+
+            const qb2 = qb.select("id", "name", "age").from("user").limit(10).offset(2).where("active = true").clone();
+
+            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("clone"), undefined);
+            expect(qb2).not.toBe(qb);
+            expect(qb.toSql()).toEqual(qb2.toSql());
+        });
+
+        it("a change in a clone should not change the original instance", () => {
+            const qb2 = qb.select("id", "name", "age").from("user").limit(10).offset(2).where("active = true").clone();
+            qb2.from("person").limit(40);
+
+            const qb3 = qb2.clone().select("id");
+
+            expect(qb2).not.toBe(qb);
+            expect(qb2).not.toBe(qb3);
+            expect(qb.toSql()).not.toEqual(qb2.toSql());
+            expect(qb2.toSql()).not.toEqual(qb3.toSql());
+        });
+    });
+
+    describe("toSql", () => {
+        it("should return a SQL based on the provided args", () => {
+            const result = qb
+                .select("id", "name", "age")
+                .from("user")
+                .limit(10)
+                .offset(2)
+                .where("active = true")
+                .toSql();
+
+            expect(result).toBe("select id, name, age from user where (active = true) limit ?1 offset ?2");
+        });
+
+        it("should place the placeholders based on the adapter's GetPlaceholderFn", () => {
+            adapter.getPlaceholder = getSqlitePlaceholder;
+
+            const result = qb
+                .select("id", "name", "age")
+                .from("user")
+                .limit(10)
+                .offset(2)
+                .where("active = true")
+                .toSql();
+
+            expect(result).toBe("select id, name, age from user where (active = true) limit ? offset ?");
+        });
+
+        it("should throw VSRepoError if the 'from' was not provided", () => {
+            let thrown: any;
+
+            try {
+                qb.select("id", "name", "age").limit(10).offset(2).where("active = true").toSql();
+            } catch (err) {
+                thrown = err;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+    });
+
+    describe("toVSSql", () => {
+        it("should return a VSSql", () => {
+            const result = qb
+                .select("id", "name", "age")
+                .from("user")
+                .limit(10)
+                .offset(2)
+                .where("active = true")
+                .toVSSql();
+
+            expect(result).toBeInstanceOf(VSSql);
+            expect(result.compile()).toEqual({
+                text: "select id, name, age from user where (active = true) limit ?1 offset ?2",
+                args: [10, 2],
+            });
+        });
+
+        it("should throw VSRepoError if the 'from' was not provided", () => {
+            let thrown: any;
+
+            try {
+                qb.select("id", "name", "age").limit(10).offset(2).where("active = true").toVSSql();
+            } catch (err) {
+                thrown = err;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+    });
+
+    describe("execute", () => {
+        it("should run a query with the provided args", async () => {
+            const resolved = [{ a: 1 }, { b: 2 }];
+            const start: any = Symbol();
+
+            vi.spyOn(adapter, "query").mockResolvedValue(resolved);
+            vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
+            vi.spyOn(logger, "startPerformLog").mockReturnValue(start);
+            vi.spyOn(logger, "endPerformLog").mockReturnValue();
+
+            const result = await qb
+                .select("id", "name", "age")
+                .from("user")
+                .limit(10)
+                .offset(2)
+                .where("active = true")
+                .execute();
+
+            const text = "select id, name, age from user where (active = true) limit ?1 offset ?2";
+            const args = [10, 2];
+
+            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("execute"), {
+                query: text,
+                args,
+            });
+            expect(logger.startPerformLog).toHaveBeenCalledWith("run raw query builder execute");
+            expect(logger.endPerformLog).toHaveBeenCalledWith(start);
+            expect(adapter.query).toHaveBeenCalledWith(text, { args, db, modifying: false });
+            expect(result).toBe(resolved);
+        });
+
+        it("should propagate the adapter's error", async () => {
+            const start: any = Symbol();
+
+            vi.spyOn(adapter, "query").mockRejectedValue(
+                new VSRepoAdapterError("some error", AdapterErrorCode.UNKNOWN, null),
+            );
+            vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
+            vi.spyOn(logger, "startPerformLog").mockReturnValue(start);
+            vi.spyOn(logger, "endPerformLog").mockReturnValue();
+
+            await expect(
+                qb.select("id", "name", "age").from("user").limit(10).offset(2).where("active = true").execute(),
+            ).rejects.toThrow(VSRepoAdapterError);
+
+            const text = "select id, name, age from user where (active = true) limit ?1 offset ?2";
+            const args = [10, 2];
+
+            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("execute"), {
+                query: text,
+                args,
+            });
+            expect(logger.startPerformLog).toHaveBeenCalledWith("run raw query builder execute");
+            expect(logger.endPerformLog).toHaveBeenCalledWith(start);
+            expect(adapter.query).toHaveBeenCalledWith(text, { args, db, modifying: false });
+        });
+
+        it("should throw if no from was provided", async () => {
+            const resolved = [{ a: 1 }, { b: 2 }];
+            const start: any = Symbol();
+
+            vi.spyOn(adapter, "query").mockRejectedValue(resolved);
+            vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
+            vi.spyOn(logger, "startPerformLog").mockReturnValue(start);
+            vi.spyOn(logger, "endPerformLog").mockReturnValue();
+
+            await expect(
+                qb.select("id", "name", "age").limit(10).offset(2).where("active = true").execute(),
+            ).rejects.toThrow(VSRepoError);
+
+            expect(logger.logDebug).not.toHaveBeenCalled();
+            expect(logger.startPerformLog).not.toHaveBeenCalled();
+            expect(logger.endPerformLog).not.toHaveBeenCalled();
+            expect(adapter.query).not.toHaveBeenCalled();
         });
     });
 });
