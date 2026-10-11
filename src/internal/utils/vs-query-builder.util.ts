@@ -126,15 +126,16 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * const qb = userRepository.createQueryBuilder().where({ active: true });
      *
      * await userRepository.transaction(async tx => {
-     *     qb.setDb(tx);
-     *     return qb.getResult();
+     *     return qb.setDb(tx).getResult();
      * });
      * ```
      */
-    setDb(db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): void {
+    setDb(db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): this {
         this.db = db;
 
         this.trace("db replaced");
+
+        return this;
     }
 
     /**
