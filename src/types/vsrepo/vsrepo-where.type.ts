@@ -1,12 +1,8 @@
+import { DecimalLike } from "../utils/decimal-like.type.js";
 import { Primitive } from "../utils/primitive.type.js";
 
 /**
  * Operators available to filter a single scalar field's value.
- *
- * The set of operators offered narrows based on `V`'s type: numbers and dates
- * additionally get `between`; strings additionally get `contains`, `startsWith`,
- * `endsWith`, and `ignoreCase`; every non-boolean type additionally gets
- * `in`, `notIn`, `gt`, `gte`, `lt`, and `lte`.
  *
  * @template V Type of the field's value.
  *
@@ -17,25 +13,27 @@ export type VSRepoFieldOperators<V> = {
     equals?: V;
     /** Negates the given value or operator object. */
     not?: V | VSRepoFieldOperators<V>;
-} & (V extends number | Date
-    ? {
-          /** Matches records where the field is between the given `[min, max]` tuple, inclusive. */
-          between?: [V, V];
-      }
+} & (NonNullable<V> extends infer U
+    ? (U extends number | bigint | Date | DecimalLike
+          ? {
+                /** Matches records where the field is between the given `[min, max]` tuple, inclusive. */
+                between?: [Exclude<V, null | undefined>, Exclude<V, null | undefined>];
+            }
+          : {}) &
+          (U extends string
+              ? {
+                    /** Matches records where the field contains the given substring. */
+                    contains?: string;
+                    /** Matches records where the field starts with the given substring. */
+                    startsWith?: string;
+                    /** Matches records where the field ends with the given substring. */
+                    endsWith?: string;
+                    /** Applies the string filters above case-insensitively. */
+                    ignoreCase?: boolean;
+                }
+              : {})
     : {}) &
-    (V extends string
-        ? {
-              /** Matches records where the field contains the given substring. */
-              contains?: string;
-              /** Matches records where the field starts with the given substring. */
-              startsWith?: string;
-              /** Matches records where the field ends with the given substring. */
-              endsWith?: string;
-              /** Applies the string filters above case-insensitively. */
-              ignoreCase?: boolean;
-          }
-        : {}) &
-    (V extends boolean
+    ([NonNullable<V>] extends [boolean]
         ? {}
         : {
               /** Matches records where the field is one of the given values. */
@@ -77,7 +75,7 @@ export type VSRepoFieldWhere<V> = V | VSRepoFieldOperators<V>;
 export type VSRepoWherePlain<T> = {
     [P in keyof T]?: NonNullable<T[P]> extends Primitive
         ? VSRepoFieldWhere<T[P]>
-        : NonNullable<T[P]> extends Array<infer U>
+        : NonNullable<T[P]> extends ReadonlyArray<infer U>
           ? U extends object
               ? {
                     /** Matches records where at least one related record matches the given filter. */
