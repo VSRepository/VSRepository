@@ -1,7 +1,8 @@
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
 
 /**
- * Single argument accepted by a method declared with `@QueryMethod`.
+ * Single argument accepted by a method declared with `@QueryMethod` and
+ * `{ singleArg: true }`.
  *
  * `args` are injected positionally into the raw SQL statement's placeholders,
  * allowing safe parameter injection instead of string-concatenating values
@@ -14,7 +15,7 @@ import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
  * @example
  * ```typescript
  * class UserRepository extends VSRepository<User, string> {
- *     @QueryMethod('SELECT * FROM "user" WHERE email = $1')
+ *     @QueryMethod('SELECT * FROM "user" WHERE email = $1', { singleArg: true })
  *     declare findByEmailRaw: (arg: QueryMethodArg<[email: string]>) => Promise<User[]>;
  * }
  *

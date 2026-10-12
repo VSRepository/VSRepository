@@ -65,7 +65,6 @@ export type { DecimalLike } from "./types/utils/decimal-like.type.js";
 export type { NumericKeys } from "./types/utils/numeric-keys.type.js";
 export type { NumericLike } from "./types/utils/numeric-like.type.js";
 export type { RestrictMethodOptions } from "./types/utils/restrict-method-options.type.js";
-export type { QueryArgs } from "./types/utils/query-args.type.js"; // * Talvez esse tipo seja descontinuado
 export type { VSRawQueryBuilderTarget } from "./types/vsrepo/vs-raw-query-builder-target.type.js";
 export type { VSRawQueryBuilderCteQuery } from "./types/vsrepo/vs-raw-query-builder-cte-query.type.js";
 export type { GetPlaceholderFn } from "./types/utils/get-placeholder-fn.type.js";

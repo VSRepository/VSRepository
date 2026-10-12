@@ -1066,13 +1066,24 @@ export class DynamicMethodsResolver<T, K> {
             const modifyingQueryMethod = method.modifying ?? false;
             const valueQueryMethod = method.value;
             const singleResult = method.singleResult ?? false;
-            const spreadArgsMode = method.spreadArgs;
+            const singleArgMode = method.singleArg ?? false;
 
             (instance as any)[originalKey] = async (...args: unknown[]) => {
                 let db: any;
                 let queryArgs: any[] | undefined;
 
-                if (spreadArgsMode) {
+                if (singleArgMode) {
+                    if (args.length > 1) {
+                        const errorMessage = `This query method was declared with singleArg = true, use a single QueryMethodArg instead`;
+                        this.logger.logError(`Cannot run '${String(originalKey)}': ${errorMessage}`);
+
+                        throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
+                    }
+
+                    const queryArg = (args[0] ?? {}) as QueryMethodArg;
+                    db = queryArg.db;
+                    queryArgs = queryArg.args;
+                } else {
                     const dbPos = args.at(-1);
                     if (dbPos instanceof DbArg) {
                         db = dbPos.getDb();
@@ -1080,17 +1091,6 @@ export class DynamicMethodsResolver<T, K> {
                     } else {
                         queryArgs = args;
                     }
-                } else {
-                    if (args.length > 1) {
-                        const errorMessage = `This query method was declared without spreadArgs = true, use a single QueryMethodArg instead`;
-                        this.logger.logError(`Cannot run '${String(originalKey)}': ${errorMessage}`);
-
-                        throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
-                    }
-
-                    const queryArg = args[0] as QueryMethodArg;
-                    db = queryArg.db;
-                    queryArgs = queryArg.args;
                 }
 
                 db ??= this.adapter.getDbClient();
@@ -1099,7 +1099,7 @@ export class DynamicMethodsResolver<T, K> {
                 let finalArgs = queryArgs;
 
                 if (this.vsPlaceholders) {
-                    const compiled = VSPlaceholdersParser.parse(valueQueryMethod, queryArgs ?? []).compile(index =>
+                    const compiled = VSPlaceholdersParser.parse(valueQueryMethod, queryArgs).compile(index =>
                         this.adapter.getPlaceholder(index),
                     );
                     finalQuery = compiled.text;

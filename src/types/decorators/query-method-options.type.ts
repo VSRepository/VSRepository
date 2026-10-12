@@ -29,11 +29,8 @@ export type QueryMethodOptions = {
     singleResult?: boolean;
 
     /**
-     * When `true`, the decorated method receives its SQL placeholder values
-     * as separate positional arguments (`method(a, b, c)`) instead of a
-     * single {@link QueryMethodArg} object (`method({ args: [a, b, c] })`).
-     * Type the declared field's parameters with {@link QueryArgs} to get
-     * autocompletion and arity checking for this call style.
+     * By default, the decorated method receives its SQL placeholder values
+     * as separate positional arguments (`method(a, b, c)`).
      *
      * To run the query against a specific client or transaction — instead
      * of the repository's default one — pass {@link DbArg} (built via
@@ -41,11 +38,11 @@ export type QueryMethodOptions = {
      * It's recognized by `instanceof`, so it never collides with a regular
      * positional argument, even one that happens to be an object.
      *
-     * When `false` (the default), calling the method with more than one
-     * argument throws, since it expects the single-object `QueryMethodArg`
-     * call style instead.
+     * When `true`, the method instead receives a single {@link QueryMethodArg}
+     * object (`method({ args: [a, b, c], db })`), and calling it with more
+     * than one argument throws.
      *
      * @default false
      */
-    spreadArgs?: boolean;
+    singleArg?: boolean;
 };

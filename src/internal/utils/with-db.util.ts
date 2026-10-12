@@ -3,7 +3,7 @@ import { DbArg } from "./db-arg.util.js";
 
 /**
  * Wraps a database client or transaction so it can be passed as the
- * trailing argument of a `@QueryMethod` declared with `{ spreadArgs: true }`,
+ * trailing argument of a `@QueryMethod` declared without `{ singleArg: true }`,
  * running that call against `db` instead of the repository's default
  * client — the same role `{ db }` plays in the single-object
  * `QueryMethodArg` call style.
