@@ -82,8 +82,7 @@
   },
   "dependencies": {
     "deepmerge": "^4.3.1",
-    "reflect-metadata": "^0.2.2",
-    "valibot": "^1.4.2"
+    "reflect-metadata": "^0.2.2"
   },
   "trustedDependencies": [
     "@parcel/watcher",

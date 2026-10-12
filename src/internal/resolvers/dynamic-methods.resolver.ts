@@ -18,20 +18,19 @@ import { QUERY_METHODS_KEY } from "../constants/query-methods-key.constant.js";
 import { VSLogLevel } from "../enums/vs-log-level.enum.js";
 import { uncapitalize } from "../utils/uncapitalize.util.js";
 import { VSLogger } from "../utils/vs-logger.util.js";
-import { VSRepoValidator } from "../validators/vsrepo.validator.js";
 import { MergeWheresResolver } from "./merge-wheres.resolver.js";
 import merge from "deepmerge";
 import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
 import { DEBUG_ARG_SYMBOL } from "../constants/debug-arg-symbol.constant.js";
 import { DbArg } from "../utils/db-arg.util.js";
 import { VSPlaceholdersParser } from "../utils/vs-placeholder-parser.util.js";
+import { QueryMethodArg } from "../../types/utils/query-method-arg.type.js";
 
 export class DynamicMethodsResolver<T, K> {
     constructor(
         private readonly logger: VSLogger,
         private readonly adapter: VSRepoAdapter<T>,
         private readonly mergeWheresResolver: MergeWheresResolver<T>,
-        private readonly validator: VSRepoValidator<T, K>,
         private readonly defaultOrdering?: Ordering<T>,
         private readonly vsPlaceholders: boolean = true,
     ) {}
@@ -92,13 +91,13 @@ export class DynamicMethodsResolver<T, K> {
         throw new VSRepoError(errorMessage, VSRepoErrorType.RESOLVER);
     }
 
-    private validateIndexedArg<R>(args: any[], positionIndex: number, validate: (value: unknown) => R): R {
+    private getValue<R>(args: any[], positionIndex: number): R {
         const value = args.at(positionIndex);
         if (value === DEBUG_ARG_SYMBOL) {
             return `<args>[${positionIndex < 0 ? args.length + positionIndex : positionIndex}]` as R;
         }
 
-        return validate(value);
+        return value;
     }
 
     private resolveDynamicMethodInfo(dynamicMethod: string) {
@@ -945,15 +944,11 @@ export class DynamicMethodsResolver<T, K> {
                     ignoreConflicts: dynamicMethodCustomization.ignoreConflicts,
                     ordering:
                         dynamicMethodCustomization.orderPosition !== undefined
-                            ? this.validateIndexedArg(args, dynamicMethodCustomization.orderPosition, value =>
-                                  this.validator.validateOrdering(value),
-                              )
+                            ? this.getValue(args, dynamicMethodCustomization.orderPosition)
                             : (dynamicMethodCustomization.injectOrdering ?? this.defaultOrdering),
                     pagination:
                         dynamicMethodCustomization.paginationPosition !== undefined
-                            ? this.validateIndexedArg(args, dynamicMethodCustomization.paginationPosition, value =>
-                                  this.validator.validatePagination(value),
-                              )
+                            ? this.getValue(args, dynamicMethodCustomization.paginationPosition)
                             : undefined,
                     dataPayload:
                         dynamicMethodInfo.dataIndex !== undefined ? args.at(dynamicMethodInfo.dataIndex) : undefined,
@@ -977,9 +972,7 @@ export class DynamicMethodsResolver<T, K> {
                 } else if (dynamicMethodInfo.onlyBaseWheres) {
                     vsrepoResolveArgsData.specificWhere =
                         dynamicMethodInfo.whereIndex !== undefined
-                            ? this.validateIndexedArg(args, dynamicMethodInfo.whereIndex, value =>
-                                  this.validator.validateWhere(value),
-                              )
+                            ? this.getValue(args, dynamicMethodInfo.whereIndex)
                             : {};
                 }
 
@@ -1018,7 +1011,7 @@ export class DynamicMethodsResolver<T, K> {
                     throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
                 } else if (args.length > dynamicMethodInfo.argsCount) {
                     const optionsArg = args[dynamicMethodInfo.argsCount];
-                    methodOptions = this.validator.validateMethodOptions(optionsArg);
+                    methodOptions = optionsArg;
                 } else {
                     args.push("1");
                 }
@@ -1094,9 +1087,10 @@ export class DynamicMethodsResolver<T, K> {
 
                         throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
                     }
-                    const queryArgValidated = this.validator.validateQueryMethodArg(args[0]);
-                    db = queryArgValidated.db;
-                    queryArgs = queryArgValidated.args;
+
+                    const queryArg = args[0] as QueryMethodArg;
+                    db = queryArg.db;
+                    queryArgs = queryArg.args;
                 }
 
                 db ??= this.adapter.getDbClient();

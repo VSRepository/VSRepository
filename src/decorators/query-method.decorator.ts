@@ -1,8 +1,5 @@
-import { VSRepoError } from "../errors/VSRepoError.js";
 import { QUERY_METHODS_KEY } from "../internal/constants/query-methods-key.constant.js";
-import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum.js";
 import { getOwnMetadataList } from "../internal/utils/get-own-metadata-list.util.js";
-import { DecoratorsValidator } from "../internal/validators/decorators.validator.js";
 import type { QueryMethodOptions } from "../types/decorators/query-method-options.type.js";
 import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
 
@@ -37,16 +34,10 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  * @publicApi
  */
 export function QueryMethod(value: string, options?: QueryMethodOptions): PropertyDecorator {
-    if (typeof value !== "string") {
-        throw new VSRepoError(`'value' must be a valid string`, VSRepoErrorType.DECORATOR);
-    }
-
-    const validatedConfig: QueryMethodOptions = DecoratorsValidator.validateQueryMethodOptions(options);
-
     return (target: object, propertyKey: string | symbol) => {
         const methods = getOwnMetadataList<VSRepoQuery>(QUERY_METHODS_KEY, target);
 
-        methods.push({ ...validatedConfig, value, propertyKey });
+        methods.push({ ...options, value, propertyKey });
 
         Reflect.defineMetadata(QUERY_METHODS_KEY, methods, target);
     };

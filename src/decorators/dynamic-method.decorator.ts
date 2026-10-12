@@ -1,6 +1,5 @@
 import { DYNAMIC_METHODS_KEY } from "../internal/constants/dynamic-methods-key.constant.js";
 import { getOwnMetadataList } from "../internal/utils/get-own-metadata-list.util.js";
-import { DecoratorsValidator } from "../internal/validators/decorators.validator.js";
 import { DynamicMethodOptions } from "../types/decorators/dynamic-method-options.type.js";
 import { VSRepoMethod } from "../types/vsrepo/vsrepo-method.type.js";
 
@@ -25,12 +24,10 @@ import { VSRepoMethod } from "../types/vsrepo/vsrepo-method.type.js";
  * @publicApi
  */
 export function DynamicMethod<T = any>(options?: DynamicMethodOptions<T>): PropertyDecorator {
-    const validatedOptions = DecoratorsValidator.validateDynamicMethodOptions<T>(options);
-
     return (target: object, propertyKey: string | symbol) => {
         const methods = getOwnMetadataList<VSRepoMethod>(DYNAMIC_METHODS_KEY, target);
 
-        methods.push({ ...validatedOptions, propertyKey });
+        methods.push({ ...options, propertyKey });
 
         Reflect.defineMetadata(DYNAMIC_METHODS_KEY, methods, target);
     };

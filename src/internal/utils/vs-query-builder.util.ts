@@ -11,13 +11,7 @@ import { VSRepoWhere } from "../../types/vsrepo/vsrepo-where.type.js";
 import { VSRepoAdapter } from "../../VSRepoAdapter.js";
 import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
 import { MergeWheresResolver } from "../resolvers/merge-wheres.resolver.js";
-import orderingSchema from "../validators/schemas/ordering.schema.js";
-import relationsSchema from "../validators/schemas/relations.schema.js";
-import seeModeSchema from "../validators/schemas/see-mode.schema.js";
-import selectSchema from "../validators/schemas/select.schema.js";
-import whereSchema from "../validators/schemas/where.schema.js";
 import { VSLogger } from "./vs-logger.util.js";
-import * as v from "valibot";
 
 /**
  * Fluent builder for queries whose shape is only known at runtime (optional filters, user-controlled
@@ -70,20 +64,12 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         private readonly logger: VSLogger,
     ) {}
 
-    private failValidation(issue: v.GenericIssue | undefined, fallbackPath = "options"): never {
-        const path = issue?.path?.length ? issue.path.map(p => String(p.key)).join(".") : fallbackPath;
-        const message = `${path}: ${issue?.message ?? "validation failed"}`;
-
-        this.logger.logError(`Validation failed (${VSRepoErrorType.QUERY_BUILDER}): ${message}`);
-
-        throw new VSRepoError(message, VSRepoErrorType.QUERY_BUILDER);
-    }
-
-    private validate(value: unknown, schema: v.GenericSchema, fallbackPath?: string): void {
-        const parsed = v.safeParse(schema, value);
-
-        if (!parsed.success) {
-            this.failValidation(parsed.issues[0], fallbackPath);
+    private static validateNonNegativeInt(value: number, name: "limit" | "offset"): void {
+        if (!Number.isInteger(value) || value < 0) {
+            throw new VSRepoError(
+                `${name}: Invalid value: Expected >=0 but received ${value}`,
+                VSRepoErrorType.QUERY_BUILDER,
+            );
         }
     }
 
@@ -289,14 +275,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * Sets the fields (and nested relation fields) to select. Replaces any previous `select`.
      *
      * @param select Fields to select, e.g. `{ id: true, name: true, address: { city: true } }`.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `select` doesn't have a valid shape.
      */
     select(select: VSRepoSelect<Entity>): this {
-        this.validate(select, selectSchema, "select");
-
         this.options.select = select;
-
-        this.trace("select", select);
 
         return this;
     }
@@ -305,14 +286,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * Sets the relations to load together with the records. Replaces any previous `relations`.
      *
      * @param relations Relations to load, e.g. `{ address: true, products: true }`.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `relations` doesn't have a valid shape.
      */
     relations(relations: VSRepoRelations<Entity>): this {
-        this.validate(relations, relationsSchema, "relations");
-
         this.options.relations = relations;
-
-        this.trace("relations", relations);
 
         return this;
     }
@@ -325,7 +301,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * The soft-delete filter (see {@link VSQueryBuilder.see}) is added on top of it when the query runs.
      *
      * @param where Filter of the query.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `where` doesn't have a valid shape.
      *
      * @example
      * ```typescript
@@ -336,11 +311,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * ```
      */
     where(where: VSRepoWhere<Entity>): this {
-        this.validate(where, whereSchema, "where");
-
         this.whereFilter = where;
-
-        this.trace("where", where);
 
         return this;
     }
@@ -350,14 +321,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      *
      * @param order An object, or an array of objects, mapping primitive fields to `"asc"`/`"desc"`
      * (lower or upper case), e.g. `{ createdAt: "desc" }`.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `order` doesn't have a valid shape.
      */
     orderBy(order: Ordering<Entity>): this {
-        this.validate(order, orderingSchema, "order");
-
         this.options.order = order;
-
-        this.trace("orderBy", order);
 
         return this;
     }
@@ -366,15 +332,12 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * Sets the maximum number of records to return. Can be combined with {@link VSQueryBuilder.offset}.
      *
      * @param limit Non-negative integer.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `limit` isn't a non-negative integer.
      */
     limit(limit: number): this {
-        this.validate(limit, v.pipe(v.number(), v.integer(), v.minValue(0)), "limit");
+        VSQueryBuilder.validateNonNegativeInt(limit, "limit");
 
         this.options.pagination ??= {};
         this.options.pagination.limit = limit;
-
-        this.trace(`limit ${limit}`);
 
         return this;
     }
@@ -383,15 +346,12 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * Sets how many records to skip. Can be combined with {@link VSQueryBuilder.limit}.
      *
      * @param offset Non-negative integer.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `offset` isn't a non-negative integer.
      */
     offset(offset: number): this {
-        this.validate(offset, v.pipe(v.number(), v.integer(), v.minValue(0)), "offset");
+        VSQueryBuilder.validateNonNegativeInt(offset, "offset");
 
         this.options.pagination ??= {};
         this.options.pagination.offset = offset;
-
-        this.trace(`offset ${offset}`);
 
         return this;
     }
@@ -402,14 +362,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * Only {@link VSQueryBuilder.getResult} uses it: the ecosystem's `count` doesn't support `distinct`.
      *
      * @param fields A primitive field, or an array of them.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `fields` isn't a string or an array of strings.
      */
     distinctOn(fields: KeysOfType<Entity, Primitive> | KeysOfType<Entity, Primitive>[]): this {
-        this.validate(fields, v.union([v.string(), v.array(v.string())]), "fields");
-
         this.distinct = Array.isArray(fields) ? fields : [fields];
-
-        this.trace("distinctOn", this.distinct);
 
         return this;
     }
@@ -421,14 +376,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      *
      * @param seeMode `"active"` (default) for non-deleted records, `"removed"` for soft-deleted ones
      * or `"all"` to ignore soft-delete.
-     * @throws {VSRepoError} `QUERY_BUILDER` if `seeMode` isn't one of the modes above.
      */
     see(seeMode: SeeMode): this {
-        this.validate(seeMode, seeModeSchema, "seeMode");
-
         this.seeMode = seeMode;
-
-        this.trace(`see '${seeMode}'`);
 
         return this;
     }

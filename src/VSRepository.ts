@@ -12,7 +12,6 @@ import { Ordering } from "./types/utils/ordering.type.js";
 import { Pagination } from "./types/utils/pagination.type.js";
 import { VSLogger } from "./internal/utils/vs-logger.util.js";
 import { VSLogLevel } from "./internal/enums/vs-log-level.enum.js";
-import { VSRepoValidator } from "./internal/validators/vsrepo.validator.js";
 import { VSRepoArgs } from "./types/vsrepo/vsrepo-args.type.js";
 import { DynamicMethodsResolver } from "./internal/resolvers/dynamic-methods.resolver.js";
 import { VSRepoError } from "./errors/VSRepoError.js";
@@ -62,7 +61,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private readonly adapter: VSRepoAdapter<Entity>;
     private readonly mergeWheresResolver: MergeWheresResolver<Entity>;
     private readonly logger: VSLogger;
-    private readonly validator: VSRepoValidator<Entity, PKType, OrmTypes>;
 
     private readonly softRemoveKey?: keyof Entity;
     private readonly defaultOrdering?: Ordering<Entity>;
@@ -82,30 +80,25 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      * every `@DynamicMethod`/`@QueryMethod` declared on the subclass.
      */
     constructor(options: VSRepoOptions<Entity, PKType>) {
-        this.validator = new VSRepoValidator<Entity, PKType, OrmTypes>();
+        this.adapter = options.adapter;
 
-        const optionsValidated = this.validator.validateConstructorOptions(options);
-
-        this.adapter = optionsValidated.adapter;
-
-        if (optionsValidated.pkName) {
-            this.pkName = optionsValidated.pkName;
+        if (options.pkName) {
+            this.pkName = options.pkName;
         } else if (this.adapter.getPkName) {
             this.pkName = this.adapter.getPkName() as KeysOfType<Entity, PKType>;
         } else {
             throw new VSRepoError(
                 "Your adapter did not implement the 'getPkName' method; try updating your adapter to a newer version or manually configure 'pkName' in the constructor's 'options'.",
-                VSRepoErrorType.VALIDATOR,
+                VSRepoErrorType.BASE,
             );
         }
 
-        this.softRemoveKey = optionsValidated.softRemoveKey;
-        this.defaultOrdering = optionsValidated.defaultOrdering;
-        this.vsPlaceholders = optionsValidated.vsPlaceholders ?? true;
+        this.softRemoveKey = options.softRemoveKey;
+        this.defaultOrdering = options.defaultOrdering;
+        this.vsPlaceholders = options.vsPlaceholders ?? true;
 
         this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softRemoveKey);
-        this.logger = new VSLogger(optionsValidated.logLevel ?? VSLogLevel.WARN, this.constructor.name + "Logger");
-        this.validator.setLogger(this.logger);
+        this.logger = new VSLogger(options.logLevel ?? VSLogLevel.WARN, this.constructor.name + "Logger");
 
         this.logger.logInfo(
             `Initializing ${this.constructor.name} (pk: '${String(this.pkName)}'` +
@@ -118,14 +111,14 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         let dynamicMethodsCount: number | undefined;
         let queryMethodsCount: number | undefined;
 
-        if (!optionsValidated.lazyDynamicMethods) {
+        if (!options.lazyDynamicMethods) {
             const result = this.resolveDynamicMethods();
             dynamicMethodsCount = result.dynamicMethodsCount;
             queryMethodsCount = result.queryMethodsCount;
         }
 
         this.logger.logInfo(
-            `${this.constructor.name} ready (${optionsValidated.lazyDynamicMethods ? "Resolution of dynamic methods postponed" : `${dynamicMethodsCount} dynamic method(s), ${queryMethodsCount} query method(s) resolved`})`,
+            `${this.constructor.name} ready (${options.lazyDynamicMethods ? "Resolution of dynamic methods postponed" : `${dynamicMethodsCount} dynamic method(s), ${queryMethodsCount} query method(s) resolved`})`,
         );
     }
 
@@ -155,7 +148,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.logger,
             this.adapter,
             this.mergeWheresResolver,
-            this.validator,
             this.defaultOrdering,
             this.vsPlaceholders,
         );
@@ -196,24 +188,16 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     private async execBaseMethod<R>(
-        fn: (optionsChecked: MethodOptions<Entity, OrmTypes>) => Promise<R>,
+        fn: (options: MethodOptions<Entity, OrmTypes>) => Promise<R>,
         methodName: string,
-        optionsUnchecked: unknown,
-        opsType: "common" | "getAll" | "restrict" = "common",
+        options: MethodOptions<Entity, OrmTypes> = {},
     ): Promise<R> {
-        const optionsChecked =
-            opsType === "common"
-                ? this.validator.validateMethodOptions(optionsUnchecked)
-                : opsType === "restrict"
-                  ? this.validator.validateRestrictMethodOptions(optionsUnchecked)
-                  : this.validator.validateGetAllMethodOptions(optionsUnchecked);
-
-        optionsChecked.db ??= this.getDbClient();
+        options.db ??= this.getDbClient();
 
         const start = this.logger.startPerformLog("run " + methodName);
 
         try {
-            const result = await fn(optionsChecked);
+            const result = await fn(options);
             this.logger.endPerformLog(start);
 
             return result;
@@ -237,7 +221,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.fail("'fn' must be a valid function", VSRepoErrorType.BASE);
         }
 
-        return this.adapter.runInTransaction(fn, this.validator.validateTransactionOptions(options));
+        return this.adapter.runInTransaction(fn, options);
     }
 
     /** Returns the underlying ORM client instance used outside of transactions. */
@@ -246,12 +230,12 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /**
-     * Creates a fluent {@link VSQueryBuilder} for queries assembled at runtime (optional filters,
+     * Creates a fluent `VSQueryBuilder` for queries assembled at runtime (optional filters,
      * user-controlled ordering and pagination, ...). Nothing runs until one of its terminal methods
      * (`getResult`, `getCount`, `getResultAndCount`, ...) is called.
      *
      * @param db Client or transaction the query runs on. Defaults to the repository's client; it can
-     * also be set later with {@link VSQueryBuilder.setDb}.
+     * also be set later with `VSQueryBuilder.setDb`.
      *
      * @example
      * ```typescript
@@ -365,26 +349,26 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.fail("'query' must be a valid string or a 'VSSql' fragment", VSRepoErrorType.BASE);
         }
 
-        const optionsValidated = this.validator.validateQueryOptions({ ...options, args });
-        optionsValidated.db ??= this.getDbClient();
+        const queryOptions = { ...options, args };
+        queryOptions.db ??= this.getDbClient();
 
         this.logger.logDebug(`${this.constructor.name} query:`, {
             query,
-            args: optionsValidated.args ?? [],
-            modifying: optionsValidated.modifying ?? false,
-            singleResult: optionsValidated.singleResult ?? false,
+            args: queryOptions.args ?? [],
+            modifying: queryOptions.modifying ?? false,
+            singleResult: queryOptions.singleResult ?? false,
         });
 
         const start = this.logger.startPerformLog("run query");
 
         try {
             const result = await this.adapter.query<T>(query, {
-                args: optionsValidated.args,
-                db: optionsValidated.db,
-                modifying: optionsValidated.modifying ?? false,
+                args: queryOptions.args,
+                db: queryOptions.db,
+                modifying: queryOptions.modifying ?? false,
             });
 
-            const resolved = optionsValidated.singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
+            const resolved = queryOptions.singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
 
             this.logger.endPerformLog(start);
 
@@ -443,7 +427,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                 }),
             "getAll",
             options,
-            "getAll",
         );
     }
 
@@ -483,7 +466,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             opt => this.adapter.deleteMany(this.mergeWheresResolver.resolve(opt.see, this.wherePkIn(pks)), opt),
             "removeList",
             options,
-            "restrict",
         );
     }
 
@@ -519,7 +501,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             opt => this.adapter.count(this.mergeWheresResolver.resolve(opt.see, {}), opt),
             "total",
             options,
-            "restrict",
         );
     }
 
@@ -529,7 +510,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             opt => this.adapter.exists(this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), opt),
             "has",
             options,
-            "restrict",
         );
     }
 
@@ -579,7 +559,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                 ),
             "softRemoveList",
             options,
-            "restrict",
         );
     }
 
@@ -629,7 +608,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                 ),
             "restoreList",
             options,
-            "restrict",
         );
     }
 
@@ -644,8 +622,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         value: NonNullable<Entity[Field]>,
         options?: MethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
-        this.validator.assertIsNumericLike(value);
-
         return this.execBaseMethod(
             opt =>
                 this.adapter.incrementOne(
@@ -666,8 +642,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         value: NonNullable<Entity[Field]>,
         options?: MethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
-        this.validator.assertIsNumericLike(value);
-
         return this.execBaseMethod(
             opt =>
                 this.adapter.decrementOne(
@@ -688,8 +662,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         value: NonNullable<Entity[Field]>,
         options?: MethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
-        this.validator.assertIsNumericLike(value);
-
         return this.execBaseMethod(
             opt =>
                 this.adapter.multiplyOne(
@@ -714,8 +686,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         value: NonNullable<Entity[Field]>,
         options?: MethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
-        this.validator.assertIsNumericLike(value);
-
         return this.execBaseMethod(
             opt =>
                 this.adapter.divideOne(field, value, this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), opt),
@@ -734,13 +704,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         where?: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<number | null> {
-        const validatedWhere = this.validator.validateWhere(where ?? {});
-
         return this.execBaseMethod(
-            opt => this.adapter.sum(field, this.mergeWheresResolver.resolve(opt.see, validatedWhere), opt),
+            opt => this.adapter.sum(field, this.mergeWheresResolver.resolve(opt.see, where ?? {}), opt),
             "sum",
             options,
-            "restrict",
         );
     }
 
@@ -750,13 +717,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         where?: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<number | null> {
-        const validatedWhere = this.validator.validateWhere(where ?? {});
-
         return this.execBaseMethod(
-            opt => this.adapter.average(field, this.mergeWheresResolver.resolve(opt.see, validatedWhere), opt),
+            opt => this.adapter.average(field, this.mergeWheresResolver.resolve(opt.see, where ?? {}), opt),
             "average",
             options,
-            "restrict",
         );
     }
 
@@ -766,13 +730,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         where?: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<number | null> {
-        const validatedWhere = this.validator.validateWhere(where ?? {});
-
         return this.execBaseMethod(
-            opt => this.adapter.min(field, this.mergeWheresResolver.resolve(opt.see, validatedWhere), opt),
+            opt => this.adapter.min(field, this.mergeWheresResolver.resolve(opt.see, where ?? {}), opt),
             "min",
             options,
-            "restrict",
         );
     }
 
@@ -782,13 +743,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         where?: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<number | null> {
-        const validatedWhere = this.validator.validateWhere(where ?? {});
-
         return this.execBaseMethod(
-            opt => this.adapter.max(field, this.mergeWheresResolver.resolve(opt.see, validatedWhere), opt),
+            opt => this.adapter.max(field, this.mergeWheresResolver.resolve(opt.see, where ?? {}), opt),
             "max",
             options,
-            "restrict",
         );
     }
 }

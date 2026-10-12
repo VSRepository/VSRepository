@@ -46,7 +46,7 @@ export class VSPlaceholdersParser {
             if (!Number.isInteger(position) || position < 1 || position > args.length) {
                 throw new VSRepoError(
                     `Invalid 'vsPlaceholders' reference '?${match[1]}' in query — expected a number between 1 and ${args.length} (the length of 'args').`,
-                    VSRepoErrorType.VALIDATOR,
+                    VSRepoErrorType.VS_PLACEHOLDERS,
                 );
             }
 
