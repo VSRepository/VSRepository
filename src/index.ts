@@ -49,7 +49,6 @@ export type { AdapterMethodOptions } from "./types/adapter/adapter-method-option
 export type { AdapterQueryOptions } from "./types/adapter/adapter-query-options.type.js"; // * lembrar de marcar como @publicApi (se for manter)
 export type { DynamicMethodOptions } from "./types/decorators/dynamic-method-options.type.js";
 export type { QueryMethodOptions } from "./types/decorators/query-method-options.type.js";
-export type { QueryMethodArg } from "./types/utils/query-method-arg.type.js";
 export type { CountResult } from "./types/utils/count-result.type.js";
 export type { DeepPartial } from "./types/utils/deep-partial.type.js";
 export type { KeysOfType } from "./types/utils/keys-of-type.type.js";

@@ -24,7 +24,6 @@ import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
 import { DEBUG_ARG_SYMBOL } from "../constants/debug-arg-symbol.constant.js";
 import { DbArg } from "../utils/db-arg.util.js";
 import { VSPlaceholdersParser } from "../utils/vs-placeholder-parser.util.js";
-import { QueryMethodArg } from "../../types/utils/query-method-arg.type.js";
 
 export class DynamicMethodsResolver<T, K> {
     constructor(
@@ -1066,31 +1065,17 @@ export class DynamicMethodsResolver<T, K> {
             const modifyingQueryMethod = method.modifying ?? false;
             const valueQueryMethod = method.value;
             const singleResult = method.singleResult ?? false;
-            const singleArgMode = method.singleArg ?? false;
 
             (instance as any)[originalKey] = async (...args: unknown[]) => {
                 let db: any;
                 let queryArgs: any[] | undefined;
 
-                if (singleArgMode) {
-                    if (args.length > 1) {
-                        const errorMessage = `This query method was declared with singleArg = true, use a single QueryMethodArg instead`;
-                        this.logger.logError(`Cannot run '${String(originalKey)}': ${errorMessage}`);
-
-                        throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
-                    }
-
-                    const queryArg = (args[0] ?? {}) as QueryMethodArg;
-                    db = queryArg.db;
-                    queryArgs = queryArg.args;
+                const dbPos = args.at(-1);
+                if (dbPos instanceof DbArg) {
+                    db = dbPos.getDb();
+                    queryArgs = args.slice(0, -1);
                 } else {
-                    const dbPos = args.at(-1);
-                    if (dbPos instanceof DbArg) {
-                        db = dbPos.getDb();
-                        queryArgs = args.slice(0, -1);
-                    } else {
-                        queryArgs = args;
-                    }
+                    queryArgs = args;
                 }
 
                 db ??= this.adapter.getDbClient();

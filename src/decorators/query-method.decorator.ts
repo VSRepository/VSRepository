@@ -9,8 +9,7 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  *
  * Applied to a `declare` class field, it executes `value` directly through the
  * adapter's `query()` method, with parameters injected positionally via the
- * separate arguments passed at the call site (placeholders) — or, with
- * `singleArg: true`, via the `args` array of a single {@link QueryMethodArg} object instead.
+ * separate arguments passed at the call site (placeholders).
  *
  * The placeholder syntax depends on the database/driver behind your adapter. Check your adapter's
  * documentation for the exact syntax before writing queries — or set `vsPlaceholders: true` in the
@@ -18,8 +17,7 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  *
  * @param value Raw SQL statement to execute. Use placeholders for the values
  * that will be passed via `args` — never interpolate values directly into `value`.
- * @param options Optional configuration; set `modifying: true` for `INSERT`/`UPDATE`/`DELETE` statements,
- * or `singleArg: true` to receive a single `QueryMethodArg` object instead of spread arguments.
+ * @param options Optional configuration; set `modifying: true` for `INSERT`/`UPDATE`/`DELETE` statements.
  *
  * @example
  * ```typescript
@@ -29,9 +27,6 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  *
  *     @QueryMethod('UPDATE "user" SET active = true WHERE id = $1', { modifying: true })
  *     declare activateUser: (id: string, db?: DbArg) => Promise<number>;
- *
- *     @QueryMethod('SELECT * FROM "user" WHERE id = $1', { singleArg: true })
- *     declare findByIdRaw: (arg: QueryMethodArg<[id: string]>) => Promise<User[]>;
  * }
  *
  * await userRepository.findByEmailRaw("joao@email.com");
