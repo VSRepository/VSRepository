@@ -57,9 +57,6 @@ export class VSPlaceholdersParser {
 
         chunks.push(query.slice(lastIndex));
 
-        // `VSSql.sql` only ever reads `strings` by index (`strings[0]`, `strings[i + 1]`)
-        // and never touches `.raw`, so a plain string array built at runtime works
-        // the same as a real tagged-template `TemplateStringsArray` here.
-        return VSSql.sql(chunks as unknown as TemplateStringsArray, ...values);
+        return VSSql.create(chunks, values);
     }
 }

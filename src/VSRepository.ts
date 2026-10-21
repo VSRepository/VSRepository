@@ -23,6 +23,7 @@ import { VSQueryBuilder } from "./internal/utils/vs-query-builder.util.js";
 import { VSRawQueryBuilder } from "./internal/utils/vs-raw-query-builder.util.js";
 import { VSSql } from "./internal/utils/vs-sql.util.js";
 import { VSPlaceholdersParser } from "./internal/utils/vs-placeholder-parser.util.js";
+import { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
 
 /**
  * ORM-agnostic base repository, exposing a complete set of ready-to-use CRUD
@@ -67,6 +68,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private readonly vsPlaceholders: boolean;
 
     private dynamicMethodsResolved = false;
+    private alredyWarnedResolveDynamicMethods = false;
 
     /**
      * This is a property managed by VSRepository, please don't modify it!!
@@ -135,13 +137,15 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      * harmless but redundant — it just re-runs the resolution and logs a
      * `WARN`, since it's usually a sign of a mistake.
      */
-    protected resolveDynamicMethods(): { dynamicMethodsCount: number; queryMethodsCount: number } {
-        if (this.dynamicMethodsResolved) {
+    protected resolveDynamicMethods(): ResolvedMethodsResult {
+        if (this.dynamicMethodsResolved && !this.alredyWarnedResolveDynamicMethods) {
             this.logger.logWarn(
                 `resolveDynamicMethods() was called more than once on ${this.constructor.name}. ` +
                     `If you are calling it manually, make sure lazyDynamicMethods is set to true ` +
                     `in the constructor options to skip the automatic resolution.`,
             );
+
+            this.alredyWarnedResolveDynamicMethods = true;
         }
 
         const dynamicMethodsResolver = new DynamicMethodsResolver<Entity, PKType>(
@@ -173,7 +177,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         return { dynamicMethodsCount, queryMethodsCount };
     }
 
-    // * Loga o erro antes de lançar, pra guard clauses (mau uso da API) não passarem em silêncio
     private fail(message: string, type: VSRepoErrorType): never {
         this.logger.logError(`${this.constructor.name}: ${message}`);
         throw new VSRepoError(message, type);
@@ -227,6 +230,24 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Returns the underlying ORM client instance used outside of transactions. */
     getDbClient<DB extends any = OrmTypes["dbClient"]>(): DB {
         return this.adapter.getDbClient();
+    }
+
+    getAdapter<A extends VSRepoAdapter<Entity> = VSRepoAdapter<Entity>>(): A {
+        return this.adapter as A;
+    }
+
+    static getQueryBuilder<E, O extends VSRepoOrmTypes>(
+        repository: VSRepository<E, any, O>,
+        db?: O["dbClient"] | O["dbTransaction"],
+    ): VSQueryBuilder<E, O> {
+        return repository.createQueryBuilder(db);
+    }
+
+    static getRawQueryBuilder<O extends VSRepoOrmTypes>(
+        repository: VSRepository<any, any, O>,
+        db?: O["dbClient"] | O["dbTransaction"],
+    ): VSRawQueryBuilder<O> {
+        return repository.createRawQueryBuilder(db);
     }
 
     /**
@@ -336,7 +357,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             queryOrSql instanceof VSSql
                 ? queryOrSql
                 : this.vsPlaceholders
-                  ? VSPlaceholdersParser.parse(queryOrSql, args ?? [])
+                  ? VSPlaceholdersParser.parse(queryOrSql, args)
                   : undefined;
 
         if (sqlFragment) {

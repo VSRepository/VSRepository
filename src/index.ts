@@ -68,6 +68,8 @@ export type { VSRawQueryBuilderTarget } from "./types/vsrepo/vs-raw-query-builde
 export type { VSRawQueryBuilderCteQuery } from "./types/vsrepo/vs-raw-query-builder-cte-query.type.js";
 export type { GetPlaceholderFn } from "./types/utils/get-placeholder-fn.type.js";
 export type { OrderTuple } from "./types/utils/order-tuple.type.js";
+export type { PaginatedResult } from "./types/utils/paginated-result.type.js";
+export type { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";

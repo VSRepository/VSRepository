@@ -29,14 +29,14 @@ export abstract class VSRepoAdapter<T> {
     public abstract query<T = any>(query: string, options?: AdapterQueryOptions): Promise<T>;
 
     /** Fetches a single record matching `where`. */
-    public abstract findOne(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T | null>;
+    public abstract findOne(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T | null>;
 
     /** Fetches a single record matching `where`, throwing if none is found. */
-    public abstract findOneOrThrow(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T>;
+    public abstract findOneOrThrow(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T>;
 
     /** Fetches all records matching `where`. */
     public abstract findMany(
-        where: VSRepoWhere<T>,
+        where?: VSRepoWhere<T>,
         options?: AdapterMethodOptions<T> & { distinct?: (keyof T)[] },
     ): Promise<T[]>;
 
@@ -47,7 +47,7 @@ export abstract class VSRepoAdapter<T> {
     public abstract saveMany(objs: DeepPartial<T>[], options?: AdapterMethodOptions<T>): Promise<T[]>;
 
     /** Creates a single record. */
-    public abstract create(objs: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<T>;
+    public abstract create(obj: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<T>;
 
     /** Creates multiple records in a single operation. */
     public abstract createMany(
@@ -88,10 +88,10 @@ export abstract class VSRepoAdapter<T> {
     ): Promise<T[]>;
 
     /** Returns the number of records matching `where`. */
-    public abstract count(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<number>;
+    public abstract count(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<number>;
 
     /** Checks whether at least one record matching `where` exists. */
-    public abstract exists(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<boolean>;
+    public abstract exists(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<boolean>;
 
     /**
      * Fetches a single record matching `where` and returns it deep-merged, in
