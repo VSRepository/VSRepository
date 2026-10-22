@@ -1,7 +1,10 @@
 import { VSRepoError } from "../../errors/VSRepoError.js";
 import { AdapterMethodOptions } from "../../types/adapter/adapter-method-options.type.js";
+import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
 import { KeysOfType } from "../../types/utils/keys-of-type.type.js";
 import { Ordering } from "../../types/utils/ordering.type.js";
+import { PaginatedResult } from "../../types/utils/paginated-result.type.js";
+import { Pagination } from "../../types/utils/pagination.type.js";
 import { Primitive } from "../../types/utils/primitive.type.js";
 import { SeeMode } from "../../types/utils/see-mode.type.js";
 import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
@@ -15,7 +18,7 @@ import { VSLogger } from "./vs-logger.util.js";
 
 /**
  * Fluent builder for queries whose shape is only known at runtime (optional filters, user-controlled
- * ordering and pagination, ...). Get one from `VSRepository.createQueryBuilder()`.
+ * ordering and pagination, ...).
  *
  * Chain the configuration methods (`select`, `relations`, `where`, `orderBy`, `limit`, `offset`,
  * `distinctOn`, `see`) and run the query with a terminal method (`getResult`,
@@ -23,33 +26,28 @@ import { VSLogger } from "./vs-logger.util.js";
  * reaches the database until a terminal method is called.
  *
  * The builder is **mutable**: every chained call changes the same instance and returns it. Use
- * {@link VSQueryBuilder.clone} to derive variations from a common base.
+ * `VSQueryBuilder.clone` to derive variations from a common base.
  *
  * Soft-delete is respected the same way as in the repository methods: when the repository has a
- * `softRemoveKey`, only non-deleted records are seen unless {@link VSQueryBuilder.see} says otherwise.
- *
- * Arguments are validated as soon as they are passed to a chained method; an invalid one throws a
- * `VSRepoError` of type `QUERY_BUILDER` and leaves the builder unchanged.
- *
- * @template Entity Type of the entity being queried.
- * @template OrmTypes ORM-specific client/transaction types. See `VSRepoOrmTypes`.
+ * `softRemoveKey`, only non-deleted records are seen unless `VSQueryBuilder.see` says otherwise.
  *
  * @example
  * ```typescript
- * const { result, count } = await userRepository
+ * const result = await userRepository
  *     .createQueryBuilder()
  *     .where({ active: true, balance: { gte: 100 } })
  *     .relations({ address: true })
  *     .orderBy({ createdAt: "desc" })
  *     .limit(20)
  *     .offset(40)
- *     .getResultAndCount();
+ *     .getResult();
  * ```
  *
  * @publicApi
  */
 export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes> {
-    private options: Omit<AdapterMethodOptions<Entity>, "db"> = {};
+    private options: Omit<AdapterMethodOptions<Entity>, "db" | "pagination"> = {};
+    private pagination?: Pagination;
     private distinct?: KeysOfType<Entity, Primitive>[];
     private seeMode: SeeMode = "active";
     private whereFilter?: VSRepoWhere<Entity>;
@@ -58,7 +56,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * @internal
      */
     constructor(
-        private db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"],
+        private db: ClientOrTransaction<OrmTypes>,
         private readonly adapter: VSRepoAdapter<Entity>,
         private readonly mergeWheresResolver: MergeWheresResolver<Entity>,
         private readonly logger: VSLogger,
@@ -74,7 +72,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     }
 
     private resolveWhere(): VSRepoWhere<Entity> {
-        return this.mergeWheresResolver.resolve(this.seeMode, this.whereFilter ?? {});
+        return this.mergeWheresResolver.resolve(this.seeMode, this.whereFilter);
     }
 
     private trace(message: string, obj?: unknown): void {
@@ -111,12 +109,12 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * ```typescript
      * const qb = userRepository.createQueryBuilder().where({ active: true });
      *
-     * await userRepository.transaction(async tx => {
+     * const result = await userRepository.transaction(async tx => {
      *     return qb.setDb(tx).getResult();
      * });
      * ```
      */
-    setDb(db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): this {
+    setDb(db: ClientOrTransaction<OrmTypes>): this {
         this.db = db;
 
         this.trace("db replaced");
@@ -134,11 +132,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     async getResult(): Promise<Entity[]> {
         const where = this.resolveWhere();
-        const options = { ...this.options, distinct: this.distinct };
+        const options = { ...this.options, distinct: this.distinct, pagination: this.pagination, db: this.db };
 
-        return this.execute("getResult", { where, options }, () =>
-            this.adapter.findMany(where, { ...options, db: this.db }),
-        );
+        return this.execute("getResult", { where, options }, () => this.adapter.findMany(where, options));
     }
 
     /**
@@ -150,11 +146,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     async getOneResult(): Promise<Entity | null> {
         const where = this.resolveWhere();
-        const options = { ...this.options };
+        const options = { ...this.options, pagination: this.pagination, db: this.db };
 
-        return this.execute("getOneResult", { where, options }, () =>
-            this.adapter.findOne(where, { ...options, db: this.db }),
-        );
+        return this.execute("getOneResult", { where, options }, () => this.adapter.findOne(where, options));
     }
 
     /**
@@ -166,10 +160,10 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     async getOneResultOrThrow(): Promise<Entity> {
         const where = this.resolveWhere();
-        const options = { ...this.options };
+        const options = { ...this.options, pagination: this.pagination, db: this.db };
 
         return this.execute("getOneResultOrThrow", { where, options }, () =>
-            this.adapter.findOneOrThrow(where, { ...options, db: this.db }),
+            this.adapter.findOneOrThrow(where, options),
         );
     }
 
@@ -185,11 +179,9 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     async getCount(): Promise<number> {
         const where = this.resolveWhere();
-        const options = { order: this.options.order, pagination: this.options.pagination };
+        const options = { pagination: this.pagination, db: this.db };
 
-        return this.execute("getCount", { where, options }, () =>
-            this.adapter.count(where, { ...options, db: this.db }),
-        );
+        return this.execute("getCount", { where, options }, () => this.adapter.count(where, options));
     }
 
     /**
@@ -225,15 +217,13 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      * const totalPages = Math.ceil(count / 20);
      * ```
      */
-    async getResultAndCount(): Promise<{ result: Entity[]; count: number }> {
+    async getResultAndCount(): Promise<PaginatedResult<Entity[]>> {
         const where = this.resolveWhere();
-        const options = { ...this.options };
+        const options = { ...this.options, pagination: this.pagination, db: this.db };
 
         return this.execute("getResultAndCount", { where, options }, async () => {
-            const [result, count] = await Promise.all([
-                this.adapter.findMany(where, { ...options, db: this.db }),
-                this.adapter.count(where, { db: this.db }),
-            ]);
+            const result = await this.adapter.findMany(where, options);
+            const count = await this.adapter.count(where, { db: this.db });
 
             return { result, count };
         });
@@ -261,7 +251,8 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
             this.logger,
         );
 
-        qbClone.options = structuredClone(this.options);
+        qbClone.options = { ...this.options };
+        qbClone.pagination = { ...this.pagination };
         qbClone.whereFilter = this.whereFilter;
         qbClone.distinct = this.distinct;
         qbClone.seeMode = this.seeMode;
@@ -336,8 +327,8 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     limit(limit: number): this {
         VSQueryBuilder.validateNonNegativeInt(limit, "limit");
 
-        this.options.pagination ??= {};
-        this.options.pagination.limit = limit;
+        this.pagination ??= {};
+        this.pagination.limit = limit;
 
         return this;
     }
@@ -350,8 +341,8 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     offset(offset: number): this {
         VSQueryBuilder.validateNonNegativeInt(offset, "offset");
 
-        this.options.pagination ??= {};
-        this.options.pagination.offset = offset;
+        this.pagination ??= {};
+        this.pagination.offset = offset;
 
         return this;
     }
