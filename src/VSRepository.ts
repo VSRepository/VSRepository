@@ -24,16 +24,10 @@ import { VSRawQueryBuilder } from "./internal/utils/vs-raw-query-builder.util.js
 import { VSSql } from "./internal/utils/vs-sql.util.js";
 import { VSPlaceholdersParser } from "./internal/utils/vs-placeholder-parser.util.js";
 import { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
+import { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
 
 /**
- * ORM-agnostic base repository, exposing a complete set of ready-to-use CRUD
- * and soft-delete methods around an entity, plus any `@DynamicMethod`/`@QueryMethod`
- * decorated methods declared on the subclass.
- *
- * Unlike the previous (v1) `VSRepository`, this class delegates every
- * operation to a `VSRepoAdapter` instead of talking to Prisma directly, which
- * is what allows it to work with any ORM/database that has an adapter
- * implementation (e.g. Prisma, TypeORM).
+ * ORM-agnostic base repository.
  *
  * @template Entity Type of the entity managed by the repository.
  * @template PKType Type of the entity's primary key value.
@@ -238,14 +232,14 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
     static getQueryBuilder<E, O extends VSRepoOrmTypes>(
         repository: VSRepository<E, any, O>,
-        db?: O["dbClient"] | O["dbTransaction"],
+        db?: ClientOrTransaction<O>,
     ): VSQueryBuilder<E, O> {
         return repository.createQueryBuilder(db);
     }
 
     static getRawQueryBuilder<O extends VSRepoOrmTypes>(
         repository: VSRepository<any, any, O>,
-        db?: O["dbClient"] | O["dbTransaction"],
+        db?: ClientOrTransaction<O>,
     ): VSRawQueryBuilder<O> {
         return repository.createRawQueryBuilder(db);
     }
@@ -268,7 +262,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      *     .getResult();
      * ```
      */
-    createQueryBuilder(db?: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): VSQueryBuilder<Entity, OrmTypes> {
+    createQueryBuilder(db?: ClientOrTransaction<OrmTypes>): VSQueryBuilder<Entity, OrmTypes> {
         return new VSQueryBuilder(
             db ?? this.adapter.getDbClient(),
             this.adapter,
@@ -297,7 +291,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      *     .execute<User[]>();
      * ```
      */
-    createRawQueryBuilder(db?: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): VSRawQueryBuilder<OrmTypes> {
+    createRawQueryBuilder(db?: ClientOrTransaction<OrmTypes>): VSRawQueryBuilder<OrmTypes> {
         return new VSRawQueryBuilder<OrmTypes>(db ?? this.adapter.getDbClient(), this.adapter, this.logger);
     }
 

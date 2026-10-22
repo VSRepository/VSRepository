@@ -11,8 +11,6 @@ export type SortDirection = "asc" | "desc" | "ASC" | "DESC";
 /**
  * Ordering shape for a single level of an entity's fields.
  *
- * @template T Entity type being ordered.
- *
  * @publicApi
  */
 export type OrderByField<T> = {
@@ -24,8 +22,6 @@ export type OrderByField<T> = {
  *
  * Can be a single ordering object or a list of chained orderings, applied in
  * the order they're declared.
- *
- * @template T Entity type being ordered.
  *
  * @example
  * ```typescript

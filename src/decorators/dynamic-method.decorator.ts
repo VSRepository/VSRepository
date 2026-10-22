@@ -11,8 +11,6 @@ import { VSRepoMethod } from "../types/vsrepo/vsrepo-method.type.js";
  * `upsertById`), the method's behavior is inferred from the field name at
  * construction time, optionally adjusted via `options`.
  *
- * @template T Entity type the decorated method operates on.
- *
  * @example
  * ```typescript
  * class UserRepository extends VSRepository<User, string> {

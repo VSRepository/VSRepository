@@ -1,3 +1,4 @@
+import { ClientOrTransaction } from "../utils/client-or-transaction.type.js";
 import { VSRepoOrmTypes } from "./vsrepo-orm-types.type.js";
 
 /**
@@ -9,7 +10,7 @@ export type VSRepoQueryOptions<T extends VSRepoOrmTypes = VSRepoOrmTypes> = {
     /** Positional parameters injected into the SQL placeholders — the placeholder syntax depends on the database/driver behind your adapter. */
     args?: any[];
     /** Database client or transaction to run this query in, instead of the repository's default client. */
-    db?: T["dbClient"] | T["dbTransaction"];
+    db?: ClientOrTransaction<T>;
     /**
      * Whether this is a modifying statement (`INSERT`/`UPDATE`/`DELETE`).
      * @default false

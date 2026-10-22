@@ -14,8 +14,6 @@ import { VSRepoWhere } from "./types/vsrepo/vsrepo-where.type.js";
  * ORM/database: `VSRepository` never talks to the ORM directly, it only
  * calls these methods with already-resolved `VSRepoWhere`/`AdapterMethodOptions`.
  *
- * @template T Entity type this adapter operates on.
- *
  * @publicApi
  */
 export abstract class VSRepoAdapter<T> {

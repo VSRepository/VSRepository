@@ -3,8 +3,6 @@ import { Ordering } from "../utils/ordering.type.js";
 /**
  * Options accepted by the `@DynamicMethod` decorator.
  *
- * @template T Entity type the decorated method operates on.
- *
  * @publicApi
  */
 export type DynamicMethodOptions<T = any> = {

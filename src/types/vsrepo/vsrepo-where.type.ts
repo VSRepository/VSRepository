@@ -4,8 +4,6 @@ import { Primitive } from "../utils/primitive.type.js";
 /**
  * Operators available to filter a single scalar field's value.
  *
- * @template V Type of the field's value.
- *
  * @publicApi
  */
 export type VSRepoFieldOperators<V> = {
@@ -54,8 +52,6 @@ export type VSRepoFieldOperators<V> = {
  * Value accepted for a single scalar field in a `VSRepoWhere`/`VSRepoWherePlain`
  * filter: either a direct value (shorthand for `equals`) or a `VSRepoFieldOperators` object.
  *
- * @template V Type of the field's value.
- *
  * @publicApi
  */
 export type VSRepoFieldWhere<V> = V | VSRepoFieldOperators<V>;
@@ -67,8 +63,6 @@ export type VSRepoFieldWhere<V> = V | VSRepoFieldOperators<V>;
  * Scalar fields accept a `VSRepoFieldWhere`. To-many relation fields accept
  * `_some`/`_every`/`_none` filters, applied to the related records. To-one
  * relation fields accept `_with`/`_without` filters.
- *
- * @template T Entity type being filtered.
  *
  * @publicApi
  */
@@ -97,21 +91,22 @@ export type VSRepoWherePlain<T> = {
 };
 
 /**
- * Filter shape accepted by the `where` clause of repository/adapter methods.
- *
- * Combines `VSRepoWherePlain`'s field-level filters with the top-level
- * logical operators `AND`, `OR`, and `NOT`, each accepting either a single
- * filter object or a list of them.
- *
- * @template T Entity type being filtered.
+ * Top-level logical operators, which can be nested arbitrarily.
  *
  * @publicApi
  */
-export type VSRepoWhere<T> = VSRepoWherePlain<T> & {
+export type VSRepoLogicalOperators<T> = {
     /** Combines multiple filters, matching records that satisfy all of them. */
-    AND?: VSRepoWherePlain<T> | VSRepoWherePlain<T>[];
+    AND?: VSRepoWhere<T> | VSRepoWhere<T>[];
     /** Combines multiple filters, matching records that satisfy at least one of them. */
-    OR?: VSRepoWherePlain<T> | VSRepoWherePlain<T>[];
+    OR?: VSRepoWhere<T> | VSRepoWhere<T>[];
     /** Negates one or more filters, matching records that satisfy none of them. */
-    NOT?: VSRepoWherePlain<T> | VSRepoWherePlain<T>[];
+    NOT?: VSRepoWhere<T> | VSRepoWhere<T>[];
 };
+
+/**
+ * Filter shape accepted by the `where` clause of repository/adapter methods.
+ *
+ * @publicApi
+ */
+export type VSRepoWhere<T> = VSRepoWherePlain<T> & VSRepoLogicalOperators<T>;

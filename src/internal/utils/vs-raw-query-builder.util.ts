@@ -1,4 +1,5 @@
 import { VSRepoError } from "../../errors/VSRepoError.js";
+import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
 import { OrderTuple } from "../../types/utils/order-tuple.type.js";
 import { SortDirection } from "../../types/utils/ordering.type.js";
 import { VSRawQueryBuilderCteQuery } from "../../types/vsrepo/vs-raw-query-builder-cte-query.type.js";
@@ -41,23 +42,15 @@ interface CteClause {
  * `VSRawQueryBuilder.clone` to derive variations from a common base.
  *
  * @example
- * ```typescript
- * import { VSSql } from "vsrepo";
- *
+ * ```typescript *
  * const rows = await orderRepository
  *     .createRawQueryBuilder()
- *     .select("o.id", "o.total", "u.name")
- *     .from("order", "o")
- *     .innerJoin("user", "u", "u.id = o.user_id")
+ *     .select("u.id", "u.name")
+ *     .from("user", "u")
  *     .where(VSSql.sql`u.active = ${true}`)
- *     .andWhere(VSSql.sql`o.total > ${100}`)
- *     .andWhere("o.deleted_at is null")
- *     .groupBy("o.id", "u.name")
- *     .having(VSSql.sql`count(*) > ${1}`)
- *     .orderBy("o.total", "desc")
+ *     .orderBy("u.created_at", "desc")
  *     .limit(20)
- *     .offset(0)
- *     .execute<{ id: string; total: number; name: string }[]>();
+ *     .execute<{ id: string; name: string }[]>();
  * ```
  *
  * @publicApi
@@ -79,7 +72,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * @internal
      */
     constructor(
-        private db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"],
+        private db: ClientOrTransaction<OrmTypes>,
         private readonly adapter: VSRepoAdapter<any>,
         private readonly logger: VSLogger,
     ) {}
@@ -417,7 +410,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * });
      * ```
      */
-    setDb(db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): this {
+    setDb(db: ClientOrTransaction<OrmTypes>): this {
         this.db = db;
 
         this.trace("db replaced");

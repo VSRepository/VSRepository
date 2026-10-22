@@ -1,3 +1,4 @@
+import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
 import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 
 /**
@@ -9,10 +10,10 @@ import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
  * @publicApi
  */
 export class DbArg<T extends VSRepoOrmTypes = VSRepoOrmTypes> {
-    constructor(private readonly db: T["dbClient"] | T["dbTransaction"]) {}
+    constructor(private readonly db: ClientOrTransaction<T>) {}
 
     /** Returns the wrapped database client or transaction. */
-    getDb(): T["dbClient"] | T["dbTransaction"] {
+    getDb(): ClientOrTransaction<T> {
         return this.db;
     }
 }

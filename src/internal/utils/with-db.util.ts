@@ -1,3 +1,4 @@
+import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
 import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 import { DbArg } from "./db-arg.util.js";
 
@@ -15,6 +16,6 @@ import { DbArg } from "./db-arg.util.js";
  *
  * @publicApi
  */
-export function withDb<T extends VSRepoOrmTypes = VSRepoOrmTypes>(db: T["dbClient"] | T["dbTransaction"]): DbArg<T> {
+export function withDb<T extends VSRepoOrmTypes = VSRepoOrmTypes>(db: ClientOrTransaction<T>): DbArg<T> {
     return new DbArg(db);
 }

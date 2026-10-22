@@ -40,6 +40,7 @@ export type {
     VSRepoWhere,
     VSRepoWherePlain,
     VSRepoFieldWhere,
+    VSRepoLogicalOperators,
     VSRepoFieldOperators,
 } from "./types/vsrepo/vsrepo-where.type.js";
 export type { VSRepoRelations, RelationKeys } from "./types/vsrepo/vsrepo-relations.type.js";
@@ -70,6 +71,7 @@ export type { GetPlaceholderFn } from "./types/utils/get-placeholder-fn.type.js"
 export type { OrderTuple } from "./types/utils/order-tuple.type.js";
 export type { PaginatedResult } from "./types/utils/paginated-result.type.js";
 export type { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
+export type { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";

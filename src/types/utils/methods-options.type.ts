@@ -2,6 +2,7 @@ import { SeeMode } from "./see-mode.type.js";
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
 import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
 import { VSRepoSelect } from "../vsrepo/vsrepo-select.type.js";
+import { ClientOrTransaction } from "./client-or-transaction.type.js";
 
 /**
  * Options accepted by the base methods exposed by `VSRepository`
@@ -20,5 +21,5 @@ export type MethodOptions<T, K extends VSRepoOrmTypes = VSRepoOrmTypes> = {
     /** Visibility mode for records with soft-delete. Defaults to `"active"`. */
     see?: SeeMode;
     /** Database client or transaction to run this operation in, instead of the repository's default client. */
-    db?: K["dbClient"] | K["dbTransaction"];
+    db?: ClientOrTransaction<K>;
 };
