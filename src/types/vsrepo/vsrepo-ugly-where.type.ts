@@ -6,4 +6,5 @@ export type VSRepoUglyWhere = {
     };
     betweenMode?: boolean;
     name: string;
+    nestedField?: string;
 };

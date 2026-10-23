@@ -34,33 +34,35 @@ export class DynamicMethodsResolver<T, K> {
         private readonly vsPlaceholders: boolean = true,
     ) {}
 
-    private static keywordTemplate = (keyword: string, allowAtTheEnd = false) =>
-        new RegExp(`${keyword}(?=[\\p{Lu}]|[^\\p{ASCII}]${allowAtTheEnd ? "|$" : ""})`, "u");
+    private static keywordTemplate = (keyword: string, allowAtTheEnd = false, allowIs = false) =>
+        new RegExp(`${allowIs ? "(?:Is)?" : ""}${keyword}(?=[\\p{Lu}]|[^\\p{ASCII}]${allowAtTheEnd ? "|$" : ""})`, "u");
 
     private static fieldModifiers = {
-        IsNull: this.keywordTemplate("IsNull", true),
-        IsNotNull: this.keywordTemplate("IsNotNull", true),
-        IsTrue: this.keywordTemplate("IsTrue", true),
-        IsFalse: this.keywordTemplate("IsFalse", true),
-        IgnoreCase: this.keywordTemplate("IgnoreCase", true),
-        Optional: this.keywordTemplate("Optional", true),
-        NotBetween: this.keywordTemplate("NotBetween", true),
-        Between: this.keywordTemplate("Between", true),
-        NotStartsWith: this.keywordTemplate("NotStartsWith", true),
-        StartsWith: this.keywordTemplate("StartsWith", true),
-        NotEndsWith: this.keywordTemplate("NotEndsWith", true),
-        EndsWith: this.keywordTemplate("EndsWith", true),
-        NotContains: this.keywordTemplate("NotContains", true),
-        Contains: this.keywordTemplate("Contains", true),
-        LessThanEqual: this.keywordTemplate("LessThanEqual", true),
-        LessThan: this.keywordTemplate("LessThan", true),
-        GreaterThanEqual: this.keywordTemplate("GreaterThanEqual", true),
-        GreaterThan: this.keywordTemplate("GreaterThan", true),
-        NotIn: this.keywordTemplate("NotIn", true),
-        In: this.keywordTemplate("In", true),
-        Not: this.keywordTemplate("Not", true),
-        Equals: this.keywordTemplate("Equals", true),
-        NotEquals: this.keywordTemplate("NotEquals", true),
+        IsNull: this.keywordTemplate("Null", true, true),
+        IsNotNull: this.keywordTemplate("NotNull", true, true),
+        IsTrue: this.keywordTemplate("True", true, true),
+        IsFalse: this.keywordTemplate("False", true, true),
+        IgnoreCase: this.keywordTemplate("(IgnoreCase|IgnoringCase)", true),
+        NotBetween: this.keywordTemplate("NotBetween", true, true),
+        Between: this.keywordTemplate("Between", true, true),
+        NotStartsWith: this.keywordTemplate("(NotStartsWith|NotStartingWith)", true, true),
+        StartsWith: this.keywordTemplate("(StartsWith|StartingWith)", true, true),
+        NotEndsWith: this.keywordTemplate("(NotEndsWith|NotEndingWith)", true, true),
+        EndsWith: this.keywordTemplate("(EndsWith|EndingWith)", true, true),
+        NotContains: this.keywordTemplate("(NotContains|NotContaining)", true, true),
+        Contains: this.keywordTemplate("(Contains|Containing)", true, true),
+        LessThanEqual: this.keywordTemplate("(LessThanEqual|Lte)", true, true),
+        LessThan: this.keywordTemplate("(LessThan|Lt)", true, true),
+        GreaterThanEqual: this.keywordTemplate("(GreaterThanEqual|Gte)", true, true),
+        GreaterThan: this.keywordTemplate("(GreaterThan|Gt)", true, true),
+        After: this.keywordTemplate("After", true, true),
+        Before: this.keywordTemplate("Before", true, true),
+        NotIn: this.keywordTemplate("NotIn", true, true),
+        In: this.keywordTemplate("In", true, true),
+        Not: this.keywordTemplate("Not", true, true),
+        Is: this.keywordTemplate("Is", true),
+        Equals: this.keywordTemplate("(Equals|Equal)", true, true),
+        NotEquals: this.keywordTemplate("(NotEquals|NotEqual)", true, true),
         Without: this.keywordTemplate("Without", true),
         With: this.keywordTemplate("With", true),
         Some: this.keywordTemplate("Some", true),
@@ -141,12 +143,10 @@ export class DynamicMethodsResolver<T, K> {
             dynamicMethodInfo.method = "findOneOrThrow";
         } else if (dynamicMethod.startsWith("countBy")) {
             dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("countBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
             dynamicMethodInfo.ignoreSelect = true;
             dynamicMethodInfo.method = "count";
         } else if (dynamicMethod.startsWith("countWhere")) {
             dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("countWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
             dynamicMethodInfo.ignoreWhere = true;
             dynamicMethodInfo.onlyBaseWheres = true;
             dynamicMethodInfo.ignoreSelect = true;
@@ -156,7 +156,6 @@ export class DynamicMethodsResolver<T, K> {
             dynamicMethodInfo.argsCount += 1;
         } else if (dynamicMethod.startsWith("count")) {
             dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("count", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
             dynamicMethodInfo.ignoreSelect = true;
             dynamicMethodInfo.ignoreWhere = true;
             dynamicMethodInfo.onlyBaseWheres = true;
@@ -439,9 +438,6 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.properties.ignoreCase = true;
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IgnoreCase, "");
             }
-            if (DynamicMethodsResolver.fieldModifiers.Optional.test(keySplitedAnd)) {
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Optional, "");
-            }
 
             if (DynamicMethodsResolver.fieldModifiers.NotBetween.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "not";
@@ -487,6 +483,12 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.GreaterThan.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "gt";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.GreaterThan, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.After.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "gt";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.After, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Before.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "lt";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Before, "");
             } else if (DynamicMethodsResolver.fieldModifiers.NotIn.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "notIn";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotIn, "");
@@ -496,6 +498,9 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.Not.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "not";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Not, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Is.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "$$$";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Is, "");
             } else {
                 uglyWhere.pushProperty = "$$$";
             }
@@ -512,6 +517,7 @@ export class DynamicMethodsResolver<T, K> {
                     uglyWhere.autoInjectVal = {};
                 }
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_without.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
@@ -527,6 +533,7 @@ export class DynamicMethodsResolver<T, K> {
                     uglyWhere.autoInjectVal = {};
                 }
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_with.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
@@ -538,6 +545,7 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = "_some";
                 uglyWhere.autoInjectVal = {};
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_some.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
@@ -549,6 +557,7 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = "_every";
                 uglyWhere.autoInjectVal = {};
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_every.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
@@ -560,6 +569,7 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = "_none";
                 uglyWhere.autoInjectVal = {};
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_none.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
@@ -670,7 +680,7 @@ export class DynamicMethodsResolver<T, K> {
                 }
             }
 
-            dynamicMethodInfo.whereParams.push(argName);
+            dynamicMethodInfo.whereParams.push(argName + (arg.nestedField ?? ""));
             return {
                 context,
                 otherProps,

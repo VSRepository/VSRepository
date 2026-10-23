@@ -60,7 +60,7 @@ type ExactOptions<O, E> = {
  *
  * @template Args Positional arguments of the method, without `options` (e.g. `[name: string]`).
  * @template R What the method resolves to: `Entity`, `Entity | null` or `Entity[]`.
- * @template K ORM type map (`dbClient`/`dbTransaction`) used to type the `db` option. Optional.
+ * @template K ORM type map (`dbClient`/`dbTransaction`) used to type the `db` option.
  *
  * @example
  * ```ts

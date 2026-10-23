@@ -34,8 +34,6 @@ export {
 // Public types
 export type { VSRepoOptions } from "./types/vsrepo/vsrepo-options.type.js";
 export type { VSRepoOrmTypes } from "./types/vsrepo/vsrepo-orm-types.type.js";
-export type { VSRepoArgs } from "./types/vsrepo/vsrepo-args.type.js"; // ! lembrar de remover o export
-export type { VSRepoMethod } from "./types/vsrepo/vsrepo-method.type.js"; // ! lembrar de remover o export
 export type {
     VSRepoWhere,
     VSRepoWherePlain,
