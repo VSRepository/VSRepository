@@ -99,13 +99,13 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         this.defaultOrdering = options.defaultOrdering;
         this.vsPlaceholders = options.vsPlaceholders ?? VSRepository.globalConfig.vsPlaceholders ?? true;
 
+        this.resolveSoftDelete();
+
         this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softDeleteField);
         this.logger = new VSLogger(
             options.logLevel ?? VSRepository.globalConfig.logLevel ?? VSLogLevel.WARN,
             this.constructor.name + "Logger",
         );
-
-        this.resolveSoftDelete();
 
         this.logger.logInfo(
             `Initializing ${this.constructor.name} (pk: '${String(this.pkName)}'` +
