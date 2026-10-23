@@ -27,6 +27,7 @@ import { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.typ
 import { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
 import { SoftDeleteMetadata } from "./types/decorators/soft-delete-metadata.type.js";
 import { ENABLE_SOFT_DELETE_KEY } from "./internal/constants/enable-soft-delete-key.constant.js";
+import { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
 
 /**
  * ORM-agnostic base repository.
@@ -64,7 +65,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private readonly vsPlaceholders: boolean;
 
     private dynamicMethodsResolved = false;
-    private alredyWarnedResolveDynamicMethods = false;
+    private alreadyWarnedResolveDynamicMethods = false;
+
+    private static globalConfig: VSRepoGlobalConfig = {};
 
     /**
      * This is a property managed by VSRepository, please don't modify it!!
@@ -92,10 +95,13 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         }
 
         this.defaultOrdering = options.defaultOrdering;
-        this.vsPlaceholders = options.vsPlaceholders ?? true;
+        this.vsPlaceholders = options.vsPlaceholders ?? VSRepository.globalConfig.vsPlaceholders ?? true;
 
         this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softDeleteField);
-        this.logger = new VSLogger(options.logLevel ?? VSLogLevel.WARN, this.constructor.name + "Logger");
+        this.logger = new VSLogger(
+            options.logLevel ?? VSRepository.globalConfig.logLevel ?? VSLogLevel.WARN,
+            this.constructor.name + "Logger",
+        );
 
         this.resolveSoftDelete();
 
@@ -109,6 +115,8 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
         let dynamicMethodsCount: number | undefined;
         let queryMethodsCount: number | undefined;
+
+        options.lazyDynamicMethods ??= VSRepository.globalConfig.lazyDynamicMethods;
 
         if (!options.lazyDynamicMethods) {
             const result = this.resolveDynamicMethods();
@@ -128,7 +136,14 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
 
         if (softDeleteMetadata?.active) {
-            this.softDeleteField = softDeleteMetadata.field;
+            this.softDeleteField = softDeleteMetadata.field ?? VSRepository.globalConfig.softDeleteField;
+
+            if (!this.softDeleteField) {
+                throw new VSRepoError(
+                    "A field for soft delete must be specified, configure it via the decorator or set it globally.",
+                    VSRepoErrorType.BASE,
+                );
+            }
         }
     }
 
@@ -146,14 +161,14 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      * `WARN`, since it's usually a sign of a mistake.
      */
     protected resolveDynamicMethods(): ResolvedMethodsResult {
-        if (this.dynamicMethodsResolved && !this.alredyWarnedResolveDynamicMethods) {
+        if (this.dynamicMethodsResolved && !this.alreadyWarnedResolveDynamicMethods) {
             this.logger.logWarn(
                 `resolveDynamicMethods() was called more than once on ${this.constructor.name}. ` +
                     `If you are calling it manually, make sure lazyDynamicMethods is set to true ` +
                     `in the constructor options to skip the automatic resolution.`,
             );
 
-            this.alredyWarnedResolveDynamicMethods = true;
+            this.alreadyWarnedResolveDynamicMethods = true;
         }
 
         const dynamicMethodsResolver = new DynamicMethodsResolver<Entity, PKType>(
@@ -192,10 +207,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
     private wherePk(pk: PKType): VSRepoWhere<Entity> {
         return { [this.pkName]: pk } as VSRepoWhere<Entity>;
-    }
-
-    private wherePkIn(pks: PKType[]): VSRepoWhere<Entity> {
-        return { [this.pkName]: { in: pks } } as VSRepoWhere<Entity>;
     }
 
     private async execBaseMethod<R>(
@@ -256,6 +267,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         db?: ClientOrTransaction<O>,
     ): VSRawQueryBuilder<O> {
         return repository.createRawQueryBuilder(db);
+    }
+
+    static setGlobalConfig(globalConfig: VSRepoGlobalConfig): void {
+        this.globalConfig = globalConfig;
     }
 
     /**
@@ -565,13 +580,35 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Marks a record as deleted (soft-delete). Requires `softDeleteField` to be configured on the repository. */
-    async softRemove(pk: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    private failSoftDelete(): never {
+        this.fail(
+            "this method can only be used if you have enabled softDelete in this repository.",
+            VSRepoErrorType.BASE,
+        );
+    }
+
+    async softDelete(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         if (!this.softDeleteField) {
-            this.fail(
-                "this method can only be used if you have configured 'softDeleteField' in this repository.",
-                VSRepoErrorType.BASE,
-            );
+            this.failSoftDelete();
+        }
+
+        const field = this.softDeleteField;
+
+        return this.execBaseMethod(
+            opt =>
+                this.adapter.update(
+                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
+                    { [field]: new Date() } as DeepPartial<Entity>,
+                    opt,
+                ),
+            "softDelete",
+            options,
+        );
+    }
+
+    async softDeleteById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+        if (!this.softDeleteField) {
+            this.failSoftDelete();
         }
 
         const key = this.softDeleteField;
@@ -579,48 +616,37 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         return this.execBaseMethod(
             opt =>
                 this.adapter.update(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(pk)),
+                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(id)),
                     { [key]: new Date() } as DeepPartial<Entity>,
                     opt,
                 ),
-            "softRemove",
+            "softDeleteById",
             options,
         );
     }
 
-    /** Marks multiple records as deleted (soft-delete) in batch. Requires `softDeleteField` to be configured on the repository. */
-    async softRemoveList(pks: PKType[], options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<CountResult> {
+    async softDeleteMany(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<CountResult> {
         if (!this.softDeleteField) {
-            this.fail(
-                "this method can only be used if you have configured 'softDeleteField' in this repository.",
-                VSRepoErrorType.BASE,
-            );
-        }
-        if (!Array.isArray(pks)) {
-            this.fail("'pks' must be a valid array", VSRepoErrorType.BASE);
+            this.failSoftDelete();
         }
 
-        const key = this.softDeleteField;
+        const field = this.softDeleteField;
 
         return this.execBaseMethod(
             opt =>
                 this.adapter.updateMany(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePkIn(pks)),
-                    { [key]: new Date() } as DeepPartial<Entity>,
+                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
+                    { [field]: new Date() } as DeepPartial<Entity>,
                     opt,
                 ),
-            "softRemoveList",
+            "softDeleteMany",
             options,
         );
     }
 
-    /** Restores a record previously marked as deleted (soft-delete). Requires `softDeleteField` to be configured on the repository. */
-    async restore(pk: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async restore(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         if (!this.softDeleteField) {
-            this.fail(
-                "this method can only be used if you have configured 'softDeleteField' in this repository.",
-                VSRepoErrorType.BASE,
-            );
+            this.failSoftDelete();
         }
 
         const key = this.softDeleteField;
@@ -628,7 +654,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         return this.execBaseMethod(
             opt =>
                 this.adapter.update(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(pk)),
+                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
                     { [key]: null } as DeepPartial<Entity>,
                     opt,
                 ),
@@ -637,16 +663,28 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Restores multiple records previously marked as deleted (soft-delete) in batch. Requires `softDeleteField` to be configured on the repository. */
-    async restoreList(pks: PKType[], options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<CountResult> {
+    async restoreById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         if (!this.softDeleteField) {
-            this.fail(
-                "this method can only be used if you have configured 'softDeleteField' in this repository.",
-                VSRepoErrorType.BASE,
-            );
+            this.failSoftDelete();
         }
-        if (!Array.isArray(pks)) {
-            this.fail("'pks' must be a valid array", VSRepoErrorType.BASE);
+
+        const key = this.softDeleteField;
+
+        return this.execBaseMethod(
+            opt =>
+                this.adapter.update(
+                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(id)),
+                    { [key]: null } as DeepPartial<Entity>,
+                    opt,
+                ),
+            "restoreById",
+            options,
+        );
+    }
+
+    async restoreMany(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<CountResult> {
+        if (!this.softDeleteField) {
+            this.failSoftDelete();
         }
 
         const key = this.softDeleteField;
@@ -654,11 +692,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         return this.execBaseMethod(
             opt =>
                 this.adapter.updateMany(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePkIn(pks)),
+                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
                     { [key]: null } as DeepPartial<Entity>,
                     opt,
                 ),
-            "restoreList",
+            "restoreMany",
             options,
         );
     }

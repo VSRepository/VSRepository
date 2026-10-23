@@ -72,6 +72,7 @@ export type { OrderTuple } from "./types/utils/order-tuple.type.js";
 export type { PaginatedResult } from "./types/utils/paginated-result.type.js";
 export type { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
 export type { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
+export type { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";
