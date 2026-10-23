@@ -59,6 +59,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     private cteClauses: CteClause[] = [];
     private recursiveWith = false;
     private selectColumns: VSSql[] = [];
+    private distinctSelectMode = false;
     private fromTarget?: VSSql;
     private joinClauses: JoinClause[] = [];
     private whereConditions: Condition[] = [];
@@ -167,6 +168,23 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         this.selectColumns = columns.length
             ? columns.map(column => VSRawQueryBuilder.toFragment(column, "select"))
             : [VSSql.raw("*")];
+
+        this.distinctSelectMode = false;
+
+        return this;
+    }
+
+    selectDistinct(...columns: (string | VSSql)[]): this {
+        if (!columns.length) {
+            throw new VSRepoError(
+                `At least one column must be provided to selectDistinct`,
+                VSRepoErrorType.QUERY_BUILDER,
+            );
+        }
+
+        this.selectColumns = columns.map(column => VSRawQueryBuilder.toFragment(column, "select"));
+
+        this.distinctSelectMode = true;
 
         return this;
     }
@@ -465,8 +483,9 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         }
 
         const select = this.selectColumns.length ? VSSql.join(this.selectColumns, ", ") : VSSql.raw("*");
+        const distinctFragment = this.distinctSelectMode ? VSSql.raw("distinct ") : VSSql.empty;
 
-        let query = VSSql.sql`select ${select} from ${this.fromTarget}`;
+        let query = VSSql.sql`select ${distinctFragment}${select} from ${this.fromTarget}`;
 
         for (const { type, target, on } of this.joinClauses) {
             query = VSSql.sql`${query} ${VSSql.raw(`${type} join`)} ${target} on ${on}`;

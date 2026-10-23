@@ -108,6 +108,104 @@ describe("VSRawQueryBuilder", () => {
         });
     });
 
+    describe("selectDistinct", () => {
+        it("should return the same instance", () => {
+            const result = qb.selectDistinct("*");
+
+            expect(result).toBe(qb);
+        });
+
+        it("should return a sql with the provided select", () => {
+            const result = qb.selectDistinct("id", "name").from("person").toSql();
+
+            expect(result).toBe("select distinct id, name from person");
+        });
+
+        it("should not accept an empty columns array", () => {
+            const result = qb.select().from("person").toSql();
+
+            expect(result).toBe("select * from person");
+        });
+
+        it("should use '*' if not called", () => {
+            let thrown: any;
+
+            try {
+                qb.selectDistinct();
+                throw new Error("never");
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+
+        it("should accept VSSql as columns", () => {
+            const result = qb
+                .selectDistinct(VSSql.sql`id`, VSSql.sql`name as nome`)
+                .from("person")
+                .toSql();
+
+            expect(result).toBe("select distinct id, name as nome from person");
+        });
+
+        it("should accept VSSql and strings mixed", () => {
+            const result = qb
+                .selectDistinct("id", VSSql.sql`name as nome`)
+                .from("person")
+                .toSql();
+
+            expect(result).toBe("select distinct id, name as nome from person");
+        });
+
+        it("should not throw if the provided VSSql is empty", () => {
+            const result = qb.selectDistinct(VSSql.empty).from("person").toSql();
+
+            expect(result).toBe("select distinct  from person");
+        });
+
+        it("should replace any pre-existing selectDistinct", () => {
+            const result = qb.selectDistinct("id").selectDistinct("name").from("person").toSql();
+
+            expect(result).toBe("select distinct name from person");
+        });
+
+        it("should convert any pre-existing select to selectDistinct", () => {
+            const result = qb.select("name").selectDistinct("name").from("person").toSql();
+
+            expect(result).toBe("select distinct name from person");
+        });
+
+        it("should throw if the provided string is empty", () => {
+            let thrown: any;
+
+            try {
+                const _result = qb.selectDistinct("").from("person");
+                throw new Error("never");
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+
+        it("should throw if some provided string is empty", () => {
+            let thrown: any;
+
+            try {
+                const _result = qb.selectDistinct("id", "name", "", VSSql.sql`age as idade`);
+                throw new Error("never");
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(VSRepoError);
+            expect(thrown.type).toBe(VSRepoErrorType.QUERY_BUILDER);
+        });
+    });
+
     describe("from", () => {
         it("should return the same instance", () => {
             const result = qb.from("person");
