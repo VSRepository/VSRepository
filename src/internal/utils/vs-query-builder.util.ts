@@ -1,11 +1,9 @@
 import { VSRepoError } from "../../errors/VSRepoError.js";
 import { AdapterMethodOptions } from "../../types/adapter/adapter-method-options.type.js";
 import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
-import { KeysOfType } from "../../types/utils/keys-of-type.type.js";
 import { Ordering } from "../../types/utils/ordering.type.js";
 import { PaginatedResult } from "../../types/utils/paginated-result.type.js";
 import { Pagination } from "../../types/utils/pagination.type.js";
-import { Primitive } from "../../types/utils/primitive.type.js";
 import { SeeMode } from "../../types/utils/see-mode.type.js";
 import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 import { VSRepoRelations } from "../../types/vsrepo/vsrepo-relations.type.js";

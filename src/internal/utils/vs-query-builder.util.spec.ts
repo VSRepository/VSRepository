@@ -1,6 +1,5 @@
 import { VSRepoAdapterError } from "../../errors/VSRepoAdapterError.js";
 import { VSRepoError } from "../../errors/VSRepoError.js";
-import { DeepPartial } from "../../types/utils/deep-partial.type.js";
 import { Ordering } from "../../types/utils/ordering.type.js";
 import { SeeMode } from "../../types/utils/see-mode.type.js";
 import { VSRepoRelations } from "../../types/vsrepo/vsrepo-relations.type.js";
