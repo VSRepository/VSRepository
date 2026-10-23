@@ -1013,7 +1013,7 @@ export class DynamicMethodsResolver<T, K> {
                     const compiled = VSPlaceholdersParser.parse(valueQueryMethod, queryArgs).compile(index =>
                         this.adapter.getPlaceholder(index),
                     );
-                    finalQuery = compiled.text;
+                    finalQuery = compiled.query;
                     finalArgs = compiled.args;
                 }
 

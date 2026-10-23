@@ -1,5 +1,6 @@
 import { VSRepoError } from "../../errors/VSRepoError.js";
 import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
+import { CompiledQuery } from "../../types/utils/compiled-query.type.js";
 import { OrderTuple } from "../../types/utils/order-tuple.type.js";
 import { SortDirection } from "../../types/utils/ordering.type.js";
 import { VSRawQueryBuilderCteQuery } from "../../types/vsrepo/vs-raw-query-builder-cte-query.type.js";
@@ -522,7 +523,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         return query;
     }
 
-    private compileForAdapter(): { text: string; args: unknown[] } {
+    private compileForAdapter(): CompiledQuery {
         return this.toVSSql().compile(index => this.adapter.getPlaceholder(index));
     }
 
@@ -533,7 +534,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * `VSRawQueryBuilder.execute` if you also need the parameter values/to run the query.
      */
     toSql(): string {
-        return this.compileForAdapter().text;
+        return this.compileForAdapter().query;
     }
 
     /**
@@ -543,7 +544,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * @template T Shape of the returned rows. Defaults to `any`.
      */
     async execute<T = any>(): Promise<T> {
-        const { text, args } = this.compileForAdapter();
+        const { query: text, args } = this.compileForAdapter();
 
         this.trace("execute", { query: text, args });
 

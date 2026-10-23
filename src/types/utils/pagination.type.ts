@@ -1,6 +1,4 @@
 /**
- * Pagination options accepted by `getAll` and by dynamic methods with `Paginated`.
- *
  * @publicApi
  */
 export type Pagination = {

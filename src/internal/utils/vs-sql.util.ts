@@ -1,4 +1,5 @@
 import { VSRepoError } from "../../errors/VSRepoError.js";
+import { CompiledQuery } from "../../types/utils/compiled-query.type.js";
 import { GetPlaceholderFn } from "../../types/utils/get-placeholder-fn.type.js";
 import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
 import { getVsPlaceholder } from "./placeholder-fns.util.js";
@@ -75,14 +76,14 @@ export class VSSql {
      *
      * @param getPlaceholder An implementation of `GetPlaceholderFn` - defaults to `getVsPlaceholder`
      */
-    compile(getPlaceholder: GetPlaceholderFn = getVsPlaceholder): { text: string; args: unknown[] } {
+    compile(getPlaceholder: GetPlaceholderFn = getVsPlaceholder): CompiledQuery {
         let text = this.chunks[0] ?? "";
 
         for (let i = 0; i < this.values.length; i++) {
             text += getPlaceholder(i) + (this.chunks[i + 1] ?? "");
         }
 
-        return { text, args: [...this.values] };
+        return { query: text, args: [...this.values] };
     }
 
     /**

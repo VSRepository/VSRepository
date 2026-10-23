@@ -354,7 +354,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
         if (sqlFragment) {
             const compiled = sqlFragment.compile(index => this.adapter.getPlaceholder(index));
-            query = compiled.text;
+            query = compiled.query;
             args = compiled.args;
         } else if (typeof queryOrSql === "string") {
             query = queryOrSql;

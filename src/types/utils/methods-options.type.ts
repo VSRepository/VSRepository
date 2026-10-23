@@ -7,12 +7,6 @@ import { Pagination } from "./pagination.type.js";
 import { Ordering } from "./ordering.type.js";
 
 /**
- * Options accepted by the base methods exposed by `VSRepository`
- * (`get`, `getOrThrow`, `save`, `patch`, `remove`, etc) and by dynamic methods.
- *
- * @template T Entity type managed by the repository.
- * @template K ORM type map (`dbClient`/`dbTransaction`) configured on the repository.
- *
  * @publicApi
  */
 export type MethodOptions<T, K extends VSRepoOrmTypes = VSRepoOrmTypes> = {

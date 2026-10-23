@@ -17,7 +17,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe("select * from person");
+            expect(result.query).toBe("select * from person");
             expect(result.args).toEqual([]);
         });
 
@@ -28,7 +28,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe("select * from person where id = ?1");
+            expect(result.query).toBe("select * from person where id = ?1");
             expect(result.args).toEqual([id]);
         });
 
@@ -40,7 +40,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe("select * from person where id = ?1 and name = ?2");
+            expect(result.query).toBe("select * from person where id = ?1 and name = ?2");
             expect(result.args).toEqual([id, name]);
         });
 
@@ -52,7 +52,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile(getSqlitePlaceholder);
 
-            expect(result.text).toBe("select * from person where id = ? and name = ?");
+            expect(result.query).toBe("select * from person where id = ? and name = ?");
             expect(result.args).toEqual([id, name]);
         });
 
@@ -68,7 +68,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile(anyCustomFn);
 
-            expect(result.text).toBe(
+            expect(result.query).toBe(
                 `select * from person where id = ${someIdentifier + "-" + someBase} and name = ${someIdentifier + "-" + (someBase + 1)}`,
             );
             expect(result.args).toEqual([id, name]);
@@ -87,7 +87,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe(
+            expect(result.query).toBe(
                 "select * from person where deleted_at = ?1 and ((id = ?2 and name = ?3) or (lastname = ?4 and age >= ?5 and name <> ?6)) and status = ?7",
             );
             expect(result.args).toEqual([date, id, name, lastname, 18, otherName, true]);
@@ -96,7 +96,7 @@ describe("VSSql", () => {
         it("should return an empty sql", () => {
             const result = VSSql.sql``.compile();
 
-            expect(result.text).toBe("");
+            expect(result.query).toBe("");
             expect(result.args).toEqual([]);
         });
 
@@ -105,7 +105,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe("where a = ?1 and b = ?2 and c = ?3 and d = ?4");
+            expect(result.query).toBe("where a = ?1 and b = ?2 and c = ?3 and d = ?4");
             expect(result.args).toEqual([0, false, "", null]);
         });
     });
@@ -116,7 +116,7 @@ describe("VSSql", () => {
 
             const result = VSSql.raw(id).compile();
 
-            expect(result.text).toBe(id);
+            expect(result.query).toBe(id);
             expect(result.args).toEqual([]);
         });
 
@@ -127,7 +127,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe(`select * from ${table}`);
+            expect(result.query).toBe(`select * from ${table}`);
             expect(result.args).toEqual([]);
         });
 
@@ -146,7 +146,7 @@ describe("VSSql", () => {
         it("should compile to an empty sql", () => {
             const result = VSSql.empty.compile();
 
-            expect(result.text).toBe("");
+            expect(result.query).toBe("");
             expect(result.args).toEqual([]);
         });
 
@@ -155,7 +155,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe(`select * from person where id = ?1`);
+            expect(result.query).toBe(`select * from person where id = ?1`);
             expect(result.args).toEqual([1]);
         });
     });
@@ -168,7 +168,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe("?1, ?2, ?3");
+            expect(result.query).toBe("?1, ?2, ?3");
             expect(result.args).toEqual(ids);
         });
 
@@ -179,7 +179,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe("select * from person where status = ?1 and id in (?2, ?3, ?4)");
+            expect(result.query).toBe("select * from person where status = ?1 and id in (?2, ?3, ?4)");
             expect(result.args).toEqual([true, ...ids]);
         });
 
@@ -190,7 +190,7 @@ describe("VSSql", () => {
 
             const result = fragment.compile();
 
-            expect(result.text).toBe("select * from person where status = ?1 or (deleted_at is null and id = ?2)");
+            expect(result.query).toBe("select * from person where status = ?1 or (deleted_at is null and id = ?2)");
             expect(result.args).toEqual([true, id]);
         });
 
@@ -227,7 +227,7 @@ describe("VSSql", () => {
 
             const result = instance.compile();
 
-            expect(result.text).toBe("select * from user where id = ?1");
+            expect(result.query).toBe("select * from user where id = ?1");
             expect(result.args).toEqual([1]);
         });
 
@@ -236,7 +236,7 @@ describe("VSSql", () => {
 
             const result = instance.compile();
 
-            expect(result.text).toBe("select * from user where id = ?1?2?3");
+            expect(result.query).toBe("select * from user where id = ?1?2?3");
             expect(result.args).toEqual([1, 2, 3]);
         });
     });

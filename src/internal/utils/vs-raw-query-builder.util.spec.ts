@@ -345,7 +345,7 @@ describe("VSRawQueryBuilder", () => {
                 .toVSSql()
                 .compile();
 
-            expect(result.text).toBe(
+            expect(result.query).toBe(
                 "select * from user where (deleted_at is null) or (active = ?1) and (email like ?2)",
             );
             expect(result.args).toEqual([true, "%@vs.com"]);
@@ -496,7 +496,7 @@ describe("VSRawQueryBuilder", () => {
                 .toVSSql()
                 .compile();
 
-            expect(result.text).toBe("select * from user group by name, age having (name <> ?1) or (age > ?2)");
+            expect(result.query).toBe("select * from user group by name, age having (name <> ?1) or (age > ?2)");
             expect(result.args).toEqual(["João", 18]);
         });
     });
@@ -577,7 +577,7 @@ describe("VSRawQueryBuilder", () => {
         ])("should set the provided param as $name", ({ method, name }) => {
             const result = method(10).toVSSql().compile();
 
-            expect(result.text).toBe(`select * from user ${name} ?1`);
+            expect(result.query).toBe(`select * from user ${name} ?1`);
             expect(result.args).toEqual([10]);
         });
 
@@ -587,7 +587,7 @@ describe("VSRawQueryBuilder", () => {
         ])("should replace any pre-existing $name", ({ method, name }) => {
             const result = method(10).toVSSql().compile();
 
-            expect(result.text).toBe(`select * from user ${name} ?1`);
+            expect(result.query).toBe(`select * from user ${name} ?1`);
             expect(result.args).toEqual([10]);
         });
 
@@ -628,14 +628,14 @@ describe("VSRawQueryBuilder", () => {
         it("should combine limit with offset if both are provided", () => {
             const result = qb.from("user").limit(20).offset(40).toVSSql().compile();
 
-            expect(result.text).toBe(`select * from user limit ?1 offset ?2`);
+            expect(result.query).toBe(`select * from user limit ?1 offset ?2`);
             expect(result.args).toEqual([20, 40]);
         });
 
         it("should ignore the order limit and offset are provided", () => {
             const result = qb.from("user").offset(40).limit(20).toVSSql().compile();
 
-            expect(result.text).toBe(`select * from user limit ?1 offset ?2`);
+            expect(result.query).toBe(`select * from user limit ?1 offset ?2`);
             expect(result.args).toEqual([20, 40]);
         });
     });
@@ -980,7 +980,7 @@ describe("VSRawQueryBuilder", () => {
 
             expect(result).toBeInstanceOf(VSSql);
             expect(result.compile()).toEqual({
-                text: "select id, name, age from user where (active = true) limit ?1 offset ?2",
+                query: "select id, name, age from user where (active = true) limit ?1 offset ?2",
                 args: [10, 2],
             });
         });
