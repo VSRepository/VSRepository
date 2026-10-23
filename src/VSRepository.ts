@@ -29,6 +29,7 @@ import { SoftDeleteMetadata } from "./types/decorators/soft-delete-metadata.type
 import { ENABLE_SOFT_DELETE_KEY } from "./internal/constants/enable-soft-delete-key.constant.js";
 import { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
 import { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
+import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
 
 /**
  * ORM-agnostic base repository.
@@ -462,6 +463,24 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
+    async create(obj: DeepPartial<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
+        return this.execBaseMethod(opt => this.adapter.create(obj, opt), "create", options);
+    }
+
+    async createMany(
+        objs: DeepPartial<Entity>[],
+        options?: WithIgnoreConflicts<RestrictMethodOptions<Entity, OrmTypes>>,
+    ): Promise<CountResult> {
+        return this.execBaseMethod(opt => this.adapter.createMany(objs, opt), "createMany", options);
+    }
+
+    async createManyReturning(
+        objs: DeepPartial<Entity>[],
+        options?: WithIgnoreConflicts<SimpleMethodOptions<Entity, OrmTypes>>,
+    ): Promise<Entity[]> {
+        return this.execBaseMethod(opt => this.adapter.createManyReturning(objs, opt), "createManyReturning", options);
+    }
+
     async delete(where: VSRepoWhere<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
             opt => this.adapter.delete(this.mergeWheresResolver.resolve(opt.see, where), opt),
@@ -496,6 +515,33 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         return this.execBaseMethod(
             opt => this.adapter.deleteManyReturning(this.mergeWheresResolver.resolve(opt.see, where), opt),
             "deleteManyReturning",
+            options,
+        );
+    }
+
+    async upsert(
+        where: VSRepoWhere<Entity>,
+        create: DeepPartial<Entity>,
+        update: DeepPartial<Entity>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
+    ): Promise<Entity> {
+        return this.execBaseMethod(
+            opt => this.adapter.upsert(this.mergeWheresResolver.resolve(opt.see, where), create, update, opt),
+            "upsert",
+            options,
+        );
+    }
+
+    async upsertById(
+        id: PKType,
+        create: DeepPartial<Entity>,
+        update: DeepPartial<Entity>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
+    ): Promise<Entity> {
+        return this.execBaseMethod(
+            opt =>
+                this.adapter.upsert(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), create, update, opt),
+            "upsertById",
             options,
         );
     }

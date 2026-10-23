@@ -80,7 +80,6 @@ export class DynamicMethodsResolver<T, K> {
         OrderedAndPaginated: /OrderedAndPaginated$/,
         Paginated: /Paginated$/,
         Ordered: /Ordered$/,
-        IgnoreConflicts: /IgnoreConflicts$/,
     };
 
     private logAndThrowError(errorMessage: string): never {
@@ -108,7 +107,6 @@ export class DynamicMethodsResolver<T, K> {
             argsCount: 0,
             method: "unknown",
             existsMode: false,
-            ignoreIgnoreConflicts: true,
             whereParams: [],
             otherParams: [],
             originalDynamicMethodName: dynamicMethod,
@@ -178,30 +176,6 @@ export class DynamicMethodsResolver<T, K> {
             dynamicMethodInfo.whereIndex = 0;
             dynamicMethodInfo.otherParams.push("where");
             dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("createManyReturning")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("createManyReturning", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.ignoreIgnoreConflicts = false;
-            dynamicMethodInfo.method = "createManyReturning";
-            dynamicMethodInfo.dataIndex = 0;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("createMany")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("createMany", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreIgnoreConflicts = false;
-            dynamicMethodInfo.method = "createMany";
-            dynamicMethodInfo.dataIndex = 0;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("create")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("create", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.method = "create";
-            dynamicMethodInfo.dataIndex = 0;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
         } else if (dynamicMethod.startsWith("updateManyReturningBy")) {
             dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyReturningBy", "");
             dynamicMethodInfo.method = "updateManyReturning";
@@ -337,24 +311,6 @@ export class DynamicMethodsResolver<T, K> {
         methodData: DynamicMethodOptions<T>,
     ) {
         const dynamicMethodCustomization: DynamicMethodCustomization = {};
-
-        if (!dynamicMethodInfo.ignoreIgnoreConflicts) {
-            if (
-                DynamicMethodsResolver.customizationModifiers.IgnoreConflicts.test(dynamicMethodInfo.keyToMapReplaced)
-            ) {
-                dynamicMethodInfo.keyToMapReplaced = dynamicMethodInfo.keyToMapReplaced.replace(
-                    DynamicMethodsResolver.customizationModifiers.IgnoreConflicts,
-                    "",
-                );
-                dynamicMethodCustomization.ignoreConflicts = true;
-            }
-        } else if (
-            DynamicMethodsResolver.customizationModifiers.IgnoreConflicts.test(dynamicMethodInfo.keyToMapReplaced)
-        ) {
-            this.logAndThrowError(
-                `This dynamic method prefix doesn't support the "IgnoreConflicts" modifier: ${dynamicMethodInfo.originalDynamicMethodName}.`,
-            );
-        }
 
         if (!dynamicMethodInfo.ignoreOrderByAndPagination) {
             if (
@@ -743,7 +699,6 @@ export class DynamicMethodsResolver<T, K> {
             ordering,
             pagination,
             withOrderingAndPagination,
-            ignoreConflicts,
         } = data;
 
         // console.log(this.adapter)
@@ -784,11 +739,6 @@ export class DynamicMethodsResolver<T, K> {
             if (pagination) {
                 vsrepoArgs.options.pagination = pagination;
             }
-        }
-
-        if (ignoreConflicts !== undefined) {
-            // * Usado no createMany
-            (vsrepoArgs.options as any).ignoreConflicts = ignoreConflicts;
         }
 
         return vsrepoArgs;
@@ -900,21 +850,22 @@ export class DynamicMethodsResolver<T, K> {
             }
 
             instance._vsrepocache.set(originalKey, (args, methodOptions) => {
+                const options = methodOptions ?? {};
+
                 const vsrepoResolveArgsData: VSRepoResolveArgsData<T, K> = {
                     instance,
-                    options: methodOptions ?? {},
+                    options,
                     withoutWhere: dynamicMethodInfo.ignoreWhere && !dynamicMethodInfo.onlyBaseWheres,
                     specificSelect: undefined, // ? Avaliar quando vai precisar
                     withoutSelect: dynamicMethodInfo.ignoreSelect,
-                    ignoreConflicts: dynamicMethodCustomization.ignoreConflicts,
                     ordering:
                         dynamicMethodCustomization.orderPosition !== undefined
                             ? this.getValue(args, dynamicMethodCustomization.orderPosition)
-                            : (dynamicMethodCustomization.injectOrdering ?? this.defaultOrdering),
+                            : (options.order ?? dynamicMethodCustomization.injectOrdering ?? this.defaultOrdering),
                     pagination:
                         dynamicMethodCustomization.paginationPosition !== undefined
                             ? this.getValue(args, dynamicMethodCustomization.paginationPosition)
-                            : undefined,
+                            : options.pagination,
                     dataPayload:
                         dynamicMethodInfo.dataIndex !== undefined ? args.at(dynamicMethodInfo.dataIndex) : undefined,
                     createPayload:

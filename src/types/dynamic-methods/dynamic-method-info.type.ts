@@ -3,7 +3,6 @@ export type DynamicMethodInfo = {
     ignoreWhere: boolean;
     ignoreOrderByAndPagination: boolean;
     ignoreSelect: boolean;
-    ignoreIgnoreConflicts: boolean;
     existsMode: boolean;
     keyToMapReplaced: string;
     argsCount: number;
