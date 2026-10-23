@@ -174,7 +174,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     async getCount(): Promise<number> {
         const where = this.resolveWhere();
-        const options = { pagination: this.pagination, db: this.db };
+        const options = { db: this.db };
 
         return this.execute("getCount", { where, options }, () => this.adapter.count(where, options));
     }

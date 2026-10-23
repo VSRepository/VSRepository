@@ -451,10 +451,7 @@ describe("VSRawQueryBuilder", () => {
 
             const result = await qb.getCount();
 
-            expect(adapter.count).toHaveBeenCalledWith(mockWhere, {
-                db,
-                pagination: { limit: mockLimit, offset: mockOffset },
-            });
+            expect(adapter.count).toHaveBeenCalledWith(mockWhere, { db });
             expect(result).toEqual(2);
         });
 

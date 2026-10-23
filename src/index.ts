@@ -47,7 +47,7 @@ export type { VSRepoRelations, RelationKeys } from "./types/vsrepo/vsrepo-relati
 export type { VSRepoSelect } from "./types/vsrepo/vsrepo-select.type.js";
 export type { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
 export type { AdapterMethodOptions } from "./types/adapter/adapter-method-options.type.js";
-export type { AdapterQueryOptions } from "./types/adapter/adapter-query-options.type.js"; // * lembrar de marcar como @publicApi (se for manter)
+export type { AdapterQueryOptions } from "./types/adapter/adapter-query-options.type.js";
 export type { DynamicMethodOptions } from "./types/decorators/dynamic-method-options.type.js";
 export type { QueryMethodOptions } from "./types/decorators/query-method-options.type.js";
 export type { CountResult } from "./types/utils/count-result.type.js";
@@ -74,6 +74,8 @@ export type { ResolvedMethodsResult } from "./types/utils/resolved-methods-resul
 export type { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
 export type { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
 export type { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
+export type { SimpleAdapterMethodOptions } from "./types/adapter/simple-adapter-method-options.type.js";
+export type { RestrictAdapterMethodOptions } from "./types/adapter/restrict-adapter-method-options.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";

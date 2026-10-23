@@ -556,7 +556,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     async merge<U extends DeepPartial<Entity>>(
         id: PKType,
         obj: U,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<(U & Entity) | null> {
         return this.execBaseMethod(
             opt => this.adapter.merge<U>(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), obj, opt),
