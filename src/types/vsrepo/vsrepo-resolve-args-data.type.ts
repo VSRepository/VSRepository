@@ -16,5 +16,4 @@ export interface VSRepoResolveArgsData<T, K> {
     ordering?: object | object[];
     ignoreConflicts?: boolean;
     withOrderingAndPagination?: boolean;
-    distinctKeys?: string[];
 }

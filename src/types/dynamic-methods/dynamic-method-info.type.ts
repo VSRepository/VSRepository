@@ -10,7 +10,6 @@ export type DynamicMethodInfo = {
     method: string;
     whereParams: string[];
     otherParams: string[];
-    ignoreDistinct: boolean;
     dataIndex?: number;
     updateIndex?: number;
     createIndex?: number;

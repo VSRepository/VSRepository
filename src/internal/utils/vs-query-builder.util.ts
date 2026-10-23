@@ -21,9 +21,9 @@ import { VSLogger } from "./vs-logger.util.js";
  * ordering and pagination, ...).
  *
  * Chain the configuration methods (`select`, `relations`, `where`, `orderBy`, `limit`, `offset`,
- * `distinctOn`, `see`) and run the query with a terminal method (`getResult`,
- * `getOneResult`, `getOneResultOrThrow`, `getCount`, `getExistence` or `getResultAndCount`). Nothing
- * reaches the database until a terminal method is called.
+ * `see`) and run the query with a terminal method (`getResult`, `getOneResult`, `getOneResultOrThrow`,
+ * `getCount`, `getExistence` or `getResultAndCount`). Nothing reaches the database until a
+ * terminal method is called.
  *
  * The builder is **mutable**: every chained call changes the same instance and returns it. Use
  * `VSQueryBuilder.clone` to derive variations from a common base.
@@ -48,7 +48,6 @@ import { VSLogger } from "./vs-logger.util.js";
 export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes> {
     private options: Omit<AdapterMethodOptions<Entity>, "db" | "pagination"> = {};
     private pagination?: Pagination;
-    private distinct?: KeysOfType<Entity, Primitive>[];
     private seeMode: SeeMode = "active";
     private whereFilter?: VSRepoWhere<Entity>;
 
@@ -125,14 +124,13 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     /**
      * Runs the query and returns every matching record.
      *
-     * Uses everything configured on the builder: filter, `select`, `relations`, `orderBy`, `limit`/`offset`
-     * and `distinctOn` (the only terminal method that applies `distinct`).
+     * Uses everything configured on the builder: filter, `select`, `relations`, `orderBy` and `limit`/`offset`.
      *
      * @returns The matching records (an empty array if none).
      */
     async getResult(): Promise<Entity[]> {
         const where = this.resolveWhere();
-        const options = { ...this.options, distinct: this.distinct, pagination: this.pagination, db: this.db };
+        const options = { ...this.options, pagination: this.pagination, db: this.db };
 
         return this.execute("getResult", { where, options }, () => this.adapter.findMany(where, options));
     }
@@ -140,7 +138,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     /**
      * Runs the query and returns the first matching record, or `null` if there is none.
      *
-     * Uses the filter, `select`, `relations`, `orderBy` and `limit`/`offset`. `distinctOn` is not applied.
+     * Uses the filter, `select`, `relations`, `orderBy` and `limit`/`offset`.
      *
      * @returns The record, or `null` when nothing matches.
      */
@@ -172,8 +170,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      *
      * Forwards `orderBy` and `limit`/`offset` to the adapter's `count` as configured, so if you want the
      * total of a builder that has pagination use {@link VSQueryBuilder.getResultAndCount} or count from a
-     * {@link VSQueryBuilder.clone} without it. `select`, `relations` and `distinctOn` are not used
-     * (`count` doesn't support `distinct`).
+     * {@link VSQueryBuilder.clone} without it. `select` and `relations` are not used.
      *
      * @returns The number of matching records.
      */
@@ -201,7 +198,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      *
      * `result` honors `orderBy` and `limit`/`offset`; `count` deliberately ignores `orderBy` and
      * pagination, so it is the total that lets you compute the number of pages. Both queries run in
-     * parallel with the same filter and the same `db`. `distinctOn` is not used by either.
+     * parallel with the same filter and the same `db`.
      *
      * @returns The page (`result`) and the total of matching records (`count`).
      *
@@ -230,7 +227,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     }
 
     /**
-     * Returns an independent builder with the same filter, options, `distinctOn` fields, `see` mode and `db`.
+     * Returns an independent builder with the same filter, options, `see` mode and `db`.
      * Changes made to either builder afterwards don't affect the other.
      *
      * @returns The new builder.
@@ -254,7 +251,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         qbClone.options = { ...this.options };
         qbClone.pagination = { ...this.pagination };
         qbClone.whereFilter = this.whereFilter;
-        qbClone.distinct = this.distinct;
         qbClone.seeMode = this.seeMode;
 
         this.trace("clone");
@@ -343,19 +339,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
 
         this.pagination ??= {};
         this.pagination.offset = offset;
-
-        return this;
-    }
-
-    /**
-     * Sets the field(s) to apply `distinct` on. Replaces any previous `distinctOn`.
-     *
-     * Only {@link VSQueryBuilder.getResult} uses it: the ecosystem's `count` doesn't support `distinct`.
-     *
-     * @param fields A primitive field, or an array of them.
-     */
-    distinctOn(fields: KeysOfType<Entity, Primitive> | KeysOfType<Entity, Primitive>[]): this {
-        this.distinct = Array.isArray(fields) ? fields : [fields];
 
         return this;
     }

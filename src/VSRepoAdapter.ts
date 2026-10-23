@@ -33,10 +33,7 @@ export abstract class VSRepoAdapter<T> {
     public abstract findOneOrThrow(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T>;
 
     /** Fetches all records matching `where`. */
-    public abstract findMany(
-        where?: VSRepoWhere<T>,
-        options?: AdapterMethodOptions<T> & { distinct?: (keyof T)[] },
-    ): Promise<T[]>;
+    public abstract findMany(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T[]>;
 
     /** Creates or updates (upsert) a single record. */
     public abstract save(obj: DeepPartial<T>, options?: AdapterMethodOptions<T>): Promise<T>;

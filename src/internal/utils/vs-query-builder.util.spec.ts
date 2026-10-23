@@ -273,46 +273,6 @@ describe("VSRawQueryBuilder", () => {
         });
     });
 
-    describe("distinct", () => {
-        it("should call the adapter with the provided distinct", async () => {
-            const distinct = ["name" as const];
-            const returned = [{ id: "123", name: "joao", address: { city: "tal", state: "tal" } }] as any;
-
-            vi.spyOn(adapter, "findMany").mockResolvedValue(returned);
-
-            const result = await qb.distinctOn(distinct).getResult();
-
-            expect(adapter.findMany).toHaveBeenCalledWith(undefined, expect.objectContaining({ distinct }));
-            expect(result).toBe(returned);
-        });
-
-        it("should accept a single field too", async () => {
-            const distinct = "name";
-            const returned = [{ id: "123", name: "joao", address: { city: "tal", state: "tal" } }] as any;
-
-            vi.spyOn(adapter, "findMany").mockResolvedValue(returned);
-
-            const result = await qb.distinctOn(distinct).getResult();
-
-            expect(adapter.findMany).toHaveBeenCalledWith(undefined, expect.objectContaining({ distinct: [distinct] }));
-            expect(result).toBe(returned);
-        });
-
-        it("should call with no distinct", async () => {
-            const returned = [{ id: "123", name: "joao" }] as any;
-
-            vi.spyOn(adapter, "findMany").mockResolvedValue(returned);
-
-            const result = await qb.getResult();
-
-            expect(adapter.findMany).toHaveBeenCalledWith(
-                undefined,
-                expect.not.objectContaining({ distinct: expect.anything() }),
-            );
-            expect(result).toBe(returned);
-        });
-    });
-
     describe("see", () => {
         it("should call the adapter with the provided see restriction", async () => {
             const see: SeeMode = "all";
@@ -421,7 +381,6 @@ describe("VSRawQueryBuilder", () => {
         const mockOrder: Ordering<User> = { name: "ASC" };
         const mockLimit = 10;
         const mockOffset = 10;
-        const mockDistinctOn = ["name" as const];
 
         beforeEach(() => {
             vi.spyOn(mergeWheresResolver, "resolve").mockImplementation((_, val) => val ?? {});
@@ -432,8 +391,7 @@ describe("VSRawQueryBuilder", () => {
                 .see("all")
                 .orderBy(mockOrder)
                 .limit(mockLimit)
-                .offset(mockOffset)
-                .distinctOn(mockDistinctOn);
+                .offset(mockOffset);
 
             vi.spyOn(logger, "startPerformLog").mockReturnValue({} as any);
             vi.spyOn(logger, "endPerformLog").mockReturnValue(undefined);
@@ -452,7 +410,6 @@ describe("VSRawQueryBuilder", () => {
             expect(adapter.findMany).toHaveBeenCalledWith(mockWhere, {
                 db,
                 pagination: { limit: mockLimit, offset: mockOffset },
-                distinct: mockDistinctOn,
                 order: mockOrder,
                 select: mockSelect,
                 relations: mockRelations,
@@ -540,7 +497,6 @@ describe("VSRawQueryBuilder", () => {
             expect(adapter.findMany).toHaveBeenCalledWith(mockWhere, {
                 db,
                 pagination: { limit: mockLimit, offset: mockOffset },
-                distinct: mockDistinctOn,
                 order: mockOrder,
                 select: mockSelect,
                 relations: mockRelations,

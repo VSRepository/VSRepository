@@ -75,7 +75,6 @@ export class DynamicMethodsResolver<T, K> {
     };
 
     private static customizationModifiers = {
-        Distinct: this.keywordTemplate("Distinct"),
         OrderBy: this.keywordTemplate("OrderBy"),
         PaginatedAndOrdered: /PaginatedAndOrdered$/,
         OrderedAndPaginated: /OrderedAndPaginated$/,
@@ -110,7 +109,6 @@ export class DynamicMethodsResolver<T, K> {
             method: "unknown",
             existsMode: false,
             ignoreIgnoreConflicts: true,
-            ignoreDistinct: true,
             whereParams: [],
             otherParams: [],
             originalDynamicMethodName: dynamicMethod,
@@ -123,7 +121,6 @@ export class DynamicMethodsResolver<T, K> {
         } else if (dynamicMethod.startsWith("findBy")) {
             dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findBy", "");
             dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreDistinct = false;
             dynamicMethodInfo.method = "findMany";
         } else if (dynamicMethod.startsWith("findOneOrThrowBy")) {
             dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneOrThrowBy", "");
@@ -309,7 +306,6 @@ export class DynamicMethodsResolver<T, K> {
             dynamicMethodInfo.ignoreOrderByAndPagination = false;
             dynamicMethodInfo.ignoreWhere = true;
             dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.ignoreDistinct = false;
             dynamicMethodInfo.method = "findMany";
             dynamicMethodInfo.whereIndex = 0;
             dynamicMethodInfo.otherParams.push("where");
@@ -426,12 +422,6 @@ export class DynamicMethodsResolver<T, K> {
             );
 
             if (keySplitedOrderBy[1]) {
-                if (DynamicMethodsResolver.customizationModifiers.Distinct.test(keySplitedOrderBy[1])) {
-                    this.logAndThrowError(
-                        `The "Distinct" modifier cannot appear after the "OrderBy" modifier: ${dynamicMethodInfo.originalDynamicMethodName}.`,
-                    );
-                }
-
                 const orderByFields = keySplitedOrderBy[1]
                     .split(DynamicMethodsResolver.operators.And)
                     .map(uncapitalize);
@@ -459,24 +449,6 @@ export class DynamicMethodsResolver<T, K> {
         ) {
             this.logAndThrowError(
                 `This dynamic method prefix doesn't support the ordering or pagination modifiers: ${dynamicMethodInfo.originalDynamicMethodName}.`,
-            );
-        }
-
-        if (!dynamicMethodInfo.ignoreDistinct) {
-            const keySplitedDistinct = dynamicMethodInfo.keyToMapReplaced.split(
-                DynamicMethodsResolver.customizationModifiers.Distinct,
-            );
-
-            if (keySplitedDistinct[1]) {
-                dynamicMethodCustomization.distinctKeys = keySplitedDistinct[1]
-                    .split(DynamicMethodsResolver.operators.And)
-                    .map(uncapitalize);
-            }
-
-            dynamicMethodInfo.keyToMapReplaced = keySplitedDistinct[0]!;
-        } else if (DynamicMethodsResolver.customizationModifiers.Distinct.test(dynamicMethodInfo.keyToMapReplaced)) {
-            this.logAndThrowError(
-                `This dynamic method prefix doesn't support the "Distinct" modifier: ${dynamicMethodInfo.originalDynamicMethodName}.`,
             );
         }
 
@@ -772,7 +744,6 @@ export class DynamicMethodsResolver<T, K> {
             pagination,
             withOrderingAndPagination,
             ignoreConflicts,
-            distinctKeys,
         } = data;
 
         // console.log(this.adapter)
@@ -818,11 +789,6 @@ export class DynamicMethodsResolver<T, K> {
         if (ignoreConflicts !== undefined) {
             // * Usado no createMany
             (vsrepoArgs.options as any).ignoreConflicts = ignoreConflicts;
-        }
-
-        if (distinctKeys !== undefined) {
-            // * Usado no findMany
-            (vsrepoArgs.options as any).distinct = distinctKeys;
         }
 
         return vsrepoArgs;
@@ -960,7 +926,6 @@ export class DynamicMethodsResolver<T, K> {
                             ? args.at(dynamicMethodInfo.updateIndex)
                             : undefined,
                     withOrderingAndPagination: !dynamicMethodInfo.ignoreOrderByAndPagination,
-                    distinctKeys: dynamicMethodCustomization.distinctKeys,
                 };
 
                 if (!dynamicMethodInfo.ignoreWhere) {
