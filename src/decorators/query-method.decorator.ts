@@ -11,10 +11,6 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  * adapter's `query()` method, with parameters injected positionally via the
  * separate arguments passed at the call site (placeholders).
  *
- * The placeholder syntax depends on the database/driver behind your adapter. Check your adapter's
- * documentation for the exact syntax before writing queries — or set `vsPlaceholders: true` in the
- * `VSRepository` constructor options to use `?1`, `?2`, ... instead, regardless of adapter.
- *
  * @param value Raw SQL statement to execute. Use placeholders for the values
  * that will be passed via `args` — never interpolate values directly into `value`.
  * @param options Optional configuration; set `modifying: true` for `INSERT`/`UPDATE`/`DELETE` statements.
@@ -22,15 +18,12 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  * @example
  * ```typescript
  * class UserRepository extends VSRepository<User, string> {
- *     @QueryMethod('SELECT * FROM "user" WHERE email = $1')
- *     declare findByEmailRaw: (email: string, db?: DbArg) => Promise<User[]>;
+ *     *@QueryMethod('SELECT * FROM "user" WHERE email = ?1')
+ *     declare findByEmail: (email: string, db?: DbArg) => Promise<User[]>;
  *
- *     @QueryMethod('UPDATE "user" SET active = true WHERE id = $1', { modifying: true })
+ *     *@QueryMethod('UPDATE "user" SET active = true WHERE id = ?1', { modifying: true })
  *     declare activateUser: (id: string, db?: DbArg) => Promise<number>;
  * }
- *
- * await userRepository.findByEmailRaw("joao@email.com");
- * await userRepository.findByIdRaw({ args: ["1"] });
  * ```
  *
  * @publicApi
