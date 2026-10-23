@@ -5,7 +5,7 @@
  * - `"removed"` — returns only deleted records.
  * - `"all"` — returns all records, regardless of their deletion status.
  *
- * Only has effect when softDelete is configured on the repository.
+ * Only has effect when soft delete is configured on the repository.
  *
  * @publicApi
  */

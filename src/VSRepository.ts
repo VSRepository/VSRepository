@@ -56,7 +56,7 @@ import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js
  * @publicApi
  */
 export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes> {
-    public readonly pkName: KeysOfType<Entity, PKType>;
+    private readonly pkName: KeysOfType<Entity, PKType>;
 
     private readonly adapter: VSRepoAdapter<Entity>;
     private readonly mergeWheresResolver: MergeWheresResolver<Entity>;
@@ -134,7 +134,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private resolveSoftDelete() {
         const softDeleteMetadata: SoftDeleteMetadata | undefined = Reflect.getMetadata(
             ENABLE_SOFT_DELETE_KEY,
-            this.constructor.prototype,
+            this.constructor,
         );
 
         if (softDeleteMetadata?.active) {
@@ -637,7 +637,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
     private failSoftDelete(): never {
         this.fail(
-            "this method can only be used if you have enabled softDelete in this repository.",
+            "this method can only be used if you have enabled soft delete in this repository.",
             VSRepoErrorType.BASE,
         );
     }
