@@ -16,13 +16,6 @@ export type VSRepoOptions<T, K> = {
     adapter: VSRepoAdapter<T>;
     /** Name of the field that represents the entity's primary key (PK). */
     pkName?: KeysOfType<T, K>;
-    /**
-     * Name of the field used for soft-delete.
-     *
-     * When configured, enables the `softRemove`, `softRemoveList`, `restore`,
-     * and `restoreList` methods.
-     */
-    softRemoveKey?: keyof T;
     /** Minimum severity of messages printed by the repository's internal logger. Defaults to `VSLogLevel.WARN`. */
     logLevel?: VSLogLevel;
     /** Default ordering automatically applied to queries that accept `order`, unless the call overrides it. */

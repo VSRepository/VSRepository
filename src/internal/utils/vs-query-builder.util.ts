@@ -27,7 +27,7 @@ import { VSLogger } from "./vs-logger.util.js";
  * `VSQueryBuilder.clone` to derive variations from a common base.
  *
  * Soft-delete is respected the same way as in the repository methods: when the repository has a
- * `softRemoveKey`, only non-deleted records are seen unless `VSQueryBuilder.see` says otherwise.
+ * `softDeleteField`, only non-deleted records are seen unless `VSQueryBuilder.see` says otherwise.
  *
  * @example
  * ```typescript
@@ -342,7 +342,7 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     }
 
     /**
-     * Sets which records the query sees when the repository has a `softRemoveKey`. Applies to every
+     * Sets which records the query sees when the repository has a `softDeleteField`. Applies to every
      * terminal method (both queries of `getResultAndCount` included) and is ignored by repositories
      * without soft-delete.
      *

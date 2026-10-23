@@ -25,6 +25,8 @@ import { VSSql } from "./internal/utils/vs-sql.util.js";
 import { VSPlaceholdersParser } from "./internal/utils/vs-placeholder-parser.util.js";
 import { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
 import { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
+import { SoftDeleteMetadata } from "./types/decorators/soft-delete-metadata.type.js";
+import { ENABLE_SOFT_DELETE_KEY } from "./internal/constants/enable-soft-delete-key.constant.js";
 
 /**
  * ORM-agnostic base repository.
@@ -57,7 +59,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private readonly mergeWheresResolver: MergeWheresResolver<Entity>;
     private readonly logger: VSLogger;
 
-    private readonly softRemoveKey?: keyof Entity;
+    private softDeleteField?: string;
     private readonly defaultOrdering?: Ordering<Entity>;
     private readonly vsPlaceholders: boolean;
 
@@ -89,16 +91,17 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             );
         }
 
-        this.softRemoveKey = options.softRemoveKey;
         this.defaultOrdering = options.defaultOrdering;
         this.vsPlaceholders = options.vsPlaceholders ?? true;
 
-        this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softRemoveKey);
+        this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softDeleteField);
         this.logger = new VSLogger(options.logLevel ?? VSLogLevel.WARN, this.constructor.name + "Logger");
+
+        this.resolveSoftDelete();
 
         this.logger.logInfo(
             `Initializing ${this.constructor.name} (pk: '${String(this.pkName)}'` +
-                (this.softRemoveKey ? `, softRemoveKey: '${String(this.softRemoveKey)}'` : "") +
+                (this.softDeleteField ? `, softDeleteField: '${String(this.softDeleteField)}'` : "") +
                 (this.defaultOrdering ? `, defaultOrdering: ${JSON.stringify(this.defaultOrdering)}` : "") +
                 `, adapter: ${this.adapter.constructor.name}` +
                 `)`,
@@ -116,6 +119,17 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         this.logger.logInfo(
             `${this.constructor.name} ready (${options.lazyDynamicMethods ? "Resolution of dynamic methods postponed" : `${dynamicMethodsCount} dynamic method(s), ${queryMethodsCount} query method(s) resolved`})`,
         );
+    }
+
+    private resolveSoftDelete() {
+        const softDeleteMetadata: SoftDeleteMetadata | undefined = Reflect.getMetadata(
+            ENABLE_SOFT_DELETE_KEY,
+            this.constructor.prototype,
+        );
+
+        if (softDeleteMetadata?.active) {
+            this.softDeleteField = softDeleteMetadata.field;
+        }
     }
 
     /**
@@ -298,45 +312,12 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /**
      * Executes a raw query/statement directly against the underlying database.
      *
-     * Accepts either a plain SQL string — use placeholders for values passed
-     * via `options.args`, never interpolate values directly into `query`, to
-     * avoid SQL injection; the placeholder syntax depends on the
-     * database/driver behind your adapter — or a `VSSql` fragment built with
-     * `VSSql.sql`/`raw`/`join`/`empty`, which is parameterized automatically
-     * and compiled using your adapter's own placeholder syntax.
-     *
      * Set `options.modifying: true` for `INSERT`/`UPDATE`/`DELETE` statements.
-     * Set `options.singleResult: true` to collapse an array result into its
-     * first element (`null` if empty).
      *
      * @example
      * ```typescript
      * const users = await userRepository.query<User[]>(
-     *     'SELECT * FROM "user" WHERE email = $1',
-     *     { args: ["joao@email.com"] },
-     * );
-     *
-     * const affected = await userRepository.query<number>(
-     *     'UPDATE "user" SET active = true WHERE id = $1',
-     *     { args: ["123"], modifying: true },
-     * );
-     *
-     * // Only one row is ever expected here, so `singleResult` collapses the
-     * // array into a single object (or `null` when no row matches).
-     * const user = await userRepository.query<User | null>(
-     *     'SELECT * FROM "user" WHERE id = $1 LIMIT 1',
-     *     { args: ["123"], singleResult: true },
-     * );
-     *
-     * // Same thing, built with a `VSSql` fragment instead of a hand-written
-     * // placeholder string — `email` is still sent as a parameter.
-     * const usersViaSql = await userRepository.query<User[]>(VSSql.sql`SELECT * FROM "user" WHERE email = ${"joao@email.com"}`);
-     *
-     * // With `vsPlaceholders: true` in the constructor options, plain
-     * // strings use VSRepository's own `?1`, `?2`, ... placeholders instead
-     * // of the adapter's native syntax — `?1` may repeat to reuse an arg.
-     * const usersViaVsPlaceholders = await userRepository.query<User[]>(
-     *     'SELECT * FROM "user" WHERE email = ?1',
+     *     'SELECT * FROM "User" WHERE email = $1',
      *     { args: ["joao@email.com"] },
      * );
      * ```
@@ -396,33 +377,34 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         }
     }
 
-    /** Fetches a record by its primary key (PK). */
-    async get(pk: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
+    async find(where?: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity[]> {
         return this.execBaseMethod(
-            opt => this.adapter.findOne(this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), opt),
-            "get",
+            opt => this.adapter.findMany(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "find",
             options,
         );
     }
 
-    /** Fetches a record by PK and throws an Error if not found. */
-    async getOrThrow(pk: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async findOne(where?: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
         return this.execBaseMethod(
-            opt => this.adapter.findOneOrThrow(this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), opt),
-            "getOrThrow",
+            opt => this.adapter.findOne(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "findOne",
             options,
         );
     }
 
-    /** Fetches multiple records by a list of primary keys (PKs). */
-    async getList(pks: PKType[], options?: MethodOptions<Entity, OrmTypes>): Promise<Entity[]> {
-        if (!Array.isArray(pks)) {
-            this.fail("'pks' must be a valid array", VSRepoErrorType.BASE);
-        }
-
+    async findOneOrThrow(where?: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
-            opt => this.adapter.findMany(this.mergeWheresResolver.resolve(opt.see, this.wherePkIn(pks)), opt),
-            "getList",
+            opt => this.adapter.findOneOrThrow(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "findOneOrThrow",
+            options,
+        );
+    }
+
+    async findOneById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
+        return this.execBaseMethod(
+            opt => this.adapter.findOne(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
+            "findOneById",
             options,
         );
     }
@@ -446,49 +428,98 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /** Creates or updates (upsert) a record. */
-    async save(obj: DeepPartial<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
-        return this.execBaseMethod(opt => this.adapter.save(obj, opt), "save", options);
+    async save(obj: DeepPartial<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity>;
+    /** Creates or updates (upsert) a list of records. */
+    async save(obj: DeepPartial<Entity>[], options?: MethodOptions<Entity, OrmTypes>): Promise<Entity[]>;
+    async save(
+        obj: DeepPartial<Entity> | DeepPartial<Entity>[],
+        options?: MethodOptions<Entity, OrmTypes>,
+    ): Promise<Entity | Entity[]> {
+        return this.execBaseMethod<Entity | Entity[]>(
+            opt =>
+                Array.isArray(obj)
+                    ? this.adapter.saveMany(obj as DeepPartial<Entity>[], opt)
+                    : this.adapter.save(obj, opt),
+            "save",
+            options,
+        );
     }
 
-    /** Creates or updates (upsert) multiple records in a single operation. */
-    async saveList(
-        objs: DeepPartial<Entity>[],
-        options?: MethodOptions<Entity, OrmTypes> & { db?: OrmTypes["dbTransaction"] },
+    async delete(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+        return this.execBaseMethod(
+            opt => this.adapter.delete(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "delete",
+            options,
+        );
+    }
+
+    async deleteById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+        return this.execBaseMethod(
+            opt => this.adapter.delete(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
+            "deleteById",
+            options,
+        );
+    }
+
+    async deleteMany(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<CountResult> {
+        return this.execBaseMethod(
+            opt => this.adapter.deleteMany(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "deleteMany",
+            options,
+        );
+    }
+
+    async deleteManyReturning(
+        where: VSRepoWhere<Entity>,
+        options?: MethodOptions<Entity, OrmTypes>,
     ): Promise<Entity[]> {
-        if (!Array.isArray(objs)) {
-            this.fail("'objs' must be a valid array", VSRepoErrorType.BASE);
-        }
-
-        return this.execBaseMethod(opt => this.adapter.saveMany(objs, opt), "saveList", options);
-    }
-
-    /** Deletes a record identified by its primary key (PK). */
-    async remove(pk: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
-            opt => this.adapter.delete(this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), opt),
-            "remove",
+            opt => this.adapter.deleteManyReturning(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "deleteManyReturning",
             options,
         );
     }
 
-    /** Deletes multiple records by their primary keys, returning the count of affected rows. */
-    async removeList(pks: PKType[], options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<CountResult> {
-        if (!Array.isArray(pks)) {
-            this.fail("'pks' must be a valid array", VSRepoErrorType.BASE);
-        }
-
+    async update(
+        where: VSRepoWhere<Entity>,
+        obj: DeepPartial<Entity>,
+        options?: MethodOptions<Entity, OrmTypes>,
+    ): Promise<Entity> {
         return this.execBaseMethod(
-            opt => this.adapter.deleteMany(this.mergeWheresResolver.resolve(opt.see, this.wherePkIn(pks)), opt),
-            "removeList",
+            opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see, where), obj, opt),
+            "update",
             options,
         );
     }
 
-    /** Partially updates an existing record by its primary key (PK). */
-    async patch(pk: PKType, obj: DeepPartial<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async updateById(id: PKType, obj: DeepPartial<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
-            opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), obj, opt),
-            "patch",
+            opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), obj, opt),
+            "updateById",
+            options,
+        );
+    }
+
+    async updateMany(
+        where: VSRepoWhere<Entity>,
+        obj: DeepPartial<Entity>,
+        options?: MethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
+        return this.execBaseMethod(
+            opt => this.adapter.updateMany(this.mergeWheresResolver.resolve(opt.see, where), obj, opt),
+            "updateMany",
+            options,
+        );
+    }
+
+    async updateManyReturning(
+        where: VSRepoWhere<Entity>,
+        obj: DeepPartial<Entity>,
+        options?: MethodOptions<Entity, OrmTypes>,
+    ): Promise<Entity[]> {
+        return this.execBaseMethod(
+            opt => this.adapter.updateManyReturning(this.mergeWheresResolver.resolve(opt.see, where), obj, opt),
+            "updateManyReturning",
             options,
         );
     }
@@ -496,48 +527,54 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /**
      * Fetches a record by PK and returns it deep-merged, in memory, with the
      * provided object — does **not** persist anything (pass the result to
-     * `save`/`patch` yourself to write it).
+     * `save`/`updateById` yourself to write it).
      */
     async merge<U extends DeepPartial<Entity>>(
-        pk: PKType,
+        id: PKType,
         obj: U,
         options?: MethodOptions<Entity, OrmTypes>,
     ): Promise<(U & Entity) | null> {
         return this.execBaseMethod(
-            opt => this.adapter.merge<U>(this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), obj, opt),
+            opt => this.adapter.merge<U>(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), obj, opt),
             "merge",
             options,
         );
     }
 
-    /** Returns the total number of records. */
-    async total(options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<number> {
+    async count(where?: VSRepoWhere<Entity>, options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<number> {
         return this.execBaseMethod(
-            opt => this.adapter.count(this.mergeWheresResolver.resolve(opt.see, {}), opt),
-            "total",
+            opt => this.adapter.count(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "count",
             options,
         );
     }
 
-    /** Checks whether a record exists by its primary key (PK). */
-    async has(pk: PKType, options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<boolean> {
+    async exists(where?: VSRepoWhere<Entity>, options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<boolean> {
         return this.execBaseMethod(
-            opt => this.adapter.exists(this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), opt),
-            "has",
+            opt => this.adapter.exists(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "exists",
             options,
         );
     }
 
-    /** Marks a record as deleted (soft-delete). Requires `softRemoveKey` to be configured on the repository. */
+    async existsById(id: PKType, options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<boolean> {
+        return this.execBaseMethod(
+            opt => this.adapter.exists(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
+            "existsById",
+            options,
+        );
+    }
+
+    /** Marks a record as deleted (soft-delete). Requires `softDeleteField` to be configured on the repository. */
     async softRemove(pk: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
-        if (!this.softRemoveKey) {
+        if (!this.softDeleteField) {
             this.fail(
-                "this method can only be used if you have configured 'softRemoveKey' in this repository.",
+                "this method can only be used if you have configured 'softDeleteField' in this repository.",
                 VSRepoErrorType.BASE,
             );
         }
 
-        const key = this.softRemoveKey;
+        const key = this.softDeleteField;
 
         return this.execBaseMethod(
             opt =>
@@ -551,11 +588,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Marks multiple records as deleted (soft-delete) in batch. Requires `softRemoveKey` to be configured on the repository. */
+    /** Marks multiple records as deleted (soft-delete) in batch. Requires `softDeleteField` to be configured on the repository. */
     async softRemoveList(pks: PKType[], options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<CountResult> {
-        if (!this.softRemoveKey) {
+        if (!this.softDeleteField) {
             this.fail(
-                "this method can only be used if you have configured 'softRemoveKey' in this repository.",
+                "this method can only be used if you have configured 'softDeleteField' in this repository.",
                 VSRepoErrorType.BASE,
             );
         }
@@ -563,7 +600,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.fail("'pks' must be a valid array", VSRepoErrorType.BASE);
         }
 
-        const key = this.softRemoveKey;
+        const key = this.softDeleteField;
 
         return this.execBaseMethod(
             opt =>
@@ -577,16 +614,16 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Restores a record previously marked as deleted (soft-delete). Requires `softRemoveKey` to be configured on the repository. */
+    /** Restores a record previously marked as deleted (soft-delete). Requires `softDeleteField` to be configured on the repository. */
     async restore(pk: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
-        if (!this.softRemoveKey) {
+        if (!this.softDeleteField) {
             this.fail(
-                "this method can only be used if you have configured 'softRemoveKey' in this repository.",
+                "this method can only be used if you have configured 'softDeleteField' in this repository.",
                 VSRepoErrorType.BASE,
             );
         }
 
-        const key = this.softRemoveKey;
+        const key = this.softDeleteField;
 
         return this.execBaseMethod(
             opt =>
@@ -600,11 +637,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Restores multiple records previously marked as deleted (soft-delete) in batch. Requires `softRemoveKey` to be configured on the repository. */
+    /** Restores multiple records previously marked as deleted (soft-delete) in batch. Requires `softDeleteField` to be configured on the repository. */
     async restoreList(pks: PKType[], options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<CountResult> {
-        if (!this.softRemoveKey) {
+        if (!this.softDeleteField) {
             this.fail(
-                "this method can only be used if you have configured 'softRemoveKey' in this repository.",
+                "this method can only be used if you have configured 'softDeleteField' in this repository.",
                 VSRepoErrorType.BASE,
             );
         }
@@ -612,7 +649,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.fail("'pks' must be a valid array", VSRepoErrorType.BASE);
         }
 
-        const key = this.softRemoveKey;
+        const key = this.softDeleteField;
 
         return this.execBaseMethod(
             opt =>
@@ -627,9 +664,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /**
-     * Atomically adds `value` to a numeric field of the record identified
-     * by `pk`, evaluated server-side against the row's current value (e.g.
-     * `saldo = saldo + value`) — not a fetch-then-save round trip.
+     * Atomically adds `value` to a numeric field of the record identified by `id`.
      */
     async increment<Field extends NumericKeys<Entity>>(
         pk: PKType,
@@ -650,7 +685,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Same as {@link VSRepository.increment}, subtracting `value` instead of adding it. */
     async decrement<Field extends NumericKeys<Entity>>(
         pk: PKType,
         field: Field,
@@ -670,7 +704,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Same as {@link VSRepository.increment}, multiplying the field's current value by `value`. */
     async multiply<Field extends NumericKeys<Entity>>(
         pk: PKType,
         field: Field,
@@ -690,11 +723,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /**
-     * Same as {@link VSRepository.increment}, dividing the field's current
-     * value by `value`. Division-by-zero behavior depends on the adapter/
-     * underlying database (see {@link VSRepoAdapter.divideOne}).
-     */
     async divide<Field extends NumericKeys<Entity>>(
         pk: PKType,
         field: Field,
@@ -710,9 +738,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /**
-     * Returns the sum of a numeric field across every record matching
-     * `where` (all records if omitted), or `null` if none match — mirrors
-     * SQL's `SUM()`, which returns `NULL` (not `0`) over an empty set.
+     * Returns the sum of a numeric field across every record matching `where`.
      */
     async sum(
         field: NumericKeys<Entity>,
@@ -726,7 +752,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Same as {@link VSRepository.sum}, but the arithmetic mean instead of the total. */
+    /**
+     * Returns the average of a numeric field across every record matching `where`.
+     */
     async average(
         field: NumericKeys<Entity>,
         where?: VSRepoWhere<Entity>,
@@ -739,7 +767,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Same as {@link VSRepository.sum}, but the minimum value instead of the total. */
+    /**
+     * Returns the minimum of a numeric field across every record matching `where`.
+     */
     async min(
         field: NumericKeys<Entity>,
         where?: VSRepoWhere<Entity>,
@@ -752,7 +782,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Same as {@link VSRepository.sum}, but the maximum value instead of the total. */
+    /**
+     * Returns the maximum of a numeric field across every record matching `where`.
+     */
     async max(
         field: NumericKeys<Entity>,
         where?: VSRepoWhere<Entity>,
