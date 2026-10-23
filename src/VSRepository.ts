@@ -28,6 +28,7 @@ import { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js
 import { SoftDeleteMetadata } from "./types/decorators/soft-delete-metadata.type.js";
 import { ENABLE_SOFT_DELETE_KEY } from "./internal/constants/enable-soft-delete-key.constant.js";
 import { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
+import { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
 
 /**
  * ORM-agnostic base repository.
@@ -392,9 +393,20 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         }
     }
 
+    private resolveDefaultOrdering(options: MethodOptions<Entity, OrmTypes>): MethodOptions<Entity, OrmTypes> {
+        return {
+            ...options,
+            order: options.order ?? this.defaultOrdering,
+        };
+    }
+
     async find(where?: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity[]> {
         return this.execBaseMethod(
-            opt => this.adapter.findMany(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            opt =>
+                this.adapter.findMany(
+                    this.mergeWheresResolver.resolve(opt.see, where),
+                    this.resolveDefaultOrdering(opt),
+                ),
             "find",
             options,
         );
@@ -402,7 +414,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
     async findOne(where?: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
         return this.execBaseMethod(
-            opt => this.adapter.findOne(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            opt =>
+                this.adapter.findOne(
+                    this.mergeWheresResolver.resolve(opt.see, where),
+                    this.resolveDefaultOrdering(opt),
+                ),
             "findOne",
             options,
         );
@@ -410,13 +426,17 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
     async findOneOrThrow(where?: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
-            opt => this.adapter.findOneOrThrow(this.mergeWheresResolver.resolve(opt.see, where), opt),
+            opt =>
+                this.adapter.findOneOrThrow(
+                    this.mergeWheresResolver.resolve(opt.see, where),
+                    this.resolveDefaultOrdering(opt),
+                ),
             "findOneOrThrow",
             options,
         );
     }
 
-    async findOneById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
+    async findOneById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
         return this.execBaseMethod(
             opt => this.adapter.findOne(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
             "findOneById",
@@ -424,31 +444,13 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    /** Fetches all records (respects the repository's `defaultOrdering` unless `order` is provided). */
-    async getAll(
-        options?: MethodOptions<Entity, OrmTypes> & {
-            pagination?: Pagination;
-            order?: Ordering<Entity>;
-        },
-    ): Promise<Entity[]> {
-        return this.execBaseMethod(
-            (opt: MethodOptions<Entity, OrmTypes> & { order?: Ordering<Entity> }) =>
-                this.adapter.findMany(this.mergeWheresResolver.resolve(opt.see, {}), {
-                    ...opt,
-                    order: opt.order ?? this.defaultOrdering,
-                }),
-            "getAll",
-            options,
-        );
-    }
-
     /** Creates or updates (upsert) a record. */
-    async save(obj: DeepPartial<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity>;
+    async save(obj: DeepPartial<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity>;
     /** Creates or updates (upsert) a list of records. */
-    async save(obj: DeepPartial<Entity>[], options?: MethodOptions<Entity, OrmTypes>): Promise<Entity[]>;
+    async save(obj: DeepPartial<Entity>[], options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity[]>;
     async save(
         obj: DeepPartial<Entity> | DeepPartial<Entity>[],
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity | Entity[]> {
         return this.execBaseMethod<Entity | Entity[]>(
             opt =>
@@ -460,7 +462,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async delete(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async delete(where: VSRepoWhere<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
             opt => this.adapter.delete(this.mergeWheresResolver.resolve(opt.see, where), opt),
             "delete",
@@ -468,7 +470,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async deleteById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async deleteById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
             opt => this.adapter.delete(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
             "deleteById",
@@ -476,7 +478,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async deleteMany(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<CountResult> {
+    async deleteMany(
+        where: VSRepoWhere<Entity>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
         return this.execBaseMethod(
             opt => this.adapter.deleteMany(this.mergeWheresResolver.resolve(opt.see, where), opt),
             "deleteMany",
@@ -486,7 +491,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
     async deleteManyReturning(
         where: VSRepoWhere<Entity>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity[]> {
         return this.execBaseMethod(
             opt => this.adapter.deleteManyReturning(this.mergeWheresResolver.resolve(opt.see, where), opt),
@@ -498,7 +503,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     async update(
         where: VSRepoWhere<Entity>,
         obj: DeepPartial<Entity>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
             opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see, where), obj, opt),
@@ -507,7 +512,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async updateById(id: PKType, obj: DeepPartial<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async updateById(
+        id: PKType,
+        obj: DeepPartial<Entity>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
+    ): Promise<Entity> {
         return this.execBaseMethod(
             opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), obj, opt),
             "updateById",
@@ -518,7 +527,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     async updateMany(
         where: VSRepoWhere<Entity>,
         obj: DeepPartial<Entity>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<CountResult> {
         return this.execBaseMethod(
             opt => this.adapter.updateMany(this.mergeWheresResolver.resolve(opt.see, where), obj, opt),
@@ -530,7 +539,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     async updateManyReturning(
         where: VSRepoWhere<Entity>,
         obj: DeepPartial<Entity>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity[]> {
         return this.execBaseMethod(
             opt => this.adapter.updateManyReturning(this.mergeWheresResolver.resolve(opt.see, where), obj, opt),
@@ -587,7 +596,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async softDelete(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async softDelete(where: VSRepoWhere<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         if (!this.softDeleteField) {
             this.failSoftDelete();
         }
@@ -606,7 +615,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async softDeleteById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async softDeleteById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         if (!this.softDeleteField) {
             this.failSoftDelete();
         }
@@ -625,7 +634,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async softDeleteMany(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<CountResult> {
+    async softDeleteMany(
+        where: VSRepoWhere<Entity>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
         if (!this.softDeleteField) {
             this.failSoftDelete();
         }
@@ -644,7 +656,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async restore(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async restore(where: VSRepoWhere<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         if (!this.softDeleteField) {
             this.failSoftDelete();
         }
@@ -663,7 +675,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async restoreById(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async restoreById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         if (!this.softDeleteField) {
             this.failSoftDelete();
         }
@@ -682,7 +694,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async restoreMany(where: VSRepoWhere<Entity>, options?: MethodOptions<Entity, OrmTypes>): Promise<CountResult> {
+    async restoreMany(
+        where: VSRepoWhere<Entity>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
         if (!this.softDeleteField) {
             this.failSoftDelete();
         }
@@ -708,7 +723,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
             opt =>
@@ -727,7 +742,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
             opt =>
@@ -746,7 +761,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
             opt =>
@@ -765,7 +780,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
-        options?: MethodOptions<Entity, OrmTypes>,
+        options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
             opt =>
