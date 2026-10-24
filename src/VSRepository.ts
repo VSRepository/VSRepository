@@ -215,12 +215,13 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         methodName: string,
         options: MethodOptions<Entity, OrmTypes> = {},
     ): Promise<R> {
-        options.db ??= this.getDbClient();
+        const resolvedOptions = { ...options };
+        resolvedOptions.db ??= this.getDbClient();
 
         const start = this.logger.startPerformLog("run " + methodName);
 
         try {
-            const result = await fn(options);
+            const result = await fn(resolvedOptions);
             this.logger.endPerformLog(start);
 
             return result;
