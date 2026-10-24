@@ -477,6 +477,12 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.GreaterThan.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "gt";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.GreaterThan, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.NotEquals.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "not";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotEquals, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Equals.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "$$$";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Equals, "");
             } else if (DynamicMethodsResolver.fieldModifiers.After.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "gt";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.After, "");
@@ -495,12 +501,6 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.Is.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "$$$";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Is, "");
-            } else if (DynamicMethodsResolver.fieldModifiers.NotEquals.test(keySplitedAnd)) {
-                uglyWhere.pushProperty = "not";
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotEquals, "");
-            } else if (DynamicMethodsResolver.fieldModifiers.Equals.test(keySplitedAnd)) {
-                uglyWhere.pushProperty = "$$$";
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Equals, "");
             } else {
                 uglyWhere.pushProperty = "$$$";
             }
