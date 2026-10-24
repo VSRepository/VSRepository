@@ -28,6 +28,8 @@ export type VSRepoFieldOperators<V> = {
                     endsWith?: string;
                     /** Applies the string filters above case-insensitively. */
                     ignoreCase?: boolean;
+
+                    like?: string;
                 }
               : {})
     : {}) &

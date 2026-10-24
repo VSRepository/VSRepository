@@ -51,6 +51,8 @@ export class DynamicMethodsResolver<T, K> {
         EndsWith: this.keywordTemplate("(EndsWith|EndingWith)", true, true),
         NotContains: this.keywordTemplate("(NotContains|NotContaining)", true, true),
         Contains: this.keywordTemplate("(Contains|Containing)", true, true),
+        NotLike: this.keywordTemplate("NotLike", true, true),
+        Like: this.keywordTemplate("Like", true, true),
         LessThanEqual: this.keywordTemplate("(LessThanEqual|Lte)", true, true),
         LessThan: this.keywordTemplate("(LessThan|Lt)", true, true),
         GreaterThanEqual: this.keywordTemplate("(GreaterThanEqual|Gte)", true, true),
@@ -465,6 +467,12 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.Contains.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "contains";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Contains, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.NotLike.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "not.like";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotLike, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Like.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "like";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Like, "");
             } else if (DynamicMethodsResolver.fieldModifiers.LessThanEqual.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "lte";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.LessThanEqual, "");
