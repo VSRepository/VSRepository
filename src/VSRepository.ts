@@ -450,18 +450,26 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /** Returns the record with the given primary key, or `null` if there is none. */
-    async get(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
+    async get(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
         return this.execBaseMethod(
-            opt => this.adapter.findOne(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
+            opt =>
+                this.adapter.findOne(
+                    this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)),
+                    this.resolveDefaultOrdering(opt),
+                ),
             "get",
             options,
         );
     }
 
     /** Same as `get`, but throws (error raised by the adapter) when nothing matches. */
-    async getOrThrow(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async getOrThrow(id: PKType, options?: MethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
-            opt => this.adapter.findOneOrThrow(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
+            opt =>
+                this.adapter.findOneOrThrow(
+                    this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)),
+                    this.resolveDefaultOrdering(opt),
+                ),
             "getOrThrow",
             options,
         );

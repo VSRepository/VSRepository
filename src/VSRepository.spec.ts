@@ -589,10 +589,15 @@ describe("VSRepository", () => {
                 ["find", "findMany", (r: UserRepository, o?: object) => r.find(W, o)],
                 ["findOne", "findOne", (r: UserRepository, o?: object) => r.findOne(W, o)],
                 ["findOneOrThrow", "findOneOrThrow", (r: UserRepository, o?: object) => r.findOneOrThrow(W, o)],
+                ["get", "findOne", (r: UserRepository, o?: object) => r.get(W.name, o)],
+                ["getOrThrow", "findOneOrThrow", (r: UserRepository, o?: object) => r.getOrThrow(W.name, o)],
             ])("%s should apply it", async (_name, adapterMethod, run) => {
                 await run(make({ defaultOrdering }));
 
-                expect(mocks[adapterMethod]).toHaveBeenCalledWith(W, { db: "default-db", order: defaultOrdering });
+                expect(mocks[adapterMethod]).toHaveBeenCalledWith(expect.any(Object), {
+                    db: "default-db",
+                    order: defaultOrdering,
+                });
             });
 
             it("should prefer the order provided in the options", async () => {
@@ -606,10 +611,8 @@ describe("VSRepository", () => {
             it("should not apply it to the other methods", async () => {
                 const repo = make({ defaultOrdering });
 
-                await repo.get("1");
                 await repo.count(W);
 
-                expect(mocks.findOne).toHaveBeenCalledWith({ id: "1" }, DB);
                 expect(mocks.count).toHaveBeenCalledWith(W, DB);
             });
 
