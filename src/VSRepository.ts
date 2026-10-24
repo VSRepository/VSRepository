@@ -437,10 +437,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async findOneById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
+    async get(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity | null> {
         return this.execBaseMethod(
             opt => this.adapter.findOne(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
-            "findOneById",
+            "get",
             options,
         );
     }
@@ -489,10 +489,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async deleteById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    async remove(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
         return this.execBaseMethod(
             opt => this.adapter.delete(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
-            "deleteById",
+            "remove",
             options,
         );
     }
@@ -532,20 +532,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async upsertById(
-        id: PKType,
-        create: DeepPartial<Entity>,
-        update: DeepPartial<Entity>,
-        options?: SimpleMethodOptions<Entity, OrmTypes>,
-    ): Promise<Entity> {
-        return this.execBaseMethod(
-            opt =>
-                this.adapter.upsert(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), create, update, opt),
-            "upsertById",
-            options,
-        );
-    }
-
     async update(
         where: VSRepoWhere<Entity>,
         obj: DeepPartial<Entity>,
@@ -558,14 +544,14 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async updateById(
+    async patch(
         id: PKType,
         obj: DeepPartial<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
             opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), obj, opt),
-            "updateById",
+            "patch",
             options,
         );
     }
@@ -627,10 +613,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async existsById(id: PKType, options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<boolean> {
+    async has(id: PKType, options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<boolean> {
         return this.execBaseMethod(
             opt => this.adapter.exists(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), opt),
-            "existsById",
+            "has",
             options,
         );
     }
@@ -642,40 +628,39 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
-    async softDelete(where: VSRepoWhere<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
+    private getSoftDeletePayload(): DeepPartial<Entity> {
         if (!this.softDeleteField) {
             this.failSoftDelete();
         }
 
-        const field = this.softDeleteField;
+        return { [this.softDeleteField]: new Date() } as DeepPartial<Entity>;
+    }
+
+    private getRestorePayload(): DeepPartial<Entity> {
+        if (!this.softDeleteField) {
+            this.failSoftDelete();
+        }
+
+        return { [this.softDeleteField]: null } as DeepPartial<Entity>;
+    }
+
+    async softDelete(where: VSRepoWhere<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
+        const payload = this.getSoftDeletePayload();
 
         return this.execBaseMethod(
-            opt =>
-                this.adapter.update(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
-                    { [field]: new Date() } as DeepPartial<Entity>,
-                    opt,
-                ),
+            opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see ?? "all", where), payload, opt),
             "softDelete",
             options,
         );
     }
 
-    async softDeleteById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
-        if (!this.softDeleteField) {
-            this.failSoftDelete();
-        }
-
-        const key = this.softDeleteField;
+    async softRemove(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
+        const payload = this.getSoftDeletePayload();
 
         return this.execBaseMethod(
             opt =>
-                this.adapter.update(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(id)),
-                    { [key]: new Date() } as DeepPartial<Entity>,
-                    opt,
-                ),
-            "softDeleteById",
+                this.adapter.update(this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(id)), payload, opt),
+            "softRemove",
             options,
         );
     }
@@ -684,58 +669,32 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         where: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<CountResult> {
-        if (!this.softDeleteField) {
-            this.failSoftDelete();
-        }
-
-        const field = this.softDeleteField;
+        const payload = this.getSoftDeletePayload();
 
         return this.execBaseMethod(
-            opt =>
-                this.adapter.updateMany(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
-                    { [field]: new Date() } as DeepPartial<Entity>,
-                    opt,
-                ),
+            opt => this.adapter.updateMany(this.mergeWheresResolver.resolve(opt.see ?? "all", where), payload, opt),
             "softDeleteMany",
             options,
         );
     }
 
     async restore(where: VSRepoWhere<Entity>, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
-        if (!this.softDeleteField) {
-            this.failSoftDelete();
-        }
-
-        const key = this.softDeleteField;
+        const payload = this.getRestorePayload();
 
         return this.execBaseMethod(
-            opt =>
-                this.adapter.update(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
-                    { [key]: null } as DeepPartial<Entity>,
-                    opt,
-                ),
+            opt => this.adapter.update(this.mergeWheresResolver.resolve(opt.see ?? "all", where), payload, opt),
             "restore",
             options,
         );
     }
 
-    async restoreById(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
-        if (!this.softDeleteField) {
-            this.failSoftDelete();
-        }
-
-        const key = this.softDeleteField;
+    async recover(id: PKType, options?: SimpleMethodOptions<Entity, OrmTypes>): Promise<Entity> {
+        const payload = this.getRestorePayload();
 
         return this.execBaseMethod(
             opt =>
-                this.adapter.update(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(id)),
-                    { [key]: null } as DeepPartial<Entity>,
-                    opt,
-                ),
-            "restoreById",
+                this.adapter.update(this.mergeWheresResolver.resolve(opt.see ?? "all", this.wherePk(id)), payload, opt),
+            "recover",
             options,
         );
     }
@@ -744,94 +703,115 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         where: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<CountResult> {
-        if (!this.softDeleteField) {
-            this.failSoftDelete();
-        }
-
-        const key = this.softDeleteField;
+        const payload = this.getRestorePayload();
 
         return this.execBaseMethod(
-            opt =>
-                this.adapter.updateMany(
-                    this.mergeWheresResolver.resolve(opt.see ?? "all", where),
-                    { [key]: null } as DeepPartial<Entity>,
-                    opt,
-                ),
+            opt => this.adapter.updateMany(this.mergeWheresResolver.resolve(opt.see ?? "all", where), payload, opt),
             "restoreMany",
             options,
         );
     }
 
-    /**
-     * Atomically adds `value` to a numeric field of the record identified by `id`.
-     */
     async increment<Field extends NumericKeys<Entity>>(
-        pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
-            opt =>
-                this.adapter.incrementOne(
-                    field,
-                    value,
-                    this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)),
-                    opt,
-                ),
+            opt => this.adapter.incrementOne(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
             "increment",
             options,
         );
     }
 
     async decrement<Field extends NumericKeys<Entity>>(
-        pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
-            opt =>
-                this.adapter.decrementOne(
-                    field,
-                    value,
-                    this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)),
-                    opt,
-                ),
+            opt => this.adapter.decrementOne(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
             "decrement",
             options,
         );
     }
 
     async multiply<Field extends NumericKeys<Entity>>(
-        pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
-            opt =>
-                this.adapter.multiplyOne(
-                    field,
-                    value,
-                    this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)),
-                    opt,
-                ),
+            opt => this.adapter.multiplyOne(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
             "multiply",
             options,
         );
     }
 
     async divide<Field extends NumericKeys<Entity>>(
-        pk: PKType,
         field: Field,
         value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
         return this.execBaseMethod(
-            opt =>
-                this.adapter.divideOne(field, value, this.mergeWheresResolver.resolve(opt.see, this.wherePk(pk)), opt),
+            opt => this.adapter.divideOne(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
             "divide",
+            options,
+        );
+    }
+
+    async incrementMany<Field extends NumericKeys<Entity>>(
+        field: Field,
+        value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
+        return this.execBaseMethod(
+            opt => this.adapter.incrementMany(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "incrementMany",
+            options,
+        );
+    }
+
+    async decrementMany<Field extends NumericKeys<Entity>>(
+        field: Field,
+        value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
+        return this.execBaseMethod(
+            opt => this.adapter.decrementMany(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "decrementMany",
+            options,
+        );
+    }
+
+    async multiplyMany<Field extends NumericKeys<Entity>>(
+        field: Field,
+        value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
+        return this.execBaseMethod(
+            opt => this.adapter.multiplyMany(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "multiplyMany",
+            options,
+        );
+    }
+
+    async divideMany<Field extends NumericKeys<Entity>>(
+        field: Field,
+        value: NonNullable<Entity[Field]>,
+        where: VSRepoWhere<Entity>,
+        options?: RestrictMethodOptions<Entity, OrmTypes>,
+    ): Promise<CountResult> {
+        return this.execBaseMethod(
+            opt => this.adapter.divideMany(field, value, this.mergeWheresResolver.resolve(opt.see, where), opt),
+            "divideMany",
             options,
         );
     }

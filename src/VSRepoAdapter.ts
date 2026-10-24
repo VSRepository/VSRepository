@@ -141,6 +141,34 @@ export abstract class VSRepoAdapter<T> {
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
 
+    public abstract incrementMany<K extends NumericKeys<T>>(
+        field: K,
+        value: NonNullable<T[K]>,
+        where: VSRepoWhere<T>,
+        options?: RestrictAdapterMethodOptions<T>,
+    ): Promise<CountResult>;
+
+    public abstract decrementMany<K extends NumericKeys<T>>(
+        field: K,
+        value: NonNullable<T[K]>,
+        where: VSRepoWhere<T>,
+        options?: RestrictAdapterMethodOptions<T>,
+    ): Promise<CountResult>;
+
+    public abstract multiplyMany<K extends NumericKeys<T>>(
+        field: K,
+        value: NonNullable<T[K]>,
+        where: VSRepoWhere<T>,
+        options?: RestrictAdapterMethodOptions<T>,
+    ): Promise<CountResult>;
+
+    public abstract divideMany<K extends NumericKeys<T>>(
+        field: K,
+        value: NonNullable<T[K]>,
+        where: VSRepoWhere<T>,
+        options?: RestrictAdapterMethodOptions<T>,
+    ): Promise<CountResult>;
+
     public abstract sum(
         field: NumericKeys<T>,
         where?: VSRepoWhere<T>,
