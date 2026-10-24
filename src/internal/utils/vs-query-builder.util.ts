@@ -111,26 +111,30 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
     /** Returns every matching record. */
     async getResult(): Promise<Entity[]> {
         const where = this.resolveWhere();
-        const options = { ...this.options, pagination: this.pagination, db: this.db };
+        const options = { ...this.options, pagination: this.pagination };
 
-        return this.execute("getResult", { where, options }, () => this.adapter.findMany(where, options));
+        return this.execute("getResult", { where, options }, () =>
+            this.adapter.findMany(where, { ...options, db: this.db }),
+        );
     }
 
     /** Returns the first matching record, or `null` if there is none. */
     async getOneResult(): Promise<Entity | null> {
         const where = this.resolveWhere();
-        const options = { ...this.options, pagination: this.pagination, db: this.db };
+        const options = { ...this.options, pagination: this.pagination };
 
-        return this.execute("getOneResult", { where, options }, () => this.adapter.findOne(where, options));
+        return this.execute("getOneResult", { where, options }, () =>
+            this.adapter.findOne(where, { ...options, db: this.db }),
+        );
     }
 
     /** Returns the first matching record or throws an error when nothing matches. */
     async getOneResultOrThrow(): Promise<Entity> {
         const where = this.resolveWhere();
-        const options = { ...this.options, pagination: this.pagination, db: this.db };
+        const options = { ...this.options, pagination: this.pagination };
 
         return this.execute("getOneResultOrThrow", { where, options }, () =>
-            this.adapter.findOneOrThrow(where, options),
+            this.adapter.findOneOrThrow(where, { ...options, db: this.db }),
         );
     }
 
@@ -139,9 +143,8 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     async getCount(): Promise<number> {
         const where = this.resolveWhere();
-        const options = { db: this.db };
 
-        return this.execute("getCount", { where, options }, () => this.adapter.count(where, options));
+        return this.execute("getCount", { where }, () => this.adapter.count(where, { db: this.db }));
     }
 
     /** Checks whether at least one record matches the filter. */
@@ -168,10 +171,10 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     async getResultAndCount(): Promise<PaginatedResult<Entity[]>> {
         const where = this.resolveWhere();
-        const options = { ...this.options, pagination: this.pagination, db: this.db };
+        const options = { ...this.options, pagination: this.pagination };
 
         return this.execute("getResultAndCount", { where, options }, async () => {
-            const result = await this.adapter.findMany(where, options);
+            const result = await this.adapter.findMany(where, { ...options, db: this.db });
             const count = await this.adapter.count(where, { db: this.db });
 
             return { result, count };
