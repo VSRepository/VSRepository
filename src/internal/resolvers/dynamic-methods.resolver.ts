@@ -841,7 +841,11 @@ export class DynamicMethodsResolver<T, K> {
         const dynamicMethods: VSRepoMethod<T>[] =
             Reflect.getMetadata(DYNAMIC_METHODS_KEY, instance.constructor.prototype) ?? [];
 
-        this.logger.logDebug(`Resolving ${dynamicMethods.length} dynamic method(s):`, dynamicMethods);
+        if (dynamicMethods.length) {
+            this.logger.logDebug(`Resolving ${dynamicMethods.length} dynamic method(s):`, dynamicMethods);
+        } else {
+            this.logger.logDebug("No dynamic methods to resolve");
+        }
 
         for (const method of dynamicMethods) {
             if (typeof method.propertyKey === "symbol") {
@@ -991,7 +995,11 @@ export class DynamicMethodsResolver<T, K> {
         const queryMethods: VSRepoQuery[] =
             Reflect.getMetadata(QUERY_METHODS_KEY, instance.constructor.prototype) ?? [];
 
-        this.logger.logDebug(`Resolving ${queryMethods.length} query method(s):`, queryMethods);
+        if (queryMethods.length) {
+            this.logger.logDebug(`Resolving ${queryMethods.length} query method(s):`, queryMethods);
+        } else {
+            this.logger.logDebug("No query methods to resolve");
+        }
 
         for (const method of queryMethods) {
             const originalKey = method.propertyKey;
