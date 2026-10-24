@@ -461,6 +461,8 @@ describe("DynamicMethodsResolver", () => {
                     ["findByPostsNone", [], { posts: { _none: {} } }],
                     ["findByPostsWith", [], { posts: { _with: {} } }],
                     ["findByPostsWithout", [], { posts: { _without: {} } }],
+                    ["findBySonWithWithDependents", [true], { son: { _with: { withDependents: true } } }],
+                    ["findByWithDependents", [true], { withDependents: true }],
                     ["findByPostsSomeTitle", ["Hi"], { posts: { _some: { title: "Hi" } } }],
                     [
                         "findByPostsSomeTitleIgnoreCase",

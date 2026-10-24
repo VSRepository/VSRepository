@@ -34,8 +34,11 @@ export class DynamicMethodsResolver<T, K> {
         private readonly vsPlaceholders: boolean = true,
     ) {}
 
-    private static keywordTemplate = (keyword: string, allowAtTheEnd = false, allowIs = false) =>
-        new RegExp(`${allowIs ? "(?:Is)?" : ""}${keyword}(?=[\\p{Lu}]|[^\\p{ASCII}]${allowAtTheEnd ? "|$" : ""})`, "u");
+    private static keywordTemplate = (keyword: string, allowAtTheEnd = false, allowIs = false, requirePrefix = false) =>
+        new RegExp(
+            `${requirePrefix ? "(?<!^)" : ""}${allowIs ? "(?:Is)?" : ""}${keyword}(?=[\\p{Lu}]|[^\\p{ASCII}]${allowAtTheEnd ? "|$" : ""})`,
+            "u",
+        );
 
     private static fieldModifiers = {
         IsNull: this.keywordTemplate("Null", true, true),
@@ -65,11 +68,11 @@ export class DynamicMethodsResolver<T, K> {
         Is: this.keywordTemplate("Is", true),
         Equals: this.keywordTemplate("(Equals|Equal)", true, true),
         NotEquals: this.keywordTemplate("(NotEquals|NotEqual)", true, true),
-        Without: this.keywordTemplate("Without", true),
-        With: this.keywordTemplate("With", true),
-        Some: this.keywordTemplate("Some", true),
-        Every: this.keywordTemplate("Every", true),
-        None: this.keywordTemplate("None", true),
+        Without: this.keywordTemplate("Without", true, false, true),
+        With: this.keywordTemplate("With", true, false, true),
+        Some: this.keywordTemplate("Some", true, false, true),
+        Every: this.keywordTemplate("Every", true, false, true),
+        None: this.keywordTemplate("None", true, false, true),
     };
 
     private static operators = {
@@ -514,9 +517,10 @@ export class DynamicMethodsResolver<T, K> {
             }
         }
 
-        if (DynamicMethodsResolver.fieldModifiers.Without.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.Without);
-            const specificField = keySplitedConector[1];
+        let relMatch: RegExpExecArray | null;
+
+        if ((relMatch = DynamicMethodsResolver.fieldModifiers.Without.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 if (nullMode) {
                     uglyWhere.pushProperty = nullMode === "not" ? "_with" : "_without";
@@ -529,10 +533,9 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = `_without.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.With.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.With);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.With.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 if (nullMode) {
                     uglyWhere.pushProperty = nullMode === "not" ? "_without" : "_with";
@@ -545,10 +548,9 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = `_with.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.Some.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.Some);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.Some.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 uglyWhere.pushProperty = "_some";
                 uglyWhere.autoInjectVal = {};
@@ -557,10 +559,9 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = `_some.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.Every.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.Every);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.Every.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 uglyWhere.pushProperty = "_every";
                 uglyWhere.autoInjectVal = {};
@@ -569,10 +570,9 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = `_every.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.None.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.None);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.None.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 uglyWhere.pushProperty = "_none";
                 uglyWhere.autoInjectVal = {};
@@ -581,7 +581,7 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.pushProperty = `_none.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
         }
 
         keySplitedAnd = uncapitalize(keySplitedAnd);
