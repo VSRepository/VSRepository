@@ -414,16 +414,16 @@ export class DynamicMethodsResolver<T, K> {
         const uglyWhere: VSRepoUglyWhere = { name: "", pushProperty: "$$$" };
         let nullMode: "is" | "not" | undefined = undefined;
 
-        if (DynamicMethodsResolver.fieldModifiers.IsNull.test(keySplitedAnd)) {
-            uglyWhere.pushProperty = "$$$";
-            uglyWhere.autoInjectVal = null;
-            nullMode = "is";
-            keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IsNull, "");
-        } else if (DynamicMethodsResolver.fieldModifiers.IsNotNull.test(keySplitedAnd)) {
+        if (DynamicMethodsResolver.fieldModifiers.IsNotNull.test(keySplitedAnd)) {
             uglyWhere.pushProperty = "not";
             uglyWhere.autoInjectVal = null;
             nullMode = "not";
             keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IsNotNull, "");
+        } else if (DynamicMethodsResolver.fieldModifiers.IsNull.test(keySplitedAnd)) {
+            uglyWhere.pushProperty = "$$$";
+            uglyWhere.autoInjectVal = null;
+            nullMode = "is";
+            keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IsNull, "");
         } else if (DynamicMethodsResolver.fieldModifiers.IsTrue.test(keySplitedAnd)) {
             uglyWhere.pushProperty = "$$$";
             uglyWhere.autoInjectVal = true;
@@ -465,12 +465,6 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.Contains.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "contains";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Contains, "");
-            } else if (DynamicMethodsResolver.fieldModifiers.NotEquals.test(keySplitedAnd)) {
-                uglyWhere.pushProperty = "not";
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotEquals, "");
-            } else if (DynamicMethodsResolver.fieldModifiers.Equals.test(keySplitedAnd)) {
-                uglyWhere.pushProperty = "$$$";
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Equals, "");
             } else if (DynamicMethodsResolver.fieldModifiers.LessThanEqual.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "lte";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.LessThanEqual, "");
@@ -501,6 +495,12 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.Is.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "$$$";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Is, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.NotEquals.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "not";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotEquals, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Equals.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "$$$";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Equals, "");
             } else {
                 uglyWhere.pushProperty = "$$$";
             }

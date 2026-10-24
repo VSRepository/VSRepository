@@ -9,7 +9,6 @@ import { VSRepoOrmTypes } from "./types/vsrepo/vsrepo-orm-types.type.js";
 import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
 import { MethodOptions } from "./types/utils/methods-options.type.js";
 import { Ordering } from "./types/utils/ordering.type.js";
-import { Pagination } from "./types/utils/pagination.type.js";
 import { VSLogger } from "./internal/utils/vs-logger.util.js";
 import { VSLogLevel } from "./internal/enums/vs-log-level.enum.js";
 import { VSRepoArgs } from "./types/vsrepo/vsrepo-args.type.js";

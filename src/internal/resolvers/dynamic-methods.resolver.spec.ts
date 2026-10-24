@@ -124,7 +124,7 @@ describe("DynamicMethodsResolver", () => {
             expect(logger.endPerformLog).toHaveBeenCalled();
         });
 
-        function methodTest(method: string, expectedCall: object, ...args: any[]) {
+        async function methodTest(method: string, expectedCall: object, ...args: any[]) {
             class Repository {
                 _vsrepocache = new Map();
 
@@ -138,14 +138,14 @@ describe("DynamicMethodsResolver", () => {
 
             resolver.resolve(repo);
 
-            repo[method]!(...args);
+            await repo[method]!(...args);
 
             expect(mergeWheresResolver.resolve).toHaveBeenCalledWith(undefined, expectedCall);
         }
 
-        it("should resolve the method", () => {
+        it("should resolve the method", async () => {
             const mockName = "some name";
-            methodTest("findByNameAndAge", { name: mockName, age: 2 }, mockName, 2);
+            await methodTest("findByNameAndAge", { name: mockName, age: 2 }, mockName, 2);
         });
     });
 });
