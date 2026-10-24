@@ -10,12 +10,8 @@ import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-opti
 import { VSRepoWhere } from "./types/vsrepo/vsrepo-where.type.js";
 
 /**
- * Contract implemented by ORM-specific adapters (e.g. Prisma, TypeORM) that
- * `VSRepository` delegates every operation to.
- *
- * Implementing this class is what makes `VSRepository` usable with a given
- * ORM/database: `VSRepository` never talks to the ORM directly, it only
- * calls these methods with already-resolved `VSRepoWhere`/`AdapterMethodOptions`.
+ * Contract implemented by ORM-specific adapters (e.g. Prisma, Drizzle). `VSRepository` never talks
+ * to the ORM directly: it resolves `where` and options, then delegates every operation to these methods.
  *
  * @publicApi
  */
@@ -26,13 +22,13 @@ export abstract class VSRepoAdapter<T> {
     /** Returns the underlying ORM client instance used outside of transactions. */
     public abstract getDbClient(): any;
 
-    /** Executes a raw query/statement against the underlying database, used by `@QueryMethod`. */
+    /** Executes a raw query/statement against the underlying database. Used by `query()`, `@QueryMethod` and the raw query builder. */
     public abstract query<T = any>(query: string, options?: AdapterQueryOptions): Promise<T>;
 
     /** Fetches a single record matching `where`. */
     public abstract findOne(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T | null>;
 
-    /** Fetches a single record matching `where`, throwing if none is found. */
+    /** Fetches a single record matching `where`. Should throw a `VSRepoAdapterError` (`NOT_FOUND`) if none is found. */
     public abstract findOneOrThrow(where?: VSRepoWhere<T>, options?: AdapterMethodOptions<T>): Promise<T>;
 
     /** Fetches all records matching `where`. */
@@ -113,6 +109,7 @@ export abstract class VSRepoAdapter<T> {
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
 
+    /** Atomically adds `value` to `field` of the record matching `where`. */
     public abstract incrementOne<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -120,6 +117,7 @@ export abstract class VSRepoAdapter<T> {
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
 
+    /** Atomically subtracts `value` from `field` of the record matching `where`. */
     public abstract decrementOne<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -127,6 +125,7 @@ export abstract class VSRepoAdapter<T> {
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
 
+    /** Atomically multiplies `field` of the record matching `where` by `value`. */
     public abstract multiplyOne<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -134,6 +133,7 @@ export abstract class VSRepoAdapter<T> {
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
 
+    /** Atomically divides `field` of the record matching `where` by `value`. */
     public abstract divideOne<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -141,6 +141,7 @@ export abstract class VSRepoAdapter<T> {
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
 
+    /** Same as `incrementOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract incrementMany<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -148,6 +149,7 @@ export abstract class VSRepoAdapter<T> {
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;
 
+    /** Same as `decrementOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract decrementMany<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -155,6 +157,7 @@ export abstract class VSRepoAdapter<T> {
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;
 
+    /** Same as `multiplyOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract multiplyMany<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -162,6 +165,7 @@ export abstract class VSRepoAdapter<T> {
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;
 
+    /** Same as `divideOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract divideMany<K extends NumericKeys<T>>(
         field: K,
         value: NonNullable<T[K]>,
@@ -169,43 +173,41 @@ export abstract class VSRepoAdapter<T> {
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;
 
+    /** Returns the sum of `field` across the records matching `where`, or `null` if none match. */
     public abstract sum(
         field: NumericKeys<T>,
         where?: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<number | null>;
 
+    /** Returns the average of `field` across the records matching `where`, or `null` if none match. */
     public abstract average(
         field: NumericKeys<T>,
         where?: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<number | null>;
 
+    /** Returns the minimum of `field` across the records matching `where`, or `null` if none match. */
     public abstract min(
         field: NumericKeys<T>,
         where?: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<number | null>;
 
+    /** Returns the maximum of `field` across the records matching `where`, or `null` if none match. */
     public abstract max(
         field: NumericKeys<T>,
         where?: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<number | null>;
 
-    /** Optional method for the adapter itself to return the "pkName", instead of the user having to configure it manually in the VSRepository constructor. */
+    /** Optional. Returns the primary key name, so users don't have to set `pkName` in the `VSRepository` options. */
     public getPkName?(): string;
 
     /**
-     * Method for the adapter to declare the placeholder syntax its
-     * database/driver expects in a raw `query()` string, given the 0-based
-     * position of the parameter in the `args` array (e.g. Postgres would
-     * return `` `$${index + 1}` ``, SQLite/MySQL would ignore `index` and
-     * always return `"?"`).
-     *
-     * Implementing this is what lets `VSRepository.query()` accept a `VSSql`
-     * fragment (built with `VSSql.sql`/`raw`/`join`/`empty`) in addition to a
-     * plain string: without it, passing a `VSSql` fragment throws.
+     * Returns the placeholder the database/driver expects for the parameter at `index` (0-based position
+     * in `args`), e.g. `$1` for Postgres or `?` for SQLite/MySQL. Used to compile `VSSql` fragments,
+     * `vsPlaceholders` strings and the raw query builder.
      */
     public abstract getPlaceholder(index: number): string;
 }

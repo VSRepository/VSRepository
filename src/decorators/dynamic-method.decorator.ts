@@ -4,12 +4,11 @@ import { DynamicMethodOptions } from "../types/decorators/dynamic-method-options
 import { VSRepoMethod } from "../types/vsrepo/vsrepo-method.type.js";
 
 /**
- * Property decorator used to declare a dynamic method on a `VSRepository` subclass.
+ * Declares a dynamic method on a `VSRepository` subclass. Applied to a `declare` field, its behavior
+ * is inferred from the field name (e.g. `findOneByEmail`, `findByStatusPaginated`, `upsertById`)
+ * when the repository is created.
  *
- * Applied to a `declare` class field whose name follows one of the supported
- * dynamic-method patterns (e.g. `findOneByEmail`, `findByStatusPaginated`,
- * `upsertById`), the method's behavior is inferred from the field name at
- * construction time, optionally adjusted via `options`.
+ * @param options Use `proxyTo` for names that don't follow the convention and `injectOrdering` for a fixed ordering.
  *
  * @example
  * ```typescript

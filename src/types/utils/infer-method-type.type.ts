@@ -11,7 +11,7 @@ type EntityOf<R> = NonNullable<R> extends readonly (infer U)[] ? U : NonNullable
  * Deeply checks that a `select`/`relations` object only has keys that exist in the reference
  * spec (`VSRepoSelect<E>`/`VSRepoRelations<E>`), turning unknown keys into `never`.
  *
- * Needed because a generic parameter (`Options` in {@link InferMethodType}) loses TypeScript's
+ * Needed because a generic parameter (`Options` in `InferMethodType`) loses TypeScript's
  * excess property check, so a typo like `select: { id: true, idd: true }` would otherwise be
  * silently accepted.
  *
@@ -29,7 +29,7 @@ type ExactSpec<S, Ref> = S extends object
           }
     : unknown;
 
-/** Applies {@link ExactSpec} to `select` and `relations`; `see`/`db` pass through, unknown keys become `never`. */
+/** Applies `ExactSpec` to `select` and `relations`; `see`/`db` pass through, unknown keys become `never`. */
 type ExactOptions<O, E> = {
     [K in keyof O]: K extends "select"
         ? ExactSpec<O[K], VSRepoSelect<E>>
@@ -41,31 +41,18 @@ type ExactOptions<O, E> = {
 };
 
 /**
- * Type for declaring a dynamic method whose return type is **strictly inferred** from the
- * `select` / `relations` passed on each call (see {@link InferMethodReturn} for the exact rules).
- *
- * It has two call signatures:
- * - `(...args) => Promise<...>` — no `options`: only the scalar fields of the entity;
- * - `(...args, options?: MethodOptions<Entity, OrmTypes>) => Promise<...>` — the return is
- *   inferred from the `options` passed.
- *
- * `Entity` is taken from the return type (`Entity`, `Entity | null`, `Entity[]`, ...).
- *
- * The `options` parameter is always the last one, after every argument in `Args` (as in a
- * regular dynamic method signature). Unknown keys in `select`/`relations` are rejected, just like
- * with a plain `MethodOptions<Entity>` parameter, and the editor autocompletes them.
- *
- * Meant for dynamic methods that return entities. Methods that don't (`existsBy...`,
- * `countBy...`, etc.) can keep their regular signature.
+ * Declares a dynamic method whose return type is strictly inferred from the `select` / `relations`
+ * passed on each call (same rules as `InferMethodReturn`). Unknown keys in `select`/`relations` are rejected.
+ * `options` is always the last parameter.
  *
  * @template Args Positional arguments of the method, without `options` (e.g. `[name: string]`).
  * @template R What the method resolves to: `Entity`, `Entity | null` or `Entity[]`.
- * @template K ORM type map (`dbClient`/`dbTransaction`) used to type the `db` option.
+ * @template K ORM types, used to type the `db` option.
  *
  * @example
- * ```ts
+ * ```typescript
  * class UserRepository extends VSRepository<User, string, MyOrmTypes> {
- *     @DynamicMethod()
+ *     *@DynamicMethod()
  *     declare findByName: InferMethodType<[name: string], User[], MyOrmTypes>;
  * }
  *

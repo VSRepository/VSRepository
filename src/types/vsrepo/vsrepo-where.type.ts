@@ -26,9 +26,9 @@ export type VSRepoFieldOperators<V> = {
                     startsWith?: string;
                     /** Matches records where the field ends with the given substring. */
                     endsWith?: string;
-                    /** Applies the string filters above case-insensitively. */
+                    /** Applies the string filters (`contains`, `startsWith`, `endsWith`, `like`) case-insensitively. */
                     ignoreCase?: boolean;
-
+                    /** Matches records where the field matches the given SQL `LIKE` pattern (e.g. `"na%"`). */
                     like?: string;
                 }
               : {})

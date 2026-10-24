@@ -4,16 +4,12 @@ import type { QueryMethodOptions } from "../types/decorators/query-method-option
 import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
 
 /**
- * Property decorator used to declare a raw SQL query method on a `VSRepository`
- * subclass, bypassing name-based method parsing entirely.
+ * Declares a raw SQL method on a `VSRepository` subclass. Applied to a `declare` field, it runs `value`
+ * through the adapter, binding the call's arguments to the placeholders (`?1`, `?2`, ..., unless
+ * `vsPlaceholders` is `false`). Pass `withDb(tx)` as the last argument to run the call in a transaction.
  *
- * Applied to a `declare` class field, it executes `value` directly through the
- * adapter's `query()` method, with parameters injected positionally via the
- * separate arguments passed at the call site (placeholders).
- *
- * @param value Raw SQL statement to execute. Use placeholders for the values
- * that will be passed via `args` — never interpolate values directly into `value`.
- * @param options Optional configuration; set `modifying: true` for `INSERT`/`UPDATE`/`DELETE` statements.
+ * @param value SQL statement. Use placeholders for values; never interpolate them into the string.
+ * @param options Set `modifying: true` for `INSERT`/`UPDATE`/`DELETE` and `singleResult` to get the first row.
  *
  * @example
  * ```typescript

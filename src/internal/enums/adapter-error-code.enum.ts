@@ -7,13 +7,13 @@
  */
 export enum AdapterErrorCode {
     /**
-     * A unknown/unclassified error raised by the underlying database or ORM.
-     * Fallback code when no more specific code matches.
+     * An unknown/unclassified error raised by the database or ORM.
+     * Fallback when no more specific code matches.
      */
     UNKNOWN = "UNKNOWN",
 
     /**
-     * Some adapters might use this code for forced transaction rollbacks (like Drizzle's `tx.rollback()`)
+     * A transaction was rolled back on purpose (e.g. Drizzle's `tx.rollback()`), for adapters that report it.
      */
     TRANSACTION_ROLLED_BACK = "TRANSACTION_ROLLED_BACK",
 

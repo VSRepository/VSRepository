@@ -2,6 +2,18 @@ import { ENABLE_SOFT_DELETE_KEY } from "../internal/constants/enable-soft-delete
 import { SoftDeleteMetadata } from "../types/decorators/soft-delete-metadata.type.js";
 
 /**
+ * Enables soft delete on a `VSRepository` subclass: reads only see non-deleted records (see the `see`
+ * option) and `softDelete`/`restore` (and their variants) become available.
+ *
+ * @param field Nullable date field that marks a record as deleted. Defaults to the `softDeleteField`
+ * of `VSRepository.setGlobalConfig()`.
+ *
+ * @example
+ * ```typescript
+ * *@EnableSoftDelete("deletedAt")
+ * class UserRepository extends VSRepository<User, string> {}
+ * ```
+ *
  * @publicApi
  */
 export function EnableSoftDelete(field?: string): ClassDecorator {

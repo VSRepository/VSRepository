@@ -4,23 +4,11 @@ import { VSSql } from "./vs-sql.util.js";
 
 export class VSPlaceholdersParser {
     /**
-     * Parses a raw SQL string written with VSRepository's own agnostic,
-     * positional placeholders — `?1`, `?2`, ... (1-based, Spring Data JPA style)
-     * — into a `VSSql` fragment, so it compiles through `adapter.getPlaceholder()`
-     * exactly like any other `VSSql`. Enabled via `vsPlaceholders: true` in the
-     * `VSRepository` constructor options.
+     * Parses a raw SQL string written with VSRepository's positional placeholders (`?1`, `?2`, ...; 1-based)
+     * into a `VSSql` fragment. An index may repeat (each occurrence becomes its own parameter), and a `?N`
+     * inside a single-quoted string literal is left untouched.
      *
-     * The same index may appear more than once (`?1 ... ?1`) to reuse the same
-     * argument — each *occurrence* becomes its own placeholder/value pair in the
-     * compiled output (duplicating the value in `args` rather than trying to
-     * reference a single bound parameter twice), since not every adapter
-     * supports referencing one bound parameter more than once.
-     *
-     * A `?N` inside a single-quoted string literal (e.g. `'keep ?1 literally'`)
-     * is *not* interpreted as a placeholder — it is passed through to the SQL
-     * untouched and consumes no `args` entry. Standard SQL escapes are
-     * respected: `''` inside a literal does not end it, so a literal like
-     * `'it''s ?1'` is fully skipped.
+     * @throws VSRepoError If a placeholder references an index outside `args`.
      *
      * @internal
      */

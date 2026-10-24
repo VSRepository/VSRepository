@@ -21,20 +21,16 @@ export type VSRepoOptions<T, K> = {
     /** Default ordering automatically applied to queries that accept `order`, unless the call overrides it. */
     defaultOrdering?: Ordering<T>;
     /**
-     * When `true`, postpones resolving every `@DynamicMethod`/`@QueryMethod`
-     * field of the subclass: the constructor skips that step, and the
-     * subclass itself must call the inherited `resolveDynamicMethods()` to
-     * make those methods available.
+     * When `true`, the constructor skips resolving `@DynamicMethod`/`@QueryMethod` fields and the
+     * subclass must call `resolveDynamicMethods()` itself.
      *
      * @default false
      */
     lazyDynamicMethods?: boolean;
     /**
-     * When `true` (or omited), raw SQL strings passed to `VSRepository.query()` and
-     * `@QueryMethod` stop using your database's native placeholder syntax
-     * and instead use VSRepository's own agnostic, positional placeholders —
-     * `?1`, `?2`, ... (1-based, Spring Data JPA style). The same index may be
-     * repeated (`?1 ... ?1`) to reuse the same argument more than once.
+     * When `true` (or omitted), raw SQL strings given to `VSRepository.query()` and `@QueryMethod` use
+     * VSRepository's own positional placeholders (`?1`, `?2`, ...; 1-based, an index can be repeated)
+     * instead of the database's native syntax.
      *
      * @default true
      */

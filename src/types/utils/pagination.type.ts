@@ -1,4 +1,6 @@
 /**
+ * Pagination settings.
+ *
  * @publicApi
  */
 export type Pagination = {

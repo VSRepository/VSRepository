@@ -18,15 +18,12 @@ export type OrderByField<T> = {
 };
 
 /**
- * Ordering accepted by repository methods that support `order`, such as `getAll` or a dynamic method with `Ordered`.
- *
- * Can be a single ordering object or a list of chained orderings, applied in
- * the order they're declared.
+ * Ordering accepted by methods that support `order`: a single object or a list of them,
+ * applied in the order declared.
  *
  * @example
  * ```typescript
- * const order: Ordering<User> = { createdAt: "desc" };
- * const chained: Ordering<User> = [{ name: "asc" }, { createdAt: "desc" }];
+ * const order: Ordering<User> = [{ name: "asc" }, { createdAt: "desc" }];
  * ```
  *
  * @publicApi

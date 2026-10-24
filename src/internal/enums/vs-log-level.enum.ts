@@ -15,6 +15,6 @@ export enum VSLogLevel {
     WARN,
     /** Failures raised while executing an operation. */
     ERROR,
-    /** Completely disables logs */
+    /** Disables logging completely. */
     NONE,
 }

@@ -105,10 +105,7 @@ export class VSLogger {
         this.log(VSLogLevel.WARN, text, obj);
     }
 
-    /**
-     * Loga um erro. Se `err` for uma instância de `Error`, apenas nome, mensagem,
-     * stack e cause são logados (evita despejar propriedades internas desnecessárias).
-     */
+    /** Logs at `ERROR` level. For an `Error`, only its name, message, stack and cause are logged. */
     logError(text: string, err?: unknown): void {
         if (err instanceof Error) {
             this.log(VSLogLevel.ERROR, text, {

@@ -8,9 +8,13 @@ import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum.js";
  * @publicApi
  */
 export class VSRepoError extends Error {
+    /**
+     * @param message Description of the failure. It is prefixed with `[VSRepository] Error:`.
+     * @param type Category of the error. See `VSRepoErrorType`.
+     * @param cause Optional root cause.
+     */
     constructor(
         message: string,
-        /** Category of the error. See `VSRepoErrorType` for the full list. */
         public readonly type: VSRepoErrorType,
         cause?: unknown,
     ) {

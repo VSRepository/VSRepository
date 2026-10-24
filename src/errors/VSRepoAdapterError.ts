@@ -3,10 +3,9 @@ import { VSRepoErrorType } from "../internal/enums/vsrepo-error-type.enum.js";
 import { VSRepoError } from "./VSRepoError.js";
 
 /**
- * Error raised when a `VSRepoAdapter` fails while talking to the underlying
- * ORM/database. Carries a stable, adapter-agnostic {@link AdapterErrorCode} plus
- * the original error thrown by the adapter, so callers can react to failures
- * without depending on any specific ORM's error shape.
+ * Error raised when a `VSRepoAdapter` fails while talking to the ORM/database. Carries an
+ * adapter-agnostic `AdapterErrorCode` and the original error, so callers don't depend on any
+ * specific ORM's error shape.
  *
  * @publicApi
  */

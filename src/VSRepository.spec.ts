@@ -443,6 +443,7 @@ describe("VSRepository", () => {
             ["findOne (no where)", r => r.findOne(), "findOne", [{}, DB]],
             ["findOneOrThrow", r => r.findOneOrThrow(W), "findOneOrThrow", [W, DB]],
             ["get", r => r.get("1"), "findOne", [{ id: "1" }, DB]],
+            ["getOrThrow", r => r.getOrThrow("1"), "findOneOrThrow", [{ id: "1" }, DB]],
             ["save (single)", r => r.save({ name: "Ana" }), "save", [{ name: "Ana" }, DB]],
             ["save (array)", r => r.save([{ name: "Ana" }]), "saveMany", [[{ name: "Ana" }], DB]],
             ["create", r => r.create({ name: "Ana" }), "create", [{ name: "Ana" }, DB]],
