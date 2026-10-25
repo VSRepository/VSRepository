@@ -32,8 +32,10 @@ O VSRepository permite criar repositories fortemente tipados com:
 
 O VSRepository é instalado como o pacote core mais um pacote de adapter para o seu ORM, por exemplo:
 
+> A v3 do `VSRepository` está em desenvolvimento, use a tag **dev** para usá-la.
+
 ```bash
-npm i vsrepo @vsrepo/prisma7-adapter
+npm i vsrepo@dev @vsrepo/prisma7-adapter
 ```
 
 ---

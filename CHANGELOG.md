@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [3.0.0-dev] - Unreleased
+## [3.0.0-dev] - 2026-10-25
 
 > Major release in development. See [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md) for the full breakdown. The list below may still change before the stable release.
 
@@ -61,7 +61,7 @@ All notable changes to this project will be documented in this file.
 - Every guide (English and Portuguese) was updated for v3, and JSDoc was added or updated on every public API surface
 - New [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md) guide; `migrating-from-v1.md` was renamed to [`migrating-from-v1-to-v2.md`](./docs/migrating-from-v1-to-v2.md)
 
-## [3.0.0-dev] - Unreleased (Português)
+## [3.0.0-dev] - 2026-10-25 (Português)
 
 > Release major em desenvolvimento. Veja [Migrando da v2 para a v3](./docs/migrating-from-v2-to-v3.pt-BR.md) para o detalhamento completo. A lista abaixo ainda pode mudar antes do release estável.
 

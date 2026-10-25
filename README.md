@@ -32,8 +32,10 @@ VSRepository lets you create strongly-typed repositories with:
 
 VSRepository is installed as the core package plus one adapter package for your ORM, for example:
 
+> Version 3 of `VSRepository` is under development, use the **dev** tag to access it.
+
 ```bash
-npm i vsrepo @vsrepo/prisma7-adapter
+npm i vsrepo@dev @vsrepo/prisma7-adapter
 ```
 
 ---
