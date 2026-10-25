@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev.1] - 2026-10-25
+
+### Added
+
+- The `WithIgnoreConflicts` type is now exported from the package root
+
+### Changed
+
+- CI now runs the type check and runs the test suite with `npm`
+
+### Removed
+
+- Unused dev dependencies: `jest`, `ts-jest`, `@jest/globals`, `@types/jest`, `cross-env`, `dotenv` and `zod`
+
+## [3.0.0-dev.1] - 2026-10-25 (Português)
+
+### Adicionado
+
+- O tipo `WithIgnoreConflicts` agora é exportado pela raiz do pacote
+
+### Alterado
+
+- A CI agora roda a checagem de tipagem e roda a suíte de testes com `npm`
+
+### Removido
+
+- Dev dependencies não utilizadas: `jest`, `ts-jest`, `@jest/globals`, `@types/jest`, `cross-env`, `dotenv` e `zod`
+
 ## [3.0.0-dev] - 2026-10-25
 
 > Major release in development. See [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md) for the full breakdown. The list below may still change before the stable release.
