@@ -21,16 +21,17 @@ bun install
 
 ## Scripts
 
-| Script                    | What it does                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `bun run full-validation` | `typecheck` + `lint` + `format:check` + `test` — the gate to run before opening a PR.                               |
-| `bun run build`           | `clean` + `tsc -p tsconfig.build.json` — compiles `src/` into `dist/` with `rootDir: src`, emitting JS and `.d.ts`. |
-| `bun run test`            | `test:typing` and then `test:implementation`, in that order.                                                        |
-| `bun run typecheck`       | `tsc --noEmit -p tsconfig.build.json` — type validation.                                                            |
-| `bun run lint`            | `oxlint --type-aware src/ test/`.                                                                                   |
-| `bun run format:check`    | Prettier in check mode over `src/**/*.ts` and `test/**/*.ts`.                                                       |
+| Script                    | What it does                                                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `bun run full-validation` | `typecheck` + `lint` + `format:check` + `test` — the gate to run before opening a PR.                                     |
+| `bun run build`           | `clean` + `tsc -p tsconfig.build.json` — compiles `src/` into `dist/` with `rootDir: src`, emitting JS and `.d.ts`.       |
+| `bun run test`            | `vitest run` — runs every `*.spec.ts` once (runtime behaviour against fake adapters, plus type-level checks).             |
+| `bun run typecheck`       | `tsc --noEmit -p tsconfig.build.json` — type validation.                                                                  |
+| `bun run lint`            | `oxlint --type-aware src/ test/`.                                                                                         |
+| `bun run format:check`    | Prettier in check mode over `src/**/*.ts` and `test/**/*.ts`.                                                             |
+| `bun run format:docs`     | Prettier over `docs/**/*.md` and the root `*.md` files — run it after editing the docs (`format:docs:check` only checks). |
 
-The two test suites also run on their own — `test:typing` (compile-time assertions) and `test:implementation` (runtime behaviour against a fake adapter), with `test:implementation:watch` for watch mode. Every other script (`format`, `clean`, `prepack`) is in [`package.json`](./package.json).
+Tests live next to the code they cover, as `*.spec.ts` files under `src/`, and run with [Vitest](https://vitest.dev). Besides `test`, there's `test:watch` (watch mode) and `test:cov` (coverage report). Every other script (`format`, `clean`, `prepack`) is in [`package.json`](./package.json).
 
 ```bash
 bun run full-validation
@@ -106,10 +107,7 @@ src/
   errors/            # VSRepoError and VSRepoAdapterError
   internal/          # metadata keys, enums, the name parser, loggers, query builders, VSSql
   types/             # types
-test/
-  implementation/    # Jest — runtime behaviour, against a fake adapter
-  typing/            # tsc --noEmit only — compile-time assertions
-  helpers/           # fake adapter, entities, example repositories
+  **/*.spec.ts       # Vitest — tests live next to the code they cover
 docs/                # the bilingual documentation
 ```
 
@@ -142,5 +140,5 @@ This is the loop an adapter author wants: build the core locally, pack it, and i
 | Job     | Runs                                                 | Depends on     |
 | ------- | ---------------------------------------------------- | -------------- |
 | `lint`  | `bun run lint` and `bun run format:check`            | —              |
-| `test`  | `bun run test` (typing + implementation)             | —              |
+| `test`  | `bun run test` (Vitest)                              | —              |
 | `build` | `bun run build`, then uploads `dist/` as an artifact | `lint`, `test` |

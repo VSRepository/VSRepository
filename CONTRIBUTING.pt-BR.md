@@ -21,16 +21,17 @@ bun install
 
 ## Scripts
 
-| Script                    | O que faz                                                                                                                   |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `bun run full-validation` | `typecheck` + `lint` + `format:check` + `test` — o gate a rodar antes de abrir um PR.                                       |
-| `bun run build`           | `clean` + `tsc -p tsconfig.build.json` — compila `src/` em `dist/` com `rootDir: src`, gerando JS e as declarações `.d.ts`. |
-| `bun run test`            | `test:typing` e depois `test:implementation`, nessa ordem.                                                                  |
-| `bun run typecheck`       | `tsc --noEmit -p tsconfig.build.json` — validação de tipagem.                                                               |
-| `bun run lint`            | `oxlint --type-aware src/ test/`.                                                                                           |
-| `bun run format:check`    | Prettier em modo de check sobre `src/**/*.ts` e `test/**/*.ts`.                                                             |
+| Script                    | O que faz                                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `bun run full-validation` | `typecheck` + `lint` + `format:check` + `test` — o gate a rodar antes de abrir um PR.                                                |
+| `bun run build`           | `clean` + `tsc -p tsconfig.build.json` — compila `src/` em `dist/` com `rootDir: src`, gerando JS e as declarações `.d.ts`.          |
+| `bun run test`            | `vitest run` — roda todos os `*.spec.ts` uma vez (comportamento em runtime contra adapters falsos, mais checagens em nível de tipo). |
+| `bun run typecheck`       | `tsc --noEmit -p tsconfig.build.json` — validação de tipagem.                                                                        |
+| `bun run lint`            | `oxlint --type-aware src/ test/`.                                                                                                    |
+| `bun run format:check`    | Prettier em modo de check sobre `src/**/*.ts` e `test/**/*.ts`.                                                                      |
+| `bun run format:docs`     | Prettier sobre `docs/**/*.md` e os `*.md` da raiz — rode depois de editar a documentação (`format:docs:check` só verifica).          |
 
-As duas suítes de teste também rodam sozinhas — `test:typing` (asserções em tempo de compilação) e `test:implementation` (comportamento em runtime contra um adapter falso), com `test:implementation:watch` para o modo watch. Todos os outros scripts (`format`, `clean`, `prepack`) estão no [`package.json`](./package.json).
+Os testes ficam ao lado do código que cobrem, como arquivos `*.spec.ts` dentro de `src/`, e rodam com o [Vitest](https://vitest.dev). Além do `test`, existem `test:watch` (modo watch) e `test:cov` (relatório de cobertura). Todos os outros scripts (`format`, `clean`, `prepack`) estão no [`package.json`](./package.json).
 
 ```bash
 bun run full-validation
@@ -106,10 +107,7 @@ src/
   errors/            # VSRepoError e VSRepoAdapterError
   internal/          # chaves de metadata, enums, o parser de nomes, loggers, query builders, VSSql
   types/             # tipos
-test/
-  implementation/    # Jest — comportamento em runtime, contra um adapter falso
-  typing/            # só tsc --noEmit — asserções em tempo de compilação
-  helpers/           # adapter falso, entidades, repositories de exemplo
+  **/*.spec.ts       # Vitest — os testes ficam ao lado do código que cobrem
 docs/                # a documentação bilíngue
 ```
 
@@ -142,5 +140,5 @@ O `.github/workflows/ci.yml` roda a cada push e pull request para `main`, com `c
 | Job     | Roda                                                 | Depende de     |
 | ------- | ---------------------------------------------------- | -------------- |
 | `lint`  | `bun run lint` e `bun run format:check`              | —              |
-| `test`  | `bun run test` (tipagem + implementação)             | —              |
+| `test`  | `bun run test` (Vitest)                              | —              |
 | `build` | `bun run build`, depois sobe o `dist/` como artifact | `lint`, `test` |

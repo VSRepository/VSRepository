@@ -33,7 +33,6 @@ Para queries cujo SQL é específico demais para o modelo desse builder — fun�
 | `orderBy(order)`       | Um objeto ou um array de objetos com `"asc"`/`"desc"` (minúsculo ou maiúsculo). Apenas campos escalares podem ser ordenados. Substitui qualquer ordenação anterior.                         |
 | `limit(limit)`         | Número máximo de registros. Precisa ser um inteiro não negativo.                                                                                                                            |
 | `offset(offset)`       | Número de registros a pular. Precisa ser um inteiro não negativo.                                                                                                                           |
-| `distinctOn(fields)`   | Um campo primitivo, ou um array deles, para aplicar `distinct`. Só é usado pelo `getResult()`.                                                                                              |
 | `see(mode)`            | Visibilidade do soft-delete: `"active"` (padrão), `"removed"` ou `"all"`. Veja [Soft-delete com `see()`](#soft-delete-com-see).                                                             |
 
 Chamar `where()` de novo substitui o filtro anterior, e o filtro de [soft-delete](#soft-delete-com-see) é adicionado por cima dele quando a query roda. Como o builder é mutável, um filtro que depende de entradas opcionais é mais fácil de montar como objeto antes:
@@ -61,22 +60,22 @@ async function buscar(filtros: { name?: string; apenasAtivos?: boolean; pagina: 
 
 | Método                  | Retorna                               | Chamada no adapter   | Enviado ao adapter                                                                   |
 | ----------------------- | ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
-| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `order`, `pagination`, `distinct`                    |
+| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `order`, `pagination`                                |
 | `getOneResult()`        | `Entity \| null`                      | `findOne`            | `where`, `select`, `relations`, `order`, `pagination`                                |
 | `getOneResultOrThrow()` | `Entity` (lança se não encontrar)     | `findOneOrThrow`     | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getCount()`            | `number`                              | `count`              | `where`, `order`, `pagination`                                                       |
+| `getCount()`            | `number`                              | `count`              | `where`                                                                              |
 | `getExistence()`        | `boolean`                             | `exists`             | `where`                                                                              |
 | `getResultAndCount()`   | `{ result: Entity[]; count: number }` | `findMany` + `count` | `findMany`: `where`, `select`, `relations`, `order`, `pagination` — `count`: `where` |
 
 Todo método terminal também aplica o modo de [`see`](#soft-delete-com-see) ao `where` e roda no `db` do builder (veja [`setDb()`](#transações-e-setdb)). Observações:
 
 - Os resultados são tipados como a `Entity` inteira, igual aos métodos base — `select` e `relations` mudam o que é carregado, não o tipo. Veja [Tipagem de retorno restrita com `InferMethodReturn`](./select-and-relations.pt-BR.md#tipagem-de-retorno-restrita-com-infermethodreturn) se quiser estreitá-lo.
-- `distinctOn()` só é enviado pelo `getResult()`: o `count` não suporta `distinct`, então `getCount()`, `getExistence()` e `getResultAndCount()` não o utilizam.
-- `getCount()` repassa `order` e `pagination` para o `count` do adapter. Se você quer o total de um builder que tem paginação, use `getResultAndCount()` ou conte a partir de um [`clone()`](#reutilizando-e-clonando-um-builder) sem ela.
+- `getCount()` e `getExistence()` enviam apenas o `where` (mais o `db`): `order`, `limit`/`offset`, `select` e `relations` são ignorados, então um builder com paginação ainda conta todos os registros que batem.
+- Este builder não tem suporte a `distinct` — para `select distinct`, use o [`selectDistinct()`](./raw-query-builder.pt-BR.md) do raw query builder.
 
 ## Paginação com `getResultAndCount()`
 
-Busca uma página e o total de registros que batem com o filtro em uma única chamada, tipo o `getResultAndCount()` do MikroORM. O `result` respeita `order`, `limit` e `offset`; o `count` ignora `order` e `pagination` de propósito — ele é o total de registros que batem com o `where`, para você calcular o número de páginas. As duas queries rodam em paralelo com o mesmo `where` resolvido e o mesmo `db`.
+Busca uma página e o total de registros que batem com o filtro em uma única chamada, tipo o `getResultAndCount()` do MikroORM. O `result` respeita `order`, `limit` e `offset`; o `count` ignora `order` e `pagination` de propósito — ele é o total de registros que batem com o `where`, para você calcular o número de páginas. As duas queries rodam uma depois da outra, com o mesmo `where` resolvido e o mesmo `db`.
 
 ```typescript
 const pageSize = 20;
@@ -94,7 +93,7 @@ const totalPages = Math.ceil(count / pageSize);
 
 ## Soft-delete com `see()`
 
-Em um repository com [`softRemoveKey`](./base-methods.pt-BR.md#soft-delete), o builder só enxerga registros não removidos por padrão, como todos os outros métodos. Use `see()` para mudar isso — vale para todos os métodos terminais (inclusive as duas queries do `getResultAndCount()`):
+Em um repository com [soft-delete habilitado](./base-methods.pt-BR.md#soft-delete) (`@EnableSoftDelete`), o builder só enxerga registros não removidos por padrão, como todos os outros métodos. Use `see()` para mudar isso — vale para todos os métodos terminais (inclusive as duas queries do `getResultAndCount()`):
 
 ```typescript
 await userRepository.createQueryBuilder().getResult(); // padrão — apenas registros não removidos
@@ -102,7 +101,7 @@ await userRepository.createQueryBuilder().see("removed").getResult(); // apenas 
 await userRepository.createQueryBuilder().see("all").getResult(); // todos, ignorando o soft-delete
 ```
 
-Repositories sem `softRemoveKey` ignoram o `see()`.
+Repositories sem `@EnableSoftDelete` ignoram o `see()`.
 
 ## Transações e `setDb()`
 
@@ -119,11 +118,11 @@ await userRepository.transaction(async tx => {
 });
 ```
 
-O `setDb()` também é útil junto com o `clone()` para rodar a mesma query em outro client sem mexer no builder original.
+O `setDb()` retorna o próprio builder, então pode ser encadeado (`qb.setDb(tx).getResult()`). Ele também é útil junto com o `clone()` para rodar a mesma query em outro client sem mexer no builder original.
 
 ## Reutilizando e clonando um builder
 
-`clone()` retorna um builder independente com o mesmo filtro, options, campos de `distinctOn`, modo de `see` e `db`. Alterações feitas em qualquer um dos dois depois disso não afetam o outro:
+`clone()` retorna um builder independente com o mesmo filtro, options, modo de `see` e `db`. Alterações feitas em qualquer um dos dois depois disso não afetam o outro:
 
 ```typescript
 const ativos = userRepository.createQueryBuilder().where({ active: true });
@@ -134,7 +133,7 @@ const primeiraPagina = await ativos.clone().orderBy({ name: "asc" }).limit(10).g
 
 ## Validação e erros
 
-Os argumentos são validados assim que são passados para um método encadeado, e não quando a query roda. Um argumento inválido lança um `VSRepoError` com `type: VSRepoErrorType.QUERY_BUILDER`, cuja mensagem começa pelo argumento problemático, e deixa o builder inalterado. `limit` e `offset` precisam ser inteiros não negativos; nos outros métodos a validação confere o formato do argumento.
+`limit` e `offset` são validados assim que são passados, e não quando a query roda: um valor que não seja inteiro não negativo lança um `VSRepoError` com `type: VSRepoErrorType.QUERY_BUILDER`, cuja mensagem começa pelo argumento problemático, e deixa o builder inalterado.
 
 ```typescript
 import { VSRepoError, VSRepoErrorType } from "vsrepo";
@@ -152,13 +151,12 @@ Erros lançados pelo adapter enquanto a query roda (ex.: `VSRepoAdapterError`) n
 
 ## Logs do query builder
 
-O builder usa o logger do repository, então segue o mesmo `logLevel` e `logSlowThresholdMs` (veja [Logging](./logging.pt-BR.md#logging)):
+O builder usa o logger do repository, então segue o mesmo `logLevel` (veja [Logging](./logging.pt-BR.md#logging)):
 
 - `DEBUG` registra cada chamada encadeada e, em cada método terminal, a query resolvida: o modo de `see`, o `where` final (já incluindo o filtro de soft-delete) e as options enviadas ao adapter. O `db` nunca é logado.
-- Todo método terminal tem o tempo medido como `run query builder <método>`: a duração é logada em `DEBUG` e promovida a `WARN` quando passa de `logSlowThresholdMs`.
-- Argumentos inválidos são logados em `ERROR` logo antes de o `VSRepoError` ser lançado.
+- Todo método terminal tem o tempo medido como `run query builder <método>`, e a duração é logada em `DEBUG`.
 
-Por exemplo, `.where({ active: true }).orderBy({ createdAt: "desc" }).limit(20).getResultAndCount()` em um repository com `softRemoveKey` imprime isto em `DEBUG` (sem os timestamps e sem as linhas das chamadas encadeadas):
+Por exemplo, `.where({ active: true }).orderBy({ createdAt: "desc" }).limit(20).getResultAndCount()` em um repository com soft-delete habilitado imprime isto em `DEBUG`:
 
 ```text
 [DEBUG] [UserRepositoryLogger] VSQueryBuilder: getResultAndCount

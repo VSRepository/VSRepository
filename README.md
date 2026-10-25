@@ -17,8 +17,8 @@ VSRepository is an **ORM-agnostic repository pattern library for TypeScript**. I
 
 VSRepository lets you create strongly-typed repositories with:
 
-- Automatic **base methods**: `get`, `getOrThrow`, `getList`, `save`, `saveList`, `remove`, `removeList`, `patch`, `merge`, `getAll`, `total`, `has`
-- **Native soft-delete**: `softRemove`, `softRemoveList`, `restore`, `restoreList`
+- Automatic **base methods**: `find`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow`, `save`, `create`, `createMany`, `update`, `updateMany`, `upsert`, `patch`, `merge`, `delete`, `deleteMany`, `remove`, `count`, `exists`, `has`, plus atomic (`increment`, ...) and aggregate (`sum`, ...) methods
+- **Native soft-delete** with `@EnableSoftDelete`: `softDelete`, `softRemove`, `softDeleteMany`, `restore`, `recover`, `restoreMany`
 - **Dynamic methods** inferred from a `declare` field name via the `@DynamicMethod` decorator: `findOneByEmail`, `findByStatusPaginated`, `updateById`
 - **Raw SQL query methods** via the `@QueryMethod` decorator (bypassing the name-parsing engine entirely), parameterized `VSSql` fragments for ad-hoc `query()` calls, and agnostic `?1`, `?2` placeholders with `vsPlaceholders`
 - Ad-hoc **`select`/`relations`** per call
@@ -44,18 +44,18 @@ npm i vsrepo @vsrepo/prisma7-adapter
 
 ```typescript
 // src/repositories/user.repository.ts
-import { VSRepository, DynamicMethod } from "vsrepo";
+import { VSRepository, DynamicMethod, EnableSoftDelete } from "vsrepo";
 import { Prisma7Adapter } from "@vsrepo/prisma7-adapter";
 import prisma from "../configs/db";
 import type { UserGetPayload } from "../../generated/prisma/models";
 
 type User = UserGetPayload<{ include: { address: true } }>;
 
+@EnableSoftDelete("deletedAt")
 class UserRepository extends VSRepository<User, string> {
     constructor() {
         super({
             adapter: new Prisma7Adapter(prisma, { tableName: "user", pkName: "id" }),
-            softRemoveKey: "deletedAt",
             defaultOrdering: { createdAt: "desc" },
         });
     }
@@ -84,7 +84,7 @@ const user = await userRepository.save({
 });
 
 const found = await userRepository.get(user.id);
-const all = await userRepository.getAll();
+const all = await userRepository.find();
 const byEmail = await userRepository.findByEmail("joao@email.com");
 
 await userRepository.patch(user.id, { name: "Joao Pedro" });
@@ -99,22 +99,23 @@ The sections above (installation, basic usage) are the essentials to get you sta
 
 ### Guides
 
-| Guide                                                               | Covers                                                                                                                                                                |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Adapter status](./docs/adapters.md)                                | Which ORM adapters exist today, what "ORM-agnostic by design" means in practice, and how to install, write or publish your own.                                       |
-| [Base methods, configuration & soft-delete](./docs/base-methods.md) | Constructor options, the 12 automatic CRUD methods, native soft-delete, and the 8 atomic/aggregate methods (`increment`, `sum`, ...).                                 |
-| [`select` and `relations`](./docs/select-and-relations.md)          | Ad-hoc field selection and eager relation loading on any call, and `InferMethodReturn` to narrow the return type accordingly.                                         |
-| [Dynamic methods](./docs/dynamic-methods.md)                        | `findByEmail`-style methods parsed from a `declare`d method name: prefixes, field filters, logical operators, relation filters, ordering/pagination/distinct.         |
-| [Query methods (raw SQL)](./docs/query-methods.md)                  | Raw SQL via `@QueryMethod`, parameterized `VSSql` fragments and the agnostic `?1`/`?2` placeholders (`vsPlaceholders`).                                               |
-| [Query builder](./docs/query-builder.md)                            | The fluent `createQueryBuilder()` API for queries assembled at runtime, including pagination, soft-delete visibility and transactions.                                |
-| [Raw query builder](./docs/raw-query-builder.md)                    | The fluent `createRawQueryBuilder()` API for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs (`with`/`withRecursive`). |
-| [Transactions](./docs/transactions.md)                              | Running several repositories against the same native ORM transaction.                                                                                                 |
-| [Utility types](./docs/utility-types.md)                            | The exported helper types (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) and where each one is used.                                                     |
-| [Writing your own adapter](./docs/writing-an-adapter.md)            | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database.                                                      |
-| [Error handling](./docs/error-handling.md)                          | `VSRepoError`, `VSRepoErrorType`, and `VSRepoAdapterError`/`AdapterErrorCode`.                                                                                        |
-| [Logging](./docs/logging.md)                                        | `logLevel`, `logSlowThresholdMs`, and the log format used by the repository and the query builder.                                                                    |
-| [Contributing](./CONTRIBUTING.md)                                   | Repository layout, the key scripts, conventions and CI — plus the contribution flow itself (issues, pull requests, review).                                           |
-| [Migrating from v1](./docs/migrating-from-v1.md)                    | Everything that changed between v1 and v2 — API, config, renamed suffixes, removed features — in a single reference for migrating existing repositories.              |
+| Guide                                                               | Covers                                                                                                                                                                       |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Adapter status](./docs/adapters.md)                                | Which ORM adapters exist today, what "ORM-agnostic by design" means in practice, and how to install, write or publish your own.                                              |
+| [Base methods, configuration & soft-delete](./docs/base-methods.md) | Constructor options, global configuration, the automatic CRUD methods, native soft-delete (`@EnableSoftDelete`), and the atomic/aggregate methods (`increment`, `sum`, ...). |
+| [`select` and `relations`](./docs/select-and-relations.md)          | Ad-hoc field selection and eager relation loading on any call, and `InferMethodReturn` to narrow the return type accordingly.                                                |
+| [Dynamic methods](./docs/dynamic-methods.md)                        | `findByEmail`-style methods parsed from a `declare`d method name: prefixes, field filters, logical operators, relation filters, ordering/pagination.                         |
+| [Query methods (raw SQL)](./docs/query-methods.md)                  | Raw SQL via `@QueryMethod`, parameterized `VSSql` fragments and the agnostic `?1`/`?2` placeholders (`vsPlaceholders`).                                                      |
+| [Query builder](./docs/query-builder.md)                            | The fluent `createQueryBuilder()` API for queries assembled at runtime, including pagination, soft-delete visibility and transactions.                                       |
+| [Raw query builder](./docs/raw-query-builder.md)                    | The fluent `createRawQueryBuilder()` API for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs (`with`/`withRecursive`).        |
+| [Transactions](./docs/transactions.md)                              | Running several repositories against the same native ORM transaction.                                                                                                        |
+| [Utility types](./docs/utility-types.md)                            | The exported helper types (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) and where each one is used.                                                            |
+| [Writing your own adapter](./docs/writing-an-adapter.md)            | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database.                                                             |
+| [Error handling](./docs/error-handling.md)                          | `VSRepoError`, `VSRepoErrorType`, and `VSRepoAdapterError`/`AdapterErrorCode`.                                                                                               |
+| [Logging](./docs/logging.md)                                        | `logLevel`, and the log format used by the repository and the query builder.                                                                                                 |
+| [Contributing](./CONTRIBUTING.md)                                   | Repository layout, the key scripts, conventions and CI — plus the contribution flow itself (issues, pull requests, review).                                                  |
+| [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md)        | Everything that changed between v2 and v3 — base methods, soft-delete, dynamic methods, query methods, adapters and requirements — as a step-by-step checklist.              |
+| [Migrating from v1 to v2](./docs/migrating-from-v1-to-v2.md)        | Everything that changed between v1 and v2 — API, config, renamed suffixes, removed features — in a single reference for migrating existing repositories.                     |
 
 ---
 

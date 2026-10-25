@@ -28,25 +28,26 @@ const rows = await invoiceRepository
 
 Nothing reaches the database until [`execute()`](#running-the-query) is called. The builder is **mutable**: every chained call changes the same instance and returns it, so use [`clone()`](#reusing-and-cloning-a-builder) to derive variations from a common base.
 
-Requires the adapter to implement `getPlaceholder()` — same requirement as [`VSSql`](./query-methods.md#parameterized-fragments-with-vssql) — since `toSql()`/`execute()` compile the query through it. Calling either without it throws a `VSRepoError`.
+`toSql()`/`execute()` compile the query through the adapter's `getPlaceholder()` — the same mechanism as [`VSSql`](./query-methods.md#parameterized-fragments-with-vssql) — so the placeholders follow your database's native syntax. The generated SQL uses lowercase keywords (`select`, `from`, `where`, ...).
 
 ## Building the query
 
 Every clause accepts a raw, trusted string (an identifier for `select`/`from`/`groupBy`/`orderBy`, or a plain condition for `on`/`where`/`having`, passed through as-is — never pass user-controlled input) or a [`VSSql`](./query-methods.md#parameterized-fragments-with-vssql) fragment for anything parameterized or aliased:
 
-| Method                                                                 | Description                                                                                                                                      |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `select(...columns)`                                                   | Columns/expressions to select, replacing any previous `select`. No arguments is equivalent to `SELECT *`.                                        |
-| `from(target, alias?)`                                                 | The `FROM` target, replacing any previous one. See [Subqueries](#subqueries).                                                                    |
-| `innerJoin/leftJoin/rightJoin/fullJoin(target, alias, on)`             | Adds a join. `target` accepts the same values as `from()`; `on` is a raw condition string or a `VSSql` fragment.                                 |
-| `where(condition)` / `andWhere(condition)`                             | Adds a `WHERE` condition. The first call sets the filter; every later `where`/`andWhere` is `AND`-combined with it, each wrapped in parentheses. |
-| `orWhere(condition)`                                                   | `OR`-combines `condition` with the existing `WHERE` filter.                                                                                      |
-| `groupBy(...columns)`                                                  | Adds columns to `GROUP BY`. Each call appends.                                                                                                   |
-| `having(condition)` / `andHaving(condition)` / `orHaving(condition)`   | Same `AND`/`OR` semantics as `where`/`andWhere`/`orWhere`, for `HAVING`.                                                                         |
-| `orderBy(column, direction?)`                                          | Adds a column to `ORDER BY`. Each call appends, so call it once per column for a multi-column ordering. `direction` is `"asc"`/`"desc"`.         |
-| `limit(limit)`                                                         | Maximum number of rows. Must be a non-negative integer.                                                                                          |
-| `offset(offset)`                                                       | Number of rows to skip. Must be a non-negative integer.                                                                                          |
-| `with(name, query, columns?)` / `withRecursive(name, query, columns?)` | Adds a `WITH` (CTE). See [CTEs with `with()`/`withRecursive()`](#ctes-with-withwithrecursive).                                                   |
+| Method                                                                 | Description                                                                                                                                                                        |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `select(...columns)`                                                   | Columns/expressions to select, replacing any previous `select`. No arguments is equivalent to `SELECT *`.                                                                          |
+| `selectDistinct(...columns)`                                           | Same as `select`, but adds `DISTINCT`. Requires at least one column — it throws a `VSRepoError` otherwise. Calling `select()` afterwards turns `DISTINCT` off again.               |
+| `from(target, alias?)`                                                 | The `FROM` target, replacing any previous one. See [Subqueries](#subqueries).                                                                                                      |
+| `innerJoin/leftJoin/rightJoin/fullJoin(target, alias, on)`             | Adds a join. `target` accepts the same values as `from()`; `on` is a raw condition string or a `VSSql` fragment.                                                                   |
+| `where(condition)` / `andWhere(condition)`                             | Adds a `WHERE` condition. The first call sets the filter; every later `where`/`andWhere` is `AND`-combined with it, each wrapped in parentheses.                                   |
+| `orWhere(condition)`                                                   | `OR`-combines `condition` with the existing `WHERE` filter.                                                                                                                        |
+| `groupBy(...columns)`                                                  | Adds columns to `GROUP BY`. Each call appends.                                                                                                                                     |
+| `having(condition)` / `andHaving(condition)` / `orHaving(condition)`   | Same `AND`/`OR` semantics as `where`/`andWhere`/`orWhere`, for `HAVING`.                                                                                                           |
+| `orderBy(column, direction?)` / `orderBy(orders)`                      | Adds columns to `ORDER BY`. Pass one column with an optional `"asc"`/`"desc"` direction, or a list of `[column, direction]` tuples to order by several at once. Each call appends. |
+| `limit(limit)`                                                         | Maximum number of rows. Must be a non-negative integer.                                                                                                                            |
+| `offset(offset)`                                                       | Number of rows to skip. Must be a non-negative integer.                                                                                                                            |
+| `with(name, query, columns?)` / `withRecursive(name, query, columns?)` | Adds a `WITH` (CTE). See [CTEs with `with()`/`withRecursive()`](#ctes-with-withwithrecursive).                                                                                     |
 
 ## Subqueries
 
@@ -131,7 +132,7 @@ One recursive CTE is enough to make the whole clause `WITH RECURSIVE`, even when
 | `toSql()`      | `string`     | Compiles down to a plain SQL string, rendered with the adapter's own placeholder syntax (`$1`, `$2`, ... or `?`). Values are **not** interpolated — use `toVSSql()` (`.compile()`) if you also need them.                                                                                |
 | `execute<T>()` | `Promise<T>` | Compiles and runs the query through the adapter, returning whatever `adapter.query()` resolves to for this SQL (typically the matching rows). `T` defaults to `any`.                                                                                                                     |
 
-`toVSSql()` throws a `VSRepoError` if no `from()` target was set (`select()` alone defaults to `SELECT *`, so it's never the one missing). `toSql()`/`execute()` additionally throw if the adapter doesn't implement `getPlaceholder()`.
+`toVSSql()` throws a `VSRepoError` if no `from()` target was set (`select()` alone defaults to `SELECT *`, so it's never the one missing). `toSql()` and `execute()` call `toVSSql()`, so they throw for the same reason.
 
 ## Transactions and `setDb()`
 
@@ -141,12 +142,11 @@ One recursive CTE is enough to make the whole clause `WITH RECURSIVE`, even when
 const qb = invoiceRepository.createRawQueryBuilder().select("*").from("invoice");
 
 await invoiceRepository.transaction(async tx => {
-    qb.setDb(tx); // from here on, execute() runs inside the transaction
-    return qb.execute();
+    return qb.setDb(tx).execute(); // runs inside the transaction
 });
 ```
 
-`setDb()` is also handy together with `clone()` to run the same query against another client without touching the original builder.
+`setDb()` returns the builder itself, so it can be chained (`qb.setDb(tx).execute()`). It's also handy together with `clone()` to run the same query against another client without touching the original builder.
 
 ## Reusing and cloning a builder
 
@@ -192,9 +192,9 @@ Errors thrown by the adapter while the query runs (e.g. `VSRepoAdapterError`) ar
 
 ## Raw query builder logs
 
-The builder uses the repository's logger, so it follows the same `logLevel` and `logSlowThresholdMs` (see [Logging](./logging.md#logging)):
+The builder uses the repository's logger, so it follows the same `logLevel` (see [Logging](./logging.md#logging)):
 
 - `DEBUG` traces `setDb`/`clone` calls and, before `execute()` runs, the compiled query and its args. The `db` is never logged.
-- `execute()` is timed as `run raw query builder execute`: the duration is logged at `DEBUG` and promoted to `WARN` when it exceeds `logSlowThresholdMs`.
+- `execute()` is timed as `run raw query builder execute`, and the duration is logged at `DEBUG`.
 
 [⬆️ Back to top](#top)

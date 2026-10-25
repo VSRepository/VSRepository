@@ -31,10 +31,10 @@ await userRepository.transaction(
 );
 ```
 
-| Option           | Type                        | Description                                                                           |
-| ---------------- | --------------------------- | ------------------------------------------------------------------------------------- |
+| Option           | Type                   | Description                                                                  |
+| ---------------- | ---------------------- | ---------------------------------------------------------------------------- |
 | `isolationLevel` | `VSRepoIsolationLevel` | Isolation level to use for the transaction. Defaults to the underlying ORM's default. |
-| `timeoutMs`      | `number`                    | Maximum time (in ms) the transaction is allowed to run before being aborted.          |
+| `timeoutMs`      | `number`               | Maximum time (in ms) the transaction is allowed to run before being aborted. |
 
 `VSRepoIsolationLevel` mirrors the standard SQL isolation levels: `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE`. Support for a given level depends on the adapter/underlying ORM and database.
 
@@ -46,7 +46,7 @@ await userRepository.transaction(
 const order = await orderRepository.transaction(async tx => {
     const created = await orderRepository.save({ userId, total }, { db: tx });
 
-    await orderItemsRepository.saveList(
+    await orderItemsRepository.save(
         items.map(item => ({ ...item, orderId: created.id })),
         { db: tx },
     );

@@ -22,6 +22,10 @@ Como cada adapter é versionado por conta própria, ele pode acompanhar o ciclo 
 | Outros ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planejados, ainda não publicados.** Por enquanto, escreva o seu próprio adapter (veja [Escrevendo seu próprio adapter](#escrevendo-seu-próprio-adapter)) e considere publicá-lo/contribuir de volta com o projeto.                                                                                                                           |
 | Adapters customizados                 | 🟢 Totalmente suportados hoje — implemente você mesmo a classe abstrata [`VSRepoAdapter`](./writing-an-adapter.pt-BR.md#o-contrato-vsrepoadapter) para qualquer ORM/banco que precisar, no seu próprio projeto ou pacote.                                                                                                                         |
 
+> [!NOTE]
+>
+> O contrato `VSRepoAdapter` mudou na v3 (novos métodos de leitura/escrita/atômicos, `getPlaceholder()` obrigatório, ...). Garanta que a versão do adapter que você instala declara compatibilidade com a versão do `vsrepo` que você usa — veja [Migrando da v2 para a v3](./migrating-from-v2-to-v3.pt-BR.md#adapters).
+
 ## Instalando um adapter
 
 Um adapter é um pacote npm comum. Instale o core mais o que corresponde ao seu ORM:
@@ -40,9 +44,9 @@ npm i @vsrepo/drizzle-adapter@alpha
 
 Você nunca precisa esperar por um pacote oficial: `VSRepoAdapter` é uma classe abstrata comum, e implementá-la é o ponto de extensão oficialmente suportado.
 
-- **[Escrevendo seu próprio adapter](./writing-an-adapter.pt-BR.md)** — o passo a passo completo: o que você vai implementar, o contrato `VSRepoAdapter`, os hooks opcionais `getPkName()`/`getPlaceholder()`, e como logar a partir do seu adapter no mesmo formato do core.
-- **[Métodos base, configuração & soft-delete](./base-methods.pt-BR.md#escrevendo-um-adapter)** — como as 8 operações atômicas/de agregação devem se comportar no seu ORM, e o que um adapter precisa retornar para elas.
-- **[Transações](./transactions.pt-BR.md)** — o que `runInTransaction()` precisa devolver para `transaction()`.
+- **[Escrevendo seu próprio adapter](./writing-an-adapter.pt-BR.md)** — o passo a passo completo: o que você vai implementar, o contrato `VSRepoAdapter`, o método `getPlaceholder()`, o hook opcional `getPkName()`, e como logar a partir do seu adapter no mesmo formato do core.
+- **[Métodos base, configuração & soft-delete](./base-methods.pt-BR.md#métodos-atômicos-e-de-agregação)** — como as operações atômicas/de agregação devem se comportar no seu ORM, e o que um adapter precisa retornar para elas.
+- **[Transações](./transactions.pt-BR.md)** — o que `runInTransaction()` precisa devolver para o `transaction()` funcionar.
 
 ## Publicando um adapter
 

@@ -38,7 +38,7 @@ class UserRepository extends VSRepository<User, string> {
 }
 ```
 
-> **O `MethodOptions` é sempre aceito:** todo método dinâmico, qualquer que seja o prefixo, aceita um `MethodOptions<Entity, OrmTypes>` opcional (`select`, `relations`, `see`, `db`, ...) como seu **último** argumento — o resolver trata o argumento além do que o nome exige como `MethodOptions` e o valida como tal. Você ainda precisa **declará-lo na assinatura TS** para o TypeScript deixar você passá-lo (como em todos os exemplos acima); os exemplos mais abaixo às vezes o omitem por brevidade, ao demonstrar outra coisa, mas ele está disponível em todos eles também.
+> **O `MethodOptions` é sempre aceito:** todo método dinâmico, qualquer que seja o prefixo, aceita um `MethodOptions<Entity, OrmTypes>` opcional (`select`, `relations`, `see`, `db`, ...) como seu **último** argumento — o resolver trata o argumento além do que o nome exige como `MethodOptions`. Você ainda precisa **declará-lo na assinatura TS** para o TypeScript deixar você passá-lo (como em todos os exemplos acima); os exemplos mais abaixo às vezes o omitem por brevidade, ao demonstrar outra coisa, mas ele está disponível em todos eles também.
 
 ## Prefixos disponíveis
 
@@ -57,9 +57,6 @@ class UserRepository extends VSRepository<User, string> {
 | `count`                    | `number`         | Sem filtros de campo.                                                                     |
 | `existsBy`                 | `boolean`        | Filtros de campo seguem o prefixo.                                                        |
 | `existsWhere`              | `boolean`        | Recebe um `VSRepoWhere<T>` como primeiro argumento.                                       |
-| `create`                   | `Entity`         | Recebe `DeepPartial<Entity>` como argumento.                                              |
-| `createMany`               | `CountResult`    | Recebe `DeepPartial<Entity>[]` como argumento; suporta `IgnoreConflicts`.                 |
-| `createManyReturning`      | `Entity[]`       | Recebe `DeepPartial<Entity>[]` como argumento; suporta `IgnoreConflicts`.                 |
 | `updateBy`                 | `Entity`         | Filtros de campo + `DeepPartial<Entity>` como argumento.                                  |
 | `updateWhere`              | `Entity`         | Recebe um `VSRepoWhere<T>` como primeiro argumento, depois `DeepPartial<Entity>`.         |
 | `updateManyBy`             | `CountResult`    | Filtros de campo + `DeepPartial<Entity>`.                                                 |
@@ -79,32 +76,37 @@ class UserRepository extends VSRepository<User, string> {
 
 ## Filtros de campo
 
-Aplicados como sufixos ao nome do campo dentro do método:
+Aplicados como sufixos ao nome do campo dentro do método. Vários filtros têm aliases — use o que ficar mais legível:
 
-| Sufixo                    | Significado                                                    | Argumento                        |
-| ------------------------- | -------------------------------------------------------------- | -------------------------------- |
-| _(sem sufixo)_ / `Equals` | igualdade (`=`)                                                | sim                              |
-| `Not` / `NotEquals`       | negação                                                        | sim                              |
-| `In`                      | está em                                                        | sim (array)                      |
-| `NotIn`                   | não está em                                                    | sim (array)                      |
-| `Contains`                | contém substring                                               | sim                              |
-| `NotContains`             | não contém substring                                           | sim                              |
-| `StartsWith`              | começa com                                                     | sim                              |
-| `NotStartsWith`           | não começa com                                                 | sim                              |
-| `EndsWith`                | termina com                                                    | sim                              |
-| `NotEndsWith`             | não termina com                                                | sim                              |
-| `GreaterThan`             | `>`                                                            | sim                              |
-| `GreaterThanEqual`        | `>=`                                                           | sim                              |
-| `LessThan`                | `<`                                                            | sim                              |
-| `LessThanEqual`           | `<=`                                                           | sim                              |
-| `Between`                 | intervalo inclusivo                                            | sim (tupla `[min, max]`)         |
-| `NotBetween`              | fora de um intervalo inclusivo                                 | sim (tupla `[min, max]`)         |
-| `IsNull`                  | campo é `null`                                                 | não                              |
-| `IsNotNull`               | campo não é `null`                                             | não                              |
-| `IsTrue`                  | campo é `true`                                                 | não                              |
-| `IsFalse`                 | campo é `false`                                                | não                              |
-| `IgnoreCase`              | combinador case-insensitive para filtros de texto              | sim                              |
-| `Optional`                | flag opcional para deixar explícito que o parâmetro é opcional | sim _(na prática não muda nada)_ |
+| Sufixo                                     | Significado                                       | Argumento                |
+| ------------------------------------------ | ------------------------------------------------- | ------------------------ |
+| _(sem sufixo)_ / `Is` / `Equals` / `Equal` | igualdade (`=`)                                   | sim                      |
+| `Not` / `NotEquals` / `NotEqual`           | negação                                           | sim                      |
+| `In`                                       | está em                                           | sim (array)              |
+| `NotIn`                                    | não está em                                       | sim (array)              |
+| `Contains` / `Containing`                  | contém substring                                  | sim                      |
+| `NotContains` / `NotContaining`            | não contém substring                              | sim                      |
+| `StartsWith` / `StartingWith`              | começa com                                        | sim                      |
+| `NotStartsWith` / `NotStartingWith`        | não começa com                                    | sim                      |
+| `EndsWith` / `EndingWith`                  | termina com                                       | sim                      |
+| `NotEndsWith` / `NotEndingWith`            | não termina com                                   | sim                      |
+| `Like`                                     | padrão SQL `LIKE` (ex.: `"na%"`)                  | sim                      |
+| `NotLike`                                  | padrão `LIKE` negado                              | sim                      |
+| `GreaterThan` / `Gt`                       | `>`                                               | sim                      |
+| `GreaterThanEqual` / `Gte`                 | `>=`                                              | sim                      |
+| `LessThan` / `Lt`                          | `<`                                               | sim                      |
+| `LessThanEqual` / `Lte`                    | `<=`                                              | sim                      |
+| `After`                                    | `>` — fica natural com datas                      | sim                      |
+| `Before`                                   | `<` — fica natural com datas                      | sim                      |
+| `Between`                                  | intervalo inclusivo                               | sim (tupla `[min, max]`) |
+| `NotBetween`                               | fora de um intervalo inclusivo                    | sim (tupla `[min, max]`) |
+| `Null` / `IsNull`                          | o campo é `null`                                  | não                      |
+| `NotNull` / `IsNotNull`                    | o campo não é `null`                              | não                      |
+| `True` / `IsTrue`                          | o campo é `true`                                  | não                      |
+| `False` / `IsFalse`                        | o campo é `false`                                 | não                      |
+| `IgnoreCase` / `IgnoringCase`              | combinador case-insensitive para filtros de texto | sim                      |
+
+Todo filtro, exceto `IgnoreCase`, também aceita um prefixo `Is` opcional (`IsBetween`, `IsIn`, `IsNotLike`, `IsGreaterThan`, ...) — então `findByAgeIsBetween` e `findByAgeBetween` são o mesmo método.
 
 ```typescript
 @DynamicMethod()
@@ -112,9 +114,18 @@ declare findByNameContainsIgnoreCase: (name: string) => Promise<User[]>;
 
 @DynamicMethod()
 declare findByAgeBetween: (age: [number, number]) => Promise<User[]>;
+
+@DynamicMethod()
+declare findByEmailLike: (pattern: string) => Promise<User[]>; // ex.: "%@gmail.com"
+
+@DynamicMethod()
+declare findByCreatedAtAfter: (date: Date) => Promise<User[]>;
+
+@DynamicMethod()
+declare findByDeletedAtNull: () => Promise<User[]>;
 ```
 
-> **Colisão de palavra-chave em nome de campo:** um sufixo/operador só é reconhecido numa fronteira de camelCase — seguido de letra maiúscula, de caractere não-ASCII ou (para sufixos de campo) do fim do nome — então `findByOrganizationId` e `findByNotes` resolvem para os campos `organizationId` e `notes`, não para as palavras-chave `Or`/`Not`. Ainda fica um caso ambíguo: um campo cujo nome termina de fato numa fronteira com as mesmas letras de uma palavra-chave (ex.: `checkIn`, que por padrão é lido como o campo `check` + o sufixo `In`). Adicione `Equals` (ou `NotEquals`) para forçar igualdade e desambiguar: `findByCheckInEquals` resolve para o campo `checkIn`.
+> **Colisão de palavra-chave em nome de campo:** um sufixo/operador só é reconhecido numa fronteira de camelCase — seguido de letra maiúscula, de caractere não-ASCII ou (para sufixos de campo) do fim do nome — então `findByOrganizationId` e `findByNotes` resolvem para os campos `organizationId` e `notes`, não para as palavras-chave `Or`/`Not`. Ainda fica um caso ambíguo: um campo cujo nome termina de fato numa fronteira com as mesmas letras de uma palavra-chave (ex.: `checkIn`, que por padrão é lido como o campo `check` + o sufixo `In`). Adicione `Equals` (ou `Is`) para forçar igualdade e desambiguar: `findByCheckInEquals` resolve para o campo `checkIn`.
 
 ## Operadores lógicos
 
@@ -151,23 +162,25 @@ declare findByAddressWithCityStartsWithIgnoreCase: (city: string) => Promise<Use
 declare findByProductsSome: () => Promise<User[]>;
 ```
 
-## Ordenação, paginação e distinct
+Essas palavras-chave só são reconhecidas **depois** do nome da relação, nunca no começo do nome de um campo — então `findByWithDependents` resolve para o campo `withDependents`, e `findBySonWithWithDependents` para o campo `withDependents` da relação `son`.
 
-| Sufixo                                     | Efeito                                                                                                                                                                                                                                 |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Paginated`                                | Injeta um argumento `pagination` (`{ limit?, offset? }`) como **penúltimo** parâmetro (antes do `MethodOptions` opcional).                                                                                                             |
-| `Ordered`                                  | Injeta um argumento `order: Ordering<T>` como **penúltimo** parâmetro (antes do `MethodOptions` opcional).                                                                                                                             |
-| `OrderedAndPaginated`                      | Injeta `order` como antepenúltimo, depois `pagination` como penúltimo — ambos antes do `MethodOptions`.                                                                                                                                |
-| `PaginatedAndOrdered`                      | Injeta `pagination` como antepenúltimo, depois `order` como penúltimo — ambos antes do `MethodOptions`.                                                                                                                                |
-| `OrderBy<Campo>Asc` / `OrderBy<Campo>Desc` | Embute uma ordenação fixa diretamente no nome do método — encadeie campos com `And` (ex.: `OrderByCreatedAtAscAndNameDesc`). Não precisa de argumento `order`. _OBS: Se você não especificar `Asc` ou `Desc` ele considera como `Asc`_ |
-| `Distinct<Campo>And<Campo>...`             | Embute campos `distinct` fixos diretamente no nome do método (só válido em métodos da família `findBy`/`findWhere`).                                                                                                                   |
-| `IgnoreConflicts`                          | No `createMany`/`createManyReturning`, ignora registros que violariam uma constraint única, em vez de lançar erro.                                                                                                                     |
+## Ordenação e paginação
+
+Disponíveis na família `find…` — `findBy`, `findWhere`, `findOneBy`, `findOneWhere`, `findOne`, `findOneOrThrowBy`, `findOneOrThrowWhere` e `findOneOrThrow`:
+
+| Sufixo                                     | Efeito                                                                                                                                                                                                                           |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Paginated`                                | Injeta um argumento `pagination` (`{ limit?, offset? }`) como **penúltimo** parâmetro (antes do `MethodOptions` opcional).                                                                                                       |
+| `Ordered`                                  | Injeta um argumento `order: Ordering<T>` como **penúltimo** parâmetro (antes do `MethodOptions` opcional).                                                                                                                       |
+| `OrderedAndPaginated`                      | Injeta `order` como antepenúltimo, depois `pagination` como penúltimo — ambos antes do `MethodOptions`.                                                                                                                          |
+| `PaginatedAndOrdered`                      | Injeta `pagination` como antepenúltimo, depois `order` como penúltimo — ambos antes do `MethodOptions`.                                                                                                                          |
+| `OrderBy<Campo>Asc` / `OrderBy<Campo>Desc` | Embute uma ordenação fixa diretamente no nome do método — encadeie campos com `And` (ex.: `OrderByCreatedAtAscAndNameDesc`). Não precisa de argumento `order`. _OBS: se você não especificar `Asc` ou `Desc`, o padrão é `Asc`._ |
 
 > [!WARNING]
 >
 > **Ordem dos parâmetros:** `pagination` e `order` sempre vêm **antes** do último argumento opcional `MethodOptions<T>`. Quando `order` e `pagination` estão presentes juntos, a ordem relativa entre eles segue o nome do sufixo (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
 >
-> Usar `Paginated`/`Ordered`/`OrderBy`, `Distinct` ou `IgnoreConflicts` num prefixo que não os suporta (ex.: `Distinct` em `findOneBy`, `Paginated` em `existsBy`, `IgnoreConflicts` em `create`) lança um `VSRepoError` (`RESOLVER`) ao construir o repository, em vez de virar silenciosamente parte do nome do campo.
+> Usar `Paginated`/`Ordered`/`OrderBy` num prefixo que não os suporta (ex.: `Paginated` em `existsBy`) lança um `VSRepoError` (`RESOLVER`) ao construir o repository, em vez de virar silenciosamente parte do nome do campo.
 
 ```typescript
 // Paginated: pagination é o penúltimo parâmetro (antes do MethodOptions)
@@ -180,38 +193,40 @@ declare findByActiveOrderByCreatedAtDescPaginated:
 declare findByNameContainsIgnoreCaseOrderedAndPaginated:
     (name: string, order: Ordering<User>, pagination: Pagination, options?: MethodOptions<User>) => Promise<User[]>;
 
-@DynamicMethod()
-declare createManyIgnoreConflicts: (data: DeepPartial<User>[]) => Promise<CountResult>;
-
-// createManyReturning: mesmo comportamento do createMany, mas retorna os registros criados
-@DynamicMethod()
-declare createManyReturningIgnoreConflicts: (data: DeepPartial<User>[]) => Promise<User[]>;
-
 // findOne sem filtro (equivalente ao findOneOrThrow sem filtro, mas retorna null em vez de lançar)
 @DynamicMethod()
 declare findOne: (options?: MethodOptions<User>) => Promise<User | null>;
 ```
 
-> [!WARNING]
->
-> **Precedência entre `Distinct` e `OrderBy`:** quando os dois são usados no mesmo nome de método, **`Distinct` deve vir antes de `OrderBy`**:
->
-> ```typescript
-> @DynamicMethod()
-> declare findByActiveDistinctNameOrderByCreatedAtDesc:
->     (active: boolean) => Promise<User[]>;
-> ```
->
-> Colocar `OrderBy` antes de `Distinct` (ex.: `findByActiveOrderByCreatedAtDescDistinctName`) não é um padrão válido e lança um `VSRepoError` (`RESOLVER`) ao construir o repository: `The "Distinct" modifier cannot appear after the "OrderBy" modifier.`
+### `order` e `pagination` via `options`
+
+Sem esses sufixos, `order` e `pagination` ainda podem ser passados no argumento `options` (o `MethodOptions` aceita os dois), então o mesmo método pode ser reutilizado com ordenação/paginação diferentes a cada chamada:
+
+```typescript
+@DynamicMethod()
+declare findByActive: (active: boolean, options?: MethodOptions<User>) => Promise<User[]>;
+
+await userRepository.findByActive(true, { order: { name: "asc" }, pagination: { limit: 20, offset: 40 } });
+```
+
+Quando mais de uma fonte define a ordenação, vence a primeira que existir:
+
+1. o argumento `order` injetado por `Ordered`/`OrderedAndPaginated`/`PaginatedAndOrdered`;
+2. `options.order`;
+3. o `OrderBy…` embutido no nome do método;
+4. o `injectOrdering` do decorator;
+5. o `defaultOrdering` do repository.
+
+Na paginação, o argumento `pagination` injetado vence o `options.pagination`.
 
 ## Options do decorador
 
 `@DynamicMethod<T>(options?)` aceita:
 
-| Option           | Tipo          | Descrição                                                                                                                                |
-| ---------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `proxyTo`        | `string`      | Redireciona a lógica do método para outro padrão de método dinâmico válido — útil para nomes que não seguem a convenção de nomenclatura. |
-| `injectOrdering` | `Ordering<T>` | Ordenação fixa injetada automaticamente, sobrescrevendo o `defaultOrdering` do repository.                                               |
+| Option           | Tipo          | Descrição                                                                                                                                  |
+| ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `proxyTo`        | `string`      | Redireciona a lógica do método para outro padrão de método dinâmico válido — útil para nomes que não seguem a convenção de nomenclatura.   |
+| `injectOrdering` | `Ordering<T>` | Ordenação fixa injetada automaticamente, sobrescrevendo o `defaultOrdering` do repository (mas não um `options.order` passado na chamada). |
 
 ```typescript
 // proxyTo: dá um nome customizado ao método reutilizando um padrão existente
@@ -305,7 +320,7 @@ class UserRepository extends VSRepository<User, string> {
     @DynamicMethod()
     declare findByEmail: (email: string) => Promise<User[]>;
 
-    // ex.: chamado no onModuleInit do Nest
+    // ex.: chamado no onModuleInit do NestJS
     init() {
         this.resolveDynamicMethods();
     }

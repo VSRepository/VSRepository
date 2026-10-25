@@ -1,14 +1,18 @@
 <a id="top"></a>
 
-🇧🇷 Português | [🇺🇸 English](./migrating-from-v1.md)
+🇧🇷 Português | [🇺🇸 English](./migrating-from-v1-to-v2.md)
 
 [← Voltar para o índice da documentação](./README.pt-BR.md)
 
-# Migrando da v1
+# Migrando da v1 para a v2
 
-A v1 foi o release original do VSRepository, **apenas para Prisma**. A v2 — a versão atual — é uma reescrita que tornou o núcleo **agnóstico de ORM**: em vez de falar diretamente com o Prisma, toda operação é delegada a um `VSRepoAdapter` plugável, permitindo que a mesma API de repository funcione com Prisma, Drizzle ou qualquer outro ORM/banco que implemente o contrato de adapter.
+A v1 foi o release original do VSRepository, **apenas para Prisma**. A v2 é uma reescrita que tornou o núcleo **agnóstico de ORM**: em vez de falar diretamente com o Prisma, toda operação é delegada a um `VSRepoAdapter` plugável, permitindo que a mesma API de repository funcione com Prisma, Drizzle ou qualquer outro ORM/banco que implemente o contrato de adapter.
 
 O código-fonte e a documentação da v1 vivem na branch dedicada [`v1`](https://github.com/jaobrabo123/VSRepository/tree/v1), para quem ainda precisar do release anterior baseado apenas em Prisma.
+
+> [!NOTE]
+>
+> Este guia cobre o salto v1 → v2. A v3 mudou mais da API (métodos base, soft-delete, sufixos dos métodos dinâmicos, argumentos dos query methods, ...), então depois de migrar para a v2 continue com [Migrando da v2 para a v3](./migrating-from-v2-to-v3.pt-BR.md) — ou, se for direto para a v3, leia os dois. Nomes que esta página mostra para a v2 (`softRemoveKey`, `IgnoreConflicts`, `spreadArgs`, `Distinct`, `logSlowThresholdMs`, ...) foram alterados de novo na v3.
 
 Esta página é a referência única do que mudou entre a v1 e a v2. Se você está migrando um repository existente da v1, o [passo a passo resumido](#migrando-um-repository-da-v1-para-a-v2) abaixo resume o caminho; a [tabela de comparação completa](#comparação-v1-vs-v2) cobre cada área em detalhe.
 
@@ -40,10 +44,10 @@ Esta página é a referência única do que mudou entre a v1 e a v2. Se você es
 
 Dois sufixos mudaram de nome entre a v1 e a v2 — a funcionalidade é idêntica, apenas o nome difere:
 
-| v1               | v2                | Onde é usado                                                                                                                                     |
-| ---------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Insensitive`    | `IgnoreCase`      | Combinador case-insensitive para filtros de texto em [métodos dinâmicos](./dynamic-methods.pt-BR.md#filtros-de-campo)                            |
-| `SkipDuplicates` | `IgnoreConflicts` | Tratamento de duplicatas no `createMany`/`createManyReturning` em [métodos dinâmicos](./dynamic-methods.pt-BR.md#ordenação-paginação-e-distinct) |
+| v1               | v2                | Onde é usado                                                                                                                            |
+| ---------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `Insensitive`    | `IgnoreCase`      | Combinador case-insensitive para filtros de texto em [métodos dinâmicos](./dynamic-methods.pt-BR.md#filtros-de-campo)                   |
+| `SkipDuplicates` | `IgnoreConflicts` | Tratamento de duplicatas no `createMany`/`createManyReturning` em [métodos dinâmicos](./dynamic-methods.pt-BR.md#ordenação-e-paginação) |
 
 ## Prefixos de métodos dinâmicos renomeados
 

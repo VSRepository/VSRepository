@@ -6,6 +6,116 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev] - Unreleased
+
+> Major release in development. See [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md) for the full breakdown. The list below may still change before the stable release.
+
+### Changed
+
+- **BREAKING:** The package is now **ESM** (`"type": "module"`) and requires **Node.js 22+** (it was CommonJS on Node 18+)
+- **BREAKING:** Base methods were reworked around `where` filters: `getAll` → `find(where?, options?)`, `getList` → `find` with an `in` filter, `saveList` → `save` (now accepts an array), `removeList` → `deleteMany`, `total` → `count`, `softRemoveList` → `softDeleteMany`, `restore(pk)` → `recover(id)` (`restore` now takes a `where`) and `restoreList` → `restoreMany`
+- **BREAKING:** `increment`, `decrement`, `multiply` and `divide` now take `(field, value, where, options?)` instead of `(pk, field, value, options?)`
+- **BREAKING:** Soft-delete is now enabled with the `@EnableSoftDelete(field?)` class decorator instead of the `softRemoveKey` constructor option
+- **BREAKING:** `getPlaceholder()` is now a required method of `VSRepoAdapter`, and `vsPlaceholders` is **enabled by default**, so raw SQL strings use `?1`, `?2`, ... unless `vsPlaceholders: false` is set
+- **BREAKING:** `@QueryMethod` methods always receive plain positional arguments (the `spreadArgs`/`singleArg` options and the `QueryArgs`/`QueryMethodArg` types were removed); `withDb(tx)` is still the optional last argument
+- **BREAKING:** Runtime validation was removed along with the `valibot` dependency — validation is now type-level only, and the `VSRepoErrorType.DECORATOR` and `VSRepoErrorType.VALIDATOR` types were removed
+- **BREAKING:** Slow-operation logging was removed, including the `logSlowThresholdMs` option — durations are only logged at `DEBUG`
+- **BREAKING:** `TransactionIsolationLevel` was renamed to `VSRepoIsolationLevel`, and `isolationLevel` also accepts the enum's string values (e.g. `"Serializable"`)
+- **BREAKING:** `distinct` support was removed from dynamic methods (the `Distinct` suffix) and from `VSQueryBuilder` (`distinctOn()`) — only `VSRawQueryBuilder` supports it, through `selectDistinct()`
+- **BREAKING:** Dynamic methods no longer support the `create*` prefixes, the `IgnoreConflicts` suffix or the `Optional` keyword — use the new base methods `create`, `createMany` and `createManyReturning` (with `ignoreConflicts`)
+- **BREAKING:** `VSQueryBuilder.setDb()` and `VSRawQueryBuilder.setDb()` now return the builder itself instead of `void`, and `VSQueryBuilder.getCount()` only sends the `where` to the adapter
+- **BREAKING:** The `VSRepoAdapter` contract changed (required `getPlaceholder()`, new `incrementMany`/`decrementMany`/`multiplyMany`/`divideMany`, `order`/`pagination` forwarded to the read methods, stricter option types) — adapters built for v2 must be updated
+- **BREAKING:** `VSSql` errors now have `type: VSRepoErrorType.VSSQL`, and `VSSql.compile()` uses `getVsPlaceholder` by default
+- Dynamic methods now forward `options.order` and `options.pagination` to the adapter, and `get`/`getOrThrow` accept `MethodOptions` and apply the repository's `defaultOrdering`
+- `VSRepoWhere` typing is stricter and more robust (e.g. `between` only on numbers, bigints, dates and decimals; string filters only on strings; `readonly` arrays in relations)
+- `VSRawQueryBuilder.orderBy()` accepts a list of `[column, direction]` tuples, and the generated SQL keywords are lowercase
+- `resolveDynamicMethods()` now logs its `WARN` only once, and the resolver only logs the methods to resolve when there is at least one
+
+### Added
+
+- New base methods: `find`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany` and `getAdapter()`
+- Atomic batch operations: `incrementMany`, `decrementMany`, `multiplyMany` and `divideMany`
+- `@EnableSoftDelete` decorator and `VSRepository.setGlobalConfig()` for shared defaults (`softDeleteField`, `logLevel`, `lazyDynamicMethods`, `vsPlaceholders`)
+- Static `VSRepository.getQueryBuilder()` and `VSRepository.getRawQueryBuilder()`
+- `VSLogLevel.NONE`, which disables logging completely
+- `VSRawQueryBuilder.selectDistinct()`
+- New dynamic-method filter aliases (`Is` prefix, `Equal`/`NotEqual`, `Containing`, `StartingWith`, `EndingWith`, `IgnoringCase`, `Gt`/`Gte`/`Lt`/`Lte`, `After`/`Before`, `True`/`False`/`Null`/`NotNull`) and the new `Like`/`NotLike` filters (`like` in `VSRepoWhere`)
+- Public placeholder helpers `getVsPlaceholder`, `getPostgresPlaceholder`, `getCockroachPlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder` and `getSqlitePlaceholder`, plus the `GetPlaceholderFn` type
+- `VSRepoErrorType.VSSQL` and `VSRepoErrorType.VS_PLACEHOLDERS`
+- New utility types: `ClientOrTransaction`, `SimpleMethodOptions`, `VSRepoGlobalConfig` and `VSRepoLogicalOperators`
+
+### Removed
+
+- Base methods `getAll`, `getList`, `saveList`, `removeList`, `total`, `softRemoveList` and `restoreList` (see the renames above)
+- Constructor options `softRemoveKey` and `logSlowThresholdMs`, `@QueryMethod` options `spreadArgs`/`singleArg`, and the `QueryArgs`/`QueryMethodArg` types
+- `valibot` dependency and every runtime validation built on it
+
+### Fixed
+
+- Relation keywords (`With`, `Without`, `Some`, `Every`, `None`) in dynamic methods are no longer recognized at the start of a field name, fixing names such as `findByWithDependents` and `findBySonWithWithDependents`
+- `get` and `getOrThrow` now apply the repository's `defaultOrdering`
+- `VSQueryBuilder` no longer logs the `db` object
+
+### Documentation
+
+- Every guide (English and Portuguese) was updated for v3, and JSDoc was added or updated on every public API surface
+- New [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md) guide; `migrating-from-v1.md` was renamed to [`migrating-from-v1-to-v2.md`](./docs/migrating-from-v1-to-v2.md)
+
+## [3.0.0-dev] - Unreleased (Português)
+
+> Release major em desenvolvimento. Veja [Migrando da v2 para a v3](./docs/migrating-from-v2-to-v3.pt-BR.md) para o detalhamento completo. A lista abaixo ainda pode mudar antes do release estável.
+
+### Alterado
+
+- **BREAKING:** O pacote agora é **ESM** (`"type": "module"`) e exige **Node.js 22+** (era CommonJS no Node 18+)
+- **BREAKING:** Os métodos base foram retrabalhados em torno de filtros `where`: `getAll` → `find(where?, options?)`, `getList` → `find` com filtro `in`, `saveList` → `save` (agora aceita um array), `removeList` → `deleteMany`, `total` → `count`, `softRemoveList` → `softDeleteMany`, `restore(pk)` → `recover(id)` (o `restore` agora recebe um `where`) e `restoreList` → `restoreMany`
+- **BREAKING:** `increment`, `decrement`, `multiply` e `divide` agora recebem `(field, value, where, options?)` em vez de `(pk, field, value, options?)`
+- **BREAKING:** O soft-delete agora é habilitado com o decorator de classe `@EnableSoftDelete(field?)` em vez da option `softRemoveKey` do construtor
+- **BREAKING:** `getPlaceholder()` agora é um método obrigatório do `VSRepoAdapter`, e o `vsPlaceholders` vem **ativo por padrão**, então strings SQL cruas usam `?1`, `?2`, ... a menos que `vsPlaceholders: false` seja definido
+- **BREAKING:** Os métodos `@QueryMethod` sempre recebem argumentos posicionais simples (as options `spreadArgs`/`singleArg` e os tipos `QueryArgs`/`QueryMethodArg` foram removidos); `withDb(tx)` continua sendo o último argumento opcional
+- **BREAKING:** A validação em runtime foi removida junto com a dependência `valibot` — a validação agora é apenas em nível de tipos, e os tipos `VSRepoErrorType.DECORATOR` e `VSRepoErrorType.VALIDATOR` foram removidos
+- **BREAKING:** Os logs de operação lenta foram removidos, incluindo a option `logSlowThresholdMs` — as durações só são logadas em `DEBUG`
+- **BREAKING:** `TransactionIsolationLevel` foi renomeado para `VSRepoIsolationLevel`, e `isolationLevel` também aceita os valores string do enum (ex.: `"Serializable"`)
+- **BREAKING:** O suporte a `distinct` foi removido dos métodos dinâmicos (sufixo `Distinct`) e do `VSQueryBuilder` (`distinctOn()`) — apenas o `VSRawQueryBuilder` o suporta, via `selectDistinct()`
+- **BREAKING:** Os métodos dinâmicos não suportam mais os prefixos `create*`, o sufixo `IgnoreConflicts` nem a palavra-chave `Optional` — use os novos métodos base `create`, `createMany` e `createManyReturning` (com `ignoreConflicts`)
+- **BREAKING:** `VSQueryBuilder.setDb()` e `VSRawQueryBuilder.setDb()` agora retornam o próprio builder em vez de `void`, e o `VSQueryBuilder.getCount()` envia apenas o `where` ao adapter
+- **BREAKING:** O contrato do `VSRepoAdapter` mudou (`getPlaceholder()` obrigatório, novos `incrementMany`/`decrementMany`/`multiplyMany`/`divideMany`, `order`/`pagination` repassados aos métodos de leitura, tipos de options mais rígidos) — adapters feitos para a v2 precisam ser atualizados
+- **BREAKING:** Os erros do `VSSql` agora têm `type: VSRepoErrorType.VSSQL`, e o `VSSql.compile()` usa `getVsPlaceholder` por padrão
+- Os métodos dinâmicos agora repassam `options.order` e `options.pagination` ao adapter, e `get`/`getOrThrow` aceitam `MethodOptions` e aplicam o `defaultOrdering` do repository
+- A tipagem do `VSRepoWhere` ficou mais rígida e robusta (ex.: `between` apenas em números, bigints, datas e decimais; filtros de string apenas em strings; arrays `readonly` em relações)
+- `VSRawQueryBuilder.orderBy()` aceita uma lista de tuplas `[column, direction]`, e as palavras-chave do SQL gerado ficam em minúsculas
+- `resolveDynamicMethods()` agora loga o seu `WARN` apenas uma vez, e o resolver só loga os métodos a resolver quando há pelo menos um
+
+### Adicionado
+
+- Novos métodos base: `find`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany` e `getAdapter()`
+- Operações atômicas em lote: `incrementMany`, `decrementMany`, `multiplyMany` e `divideMany`
+- Decorator `@EnableSoftDelete` e `VSRepository.setGlobalConfig()` para padrões compartilhados (`softDeleteField`, `logLevel`, `lazyDynamicMethods`, `vsPlaceholders`)
+- Métodos estáticos `VSRepository.getQueryBuilder()` e `VSRepository.getRawQueryBuilder()`
+- `VSLogLevel.NONE`, que desativa o logging por completo
+- `VSRawQueryBuilder.selectDistinct()`
+- Novos aliases de filtro nos métodos dinâmicos (prefixo `Is`, `Equal`/`NotEqual`, `Containing`, `StartingWith`, `EndingWith`, `IgnoringCase`, `Gt`/`Gte`/`Lt`/`Lte`, `After`/`Before`, `True`/`False`/`Null`/`NotNull`) e os novos filtros `Like`/`NotLike` (`like` no `VSRepoWhere`)
+- Helpers públicos de placeholder `getVsPlaceholder`, `getPostgresPlaceholder`, `getCockroachPlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder` e `getSqlitePlaceholder`, além do tipo `GetPlaceholderFn`
+- `VSRepoErrorType.VSSQL` e `VSRepoErrorType.VS_PLACEHOLDERS`
+- Novos tipos utilitários: `ClientOrTransaction`, `SimpleMethodOptions`, `VSRepoGlobalConfig` e `VSRepoLogicalOperators`
+
+### Removido
+
+- Os métodos base `getAll`, `getList`, `saveList`, `removeList`, `total`, `softRemoveList` e `restoreList` (veja as renomeações acima)
+- As options de construtor `softRemoveKey` e `logSlowThresholdMs`, as options `spreadArgs`/`singleArg` do `@QueryMethod`, e os tipos `QueryArgs`/`QueryMethodArg`
+- A dependência `valibot` e todas as validações em runtime que dependiam dela
+
+### Corrigido
+
+- As palavras-chave de relação (`With`, `Without`, `Some`, `Every`, `None`) nos métodos dinâmicos não são mais reconhecidas no começo do nome de um campo, corrigindo nomes como `findByWithDependents` e `findBySonWithWithDependents`
+- `get` e `getOrThrow` agora aplicam o `defaultOrdering` do repository
+- O `VSQueryBuilder` não loga mais o objeto `db`
+
+### Documentação
+
+- Todos os guias (inglês e português) foram atualizados para a v3, e JSDoc foi adicionado ou atualizado em toda a superfície pública da API
+- Novo guia [Migrando da v2 para a v3](./docs/migrating-from-v2-to-v3.pt-BR.md); o `migrating-from-v1.md` foi renomeado para [`migrating-from-v1-to-v2.pt-BR.md`](./docs/migrating-from-v1-to-v2.pt-BR.md)
+
 ## [2.7.3] - 2026-09-29
 
 ### Fixed
@@ -374,7 +484,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0] - 2026-09-01
 
-> Major rewrite. If you're upgrading from v1, see the [Migrating from v1](./docs/migrating-from-v1.md) guide for the full breakdown before migrating.
+> Major rewrite. If you're upgrading from v1, see the [Migrating from v1](./docs/migrating-from-v1-to-v2.md) guide for the full breakdown before migrating.
 
 ### Changed
 
@@ -415,7 +525,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0] - 2026-09-01 (Português)
 
-> Reescrita major. Se você está migrando da v1, veja o guia [Migrando da v1](./docs/migrating-from-v1.pt-BR.md) para o detalhamento completo antes de migrar.
+> Reescrita major. Se você está migrando da v1, veja o guia [Migrando da v1](./docs/migrating-from-v1-to-v2.pt-BR.md) para o detalhamento completo antes de migrar.
 
 ### Alterado
 

@@ -15,8 +15,7 @@ Antes do contrato em si, vale deixar claro **o que um adapter realmente faz**: o
 O `VSRepository` é dono de toda a abstração. Dado uma chamada como `userRepository.get("user-1", { relations: { address: true } })`, o repository:
 
 - resolve a primary key em um `VSRepoWhere<T>` (`{ id: "user-1" }`),
-- junta o filtro de soft-delete implícito por `softRemoveKey`/`see`,
-- valida as options,
+- junta o filtro de soft-delete implícito por `@EnableSoftDelete`/`see`,
 - loga a operação e mede o tempo,
 - e então chama **exatamente um** método no seu adapter, com o `where` e as options já resolvidos.
 
@@ -34,27 +33,27 @@ Os tipos que você vai encontrar pelo contrato estão todos documentados em [Tip
 
 ## O contrato `VSRepoAdapter`
 
-O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos abaixo são `abstract`, exceto os dois opcionais no final. Esta é a visão geral — as assinaturas exatas e o JSDoc de cada método ficam em [`src/VSRepoAdapter.ts`](https://github.com/jaobrabo123/VSRepository/blob/main/src/VSRepoAdapter.ts), que é a fonte de verdade do contrato:
+O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos abaixo são `abstract`, exceto o `getPkName()` opcional no final. Esta é a visão geral — as assinaturas exatas e o JSDoc de cada método ficam em [`src/VSRepoAdapter.ts`](https://github.com/jaobrabo123/VSRepository/blob/main/src/VSRepoAdapter.ts), que é a fonte de verdade do contrato:
 
-| Grupo                      | Métodos                                                                                      | Papel                                                                                                                            |
-| -------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Infraestrutura             | `runInTransaction`, `getDbClient`, `query`                                                   | Transação nativa do ORM, acesso ao client do ORM e execução de SQL raw (usado por `query()`/`@QueryMethod`).                     |
-| Leitura                    | `findOne`, `findOneOrThrow`, `findMany`, `count`, `exists`                                   | Recebem um `VSRepoWhere<T>` e `AdapterMethodOptions<T>` já resolvidos. `findMany` também aceita `distinct`.                      |
-| Escrita                    | `save`, `saveMany`, `create`, `createMany`, `createManyReturning`, `upsert`, `merge`         | Criação, upsert e merge em memória. `createMany`/`createManyReturning` aceitam `ignoreConflicts`; `merge` **não** persiste nada. |
-| Atualização e remoção      | `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning` | Versões que retornam a entidade, uma lista ou só `{ count }` (`CountResult`).                                                    |
-| Atômicos                   | `incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`                                   | Update aritmético avaliado no servidor contra o valor atual da linha, restrito a `NumericKeys<T>`.                               |
-| Agregações                 | `sum`, `average`, `min`, `max`                                                               | Retornam `number \| null` — `null` quando nenhum registro bate no filtro.                                                        |
-| Opcionais (não `abstract`) | `getPkName?()`, `getPlaceholder?(index)`                                                     | Veja abaixo.                                                                                                                     |
+| Grupo                     | Métodos                                                                                      | Papel                                                                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Infraestrutura            | `runInTransaction`, `getDbClient`, `query`, `getPlaceholder`                                 | Transação nativa do ORM, acesso ao client do ORM, execução de SQL raw (usado por `query()`/`@QueryMethod`) e a sintaxe de placeholder.                  |
+| Leitura                   | `findOne`, `findOneOrThrow`, `findMany`, `count`, `exists`                                   | Recebem um `VSRepoWhere<T>` e `AdapterMethodOptions<T>` já resolvidos. Os métodos `find*` também recebem `order` e `pagination`.                        |
+| Escrita                   | `save`, `saveMany`, `create`, `createMany`, `createManyReturning`, `upsert`, `merge`         | Criação, upsert e merge em memória. `createMany`/`createManyReturning` aceitam `ignoreConflicts`; `merge` **não** persiste nada.                        |
+| Atualização e remoção     | `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning` | Versões que retornam a entidade, uma lista ou só `{ count }` (`CountResult`).                                                                           |
+| Atômicos                  | `incrementOne`/`decrementOne`/`multiplyOne`/`divideOne` e suas variantes `*Many`             | Update aritmético avaliado no servidor contra o valor atual da linha, restrito a `NumericKeys<T>`. `*One` retorna a entidade, `*Many` um `CountResult`. |
+| Agregações                | `sum`, `average`, `min`, `max`                                                               | Retornam `number \| null` — `null` quando nenhum registro bate no filtro.                                                                               |
+| Opcional (não `abstract`) | `getPkName?()`                                                                               | Veja abaixo.                                                                                                                                            |
 
 O `getPkName()` opcional permite que o adapter declare ao repository qual campo é a primary key da entidade. Ao instanciar um `VSRepository`, você pode omitir o `pkName` das options do construtor e ele será lido do `adapter.getPkName()`. Se você omitir e o adapter não implementar o `getPkName()`, o construtor lança um `VSRepoError`.
 
-O `getPlaceholder?(index)` opcional declara a sintaxe de placeholder que seu banco/driver espera para o N-ésimo (base 0) parâmetro ligado numa query raw — ex.: PostgreSQL retorna `` `$${index + 1}` `` (`$1`, `$2`, ...), enquanto SQLite/MySQL ignoram `index` e sempre retornam `"?"`. Implementá-lo é o que libera os recursos de query parametrizada: `query()` passa a aceitar um fragmento `VSSql`, e `vsPlaceholders: true` compila os placeholders `?1`, `?2`, ... do próprio VSRepository — ambos através do `getPlaceholder()`. Sem ele, passar um fragmento `VSSql` ou ligar `vsPlaceholders` lança um `VSRepoError`. Veja [Query methods](./query-methods.pt-BR.md#fragmentos-parametrizados-com-vssql).
+O `getPlaceholder(index)` é **obrigatório**: ele declara a sintaxe de placeholder que seu banco/driver espera para o N-ésimo (base 0) parâmetro ligado numa query raw — ex.: PostgreSQL retorna `` `$${index + 1}` `` (`$1`, `$2`, ...), enquanto SQLite/MySQL ignoram `index` e sempre retornam `"?"`. É ele que faz as funcionalidades de query parametrizada funcionarem: fragmentos `VSSql`, os placeholders próprios do VSRepository (`?1`, `?2`, ... — `vsPlaceholders`, ligado por padrão) e o raw query builder compilam através dele. O core exporta implementações prontas — `getPostgresPlaceholder`, `getSqlitePlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder`, `getCockroachPlaceholder` e `getVsPlaceholder`. Veja [Query methods](./query-methods.pt-BR.md#fragmentos-parametrizados-com-vssql).
 
 O `VSRepository` nunca fala diretamente com o ORM — ele só chama esses métodos com um `VSRepoWhere<T>` e um `AdapterMethodOptions<T>` já resolvidos. Uma vez que um adapter implemente esse contrato, todo método base, método dinâmico e query method passa a funcionar com ele automaticamente — mas chegar a uma implementação correta e completa exige traduzir com cuidado o comportamento de cada método para o ORM.
 
 Duas regras cobrem os corpos dos métodos:
 
-- **Não reconstrua o filtro — mas traduza.** O `where` já está resolvido, validado e já carrega o filtro de soft-delete. Traduzir a _forma_ dele para o vocabulário do seu ORM é seu trabalho, e é o assunto da próxima seção.
+- **Não reconstrua o filtro — mas traduza.** o `where` já está resolvido e já carrega o filtro de soft-delete. Traduzir a _forma_ dele para o vocabulário do seu ORM é seu trabalho, e é o assunto da próxima seção.
 - **Encapsule todo erro do ORM — nunca deixe ele escapar cru.** Qualquer erro lançado pelo ORM/driver precisa ser capturado e relançado como um `VSRepoAdapterError`, com o erro bruto mantido em `originalError` e a falha classificada por um `AdapterErrorCode` (veja [`VSRepoAdapterError` e `AdapterErrorCode`](./error-handling.pt-BR.md#vsrepoadaptererror-e-adaptererrorcode)). Engoli-lo, ou deixar a classe de erro do próprio ORM chegar a quem chama, quebra a garantia de que quem chama nunca depende do formato de erro de um ORM específico:
 
     ```typescript
@@ -99,7 +98,7 @@ Mesma entrada, duas saídas diferentes, e nenhuma das duas é pass-through: `bet
 
 ## Logging a partir do seu adapter
 
-O `vsrepo` exporta a mesma classe `VSLogger` usada internamente pelo core, então seu adapter pode logar no mesmo formato/estilo (timestamps, labels de nível coloridos, avisos de operação lenta) em vez de implementar o seu próprio:
+O `vsrepo` exporta a mesma classe `VSLogger` usada internamente pelo core, então seu adapter pode logar no mesmo formato/estilo (timestamps, labels de nível coloridos) em vez de implementar o seu próprio:
 
 ```typescript
 import { VSLogger, VSLogLevel, VSRepoAdapterError, AdapterErrorCode } from "vsrepo";
@@ -124,13 +123,13 @@ export class MyOrmAdapter<T> extends VSRepoAdapter<T> {
 
 O logger apenas observa a falha; o `VSRepoAdapterError` é o que quem chama realmente recebe, que é o encapsulamento que a regra acima exige.
 
-| Método                                               | Descrição                                                                                                                                                                                                                                                  |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `new VSLogger(logLevel, name, slowThresholdMs?)`     | Cria um logger; `name` prefixa cada linha. `slowThresholdMs` controla o threshold de operação lenta: um `number` define o valor em ms (padrão 300), `false` desabilita os avisos de operação lenta completamente, `true` ou omitido usa o padrão de 300ms. |
-| `logDebug/logInfo/logWarn(text, obj?)`               | Loga no nível dado se `logLevel` permitir; `obj` é anexado como JSON formatado.                                                                                                                                                                            |
-| `logError(text, err?)`                               | Loga em `ERROR`; se `err` for uma `Error`, só `name`/`message`/`stack`/`cause` são logados.                                                                                                                                                                |
-| `startPerformLog(operation)` / `endPerformLog(data)` | Envolve um trecho de código para logar sua duração, escalando pra `WARN` se ultrapassar `slowThresholdMs`.                                                                                                                                                 |
-| `getLogLevel()`                                      | Retorna o `VSLogLevel` configurado do logger.                                                                                                                                                                                                              |
+| Método                                               | Descrição                                                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `new VSLogger(logLevel, name)`                       | Cria um logger; `name` prefixa cada linha.                                                  |
+| `logDebug/logInfo/logWarn(text, obj?)`               | Loga no nível dado se `logLevel` permitir; `obj` é anexado como JSON formatado.             |
+| `logError(text, err?)`                               | Loga em `ERROR`; se `err` for uma `Error`, só `name`/`message`/`stack`/`cause` são logados. |
+| `startPerformLog(operation)` / `endPerformLog(data)` | Envolve um trecho de código para logar sua duração em nível `DEBUG`.                        |
+| `getLogLevel()`                                      | Retorna o `VSLogLevel` configurado do logger.                                               |
 
 Isso é puramente uma conveniência para autores de adapters — nada no core exige que seu adapter o utilize.
 
@@ -153,16 +152,15 @@ Um adapter oficial é publicado sob o escopo `@vsrepo` no npm, que o projeto con
 
 É o mesmo pipeline que o core usa — veja [`.github/workflows/publish.yml`](https://github.com/jaobrabo123/VSRepository/blob/main/.github/workflows/publish.yml). O acesso é concedido uma vez que o checklist abaixo passa.
 
-| Requisito              | O que significa                                                                                                                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Contrato completo      | Todos os métodos abstratos de `VSRepoAdapter`, incluindo as 8 operações atômicas/de agregação (`incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max`). |
-| Testes de contrato     | Um client falso mais uma suíte que verifica _quais_ métodos do adapter o repository chama e _com quais argumentos_.                                                                         |
-| Testes de integração   | **Testes contra um banco real**, exercitando o SQL que o seu adapter realmente gera.                                                                                                        |
-| `getPlaceholder()`     | Implementado, senão `query()`, fragmentos `VSSql` e `vsPlaceholders` não funcionam.                                                                                                         |
-| Peer dependencies      | O ORM e o core `vsrepo` declarados como `peerDependencies`.                                                                                                                                 |
-| Repositório próprio    | No seu próprio repositório, versionado e released de forma independente do core.                                                                                                            |
-| Dist-tag de maturidade | `latest` quando o adapter estiver pronto para produção; `alpha`/`beta` enquanto não estiver. Nunca publique trabalho em andamento como `latest`.                                            |
-| Registro               | Um PR adicionando uma linha na tabela oficial em [Status dos adapters](./adapters.pt-BR.md#status-dos-adapters).                                                                            |
+| Requisito              | O que significa                                                                                                                                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contrato completo      | Todos os métodos abstratos de `VSRepoAdapter`, incluindo as operações atômicas (`incrementOne`, `decrementOne`, `multiplyOne`, `divideOne` e suas variantes `*Many`) e as agregações (`sum`, `average`, `min`, `max`). |
+| Testes de contrato     | Um client falso mais uma suíte que verifica _quais_ métodos do adapter o repository chama e _com quais argumentos_.                                                                                                    |
+| Testes de integração   | **Testes contra um banco real**, exercitando o SQL que o seu adapter realmente gera.                                                                                                                                   |
+| Peer dependencies      | O ORM e o core `vsrepo` declarados como `peerDependencies`.                                                                                                                                                            |
+| Repositório próprio    | No seu próprio repositório, versionado e released de forma independente do core.                                                                                                                                       |
+| Dist-tag de maturidade | `latest` quando o adapter estiver pronto para produção; `alpha`/`beta` enquanto não estiver. Nunca publique trabalho em andamento como `latest`.                                                                       |
+| Registro               | Um PR adicionando uma linha na tabela oficial em [Status dos adapters](./adapters.pt-BR.md#status-dos-adapters).                                                                                                       |
 
 Para solicitar, abra uma issue com o link do seu repositório e uma nota curta sobre quais versões de ORM você suporta.
 

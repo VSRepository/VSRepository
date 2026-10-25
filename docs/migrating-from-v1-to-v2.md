@@ -1,14 +1,18 @@
 <a id="top"></a>
 
-🇺🇸 English | [🇧🇷 Português](./migrating-from-v1.pt-BR.md)
+🇺🇸 English | [🇧🇷 Português](./migrating-from-v1-to-v2.pt-BR.md)
 
 [← Back to the table of contents](./README.md)
 
-# Migrating from v1
+# Migrating from v1 to v2
 
-v1 was the original, **Prisma-only** release of VSRepository. v2 — the current version — is a rewrite that made the core **ORM-agnostic**: instead of talking to Prisma directly, every operation is delegated to a pluggable `VSRepoAdapter`, so the same repository API works against Prisma, Drizzle, or any other ORM/database that implements the adapter contract.
+v1 was the original, **Prisma-only** release of VSRepository. v2 is a rewrite that made the core **ORM-agnostic**: instead of talking to Prisma directly, every operation is delegated to a pluggable `VSRepoAdapter`, so the same repository API works against Prisma, Drizzle, or any other ORM/database that implements the adapter contract.
 
 The v1 source code and documentation live on the dedicated [`v1` branch](https://github.com/jaobrabo123/VSRepository/tree/v1), for anyone who still needs the previous Prisma-only release.
+
+> [!NOTE]
+>
+> This guide covers the v1 → v2 jump. v3 changed more of the API (base methods, soft-delete, dynamic-method suffixes, query-method arguments, ...), so after migrating to v2 continue with [Migrating from v2 to v3](./migrating-from-v2-to-v3.md) — or, if you're going straight to v3, read both. Names this page shows for v2 (`softRemoveKey`, `IgnoreConflicts`, `spreadArgs`, `Distinct`, `logSlowThresholdMs`, ...) were changed again in v3.
 
 This page is the single reference for what changed between v1 and v2. If you're migrating an existing v1 repository, the [quick walkthrough](#migrating-a-v1-repository-to-v2) below summarizes the steps; the [full comparison table](#v1-vs-v2-comparison) covers every area in detail.
 
@@ -40,10 +44,10 @@ This page is the single reference for what changed between v1 and v2. If you're 
 
 Two suffix names changed between v1 and v2 — the feature is identical, only the name differs:
 
-| v1               | v2                | Where it's used                                                                                                                      |
-| ---------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `Insensitive`    | `IgnoreCase`      | Case-insensitive combinator for text filters in [dynamic methods](./dynamic-methods.md#field-filters)                                |
-| `SkipDuplicates` | `IgnoreConflicts` | Duplicate handling on `createMany`/`createManyReturning` in [dynamic methods](./dynamic-methods.md#ordering-pagination-and-distinct) |
+| v1               | v2                | Where it's used                                                                                                             |
+| ---------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `Insensitive`    | `IgnoreCase`      | Case-insensitive combinator for text filters in [dynamic methods](./dynamic-methods.md#field-filters)                       |
+| `SkipDuplicates` | `IgnoreConflicts` | Duplicate handling on `createMany`/`createManyReturning` in [dynamic methods](./dynamic-methods.md#ordering-and-pagination) |
 
 ## Renamed dynamic-method prefixes
 
