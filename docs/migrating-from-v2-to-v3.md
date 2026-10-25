@@ -16,12 +16,12 @@ If you're coming from v1, read [Migrating from v1 to v2](./migrating-from-v1-to-
 
 ## Requirements and packaging
 
-| Area                | v2                                                         | v3                                                                                                                                                                         |
-| ------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js             | 18+                                                        | **22+**                                                                                                                                                                    |
-| Module format       | CommonJS package                                           | **ESM package** (`"type": "module"`). |
-| Runtime validation  | `valibot` validates options, arguments and `where` objects | **Removed** — validation is type-level only, and `valibot` is no longer a dependency. The `DECORATOR` and `VALIDATOR` error types went away with it.                       |
-| Slow-operation logs | `logSlowThresholdMs` and `WARN` slow-operation lines       | **Removed** — durations are only logged at `DEBUG`.                                                                                                                        |
+| Area                | v2                                                         | v3                                                                                                                                                   |
+| ------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js             | 18+                                                        | **22+**                                                                                                                                              |
+| Module format       | CommonJS package                                           | **ESM package** (`"type": "module"`).                                                                                                                |
+| Runtime validation  | `valibot` validates options, arguments and `where` objects | **Removed** — validation is type-level only, and `valibot` is no longer a dependency. The `DECORATOR` and `VALIDATOR` error types went away with it. |
+| Slow-operation logs | `logSlowThresholdMs` and `WARN` slow-operation lines       | **Removed** — durations are only logged at `DEBUG`.                                                                                                  |
 
 ## Base methods
 

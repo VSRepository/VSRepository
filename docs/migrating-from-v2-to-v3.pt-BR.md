@@ -16,12 +16,12 @@ Se você vem da v1, leia antes [Migrando da v1 para a v2](./migrating-from-v1-to
 
 ## Requisitos e empacotamento
 
-| Área                   | v2                                                       | v3                                                                                                                                                                               |
-| ---------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js                | 18+                                                      | **22+**                                                                                                                                                                          |
-| Formato de módulo      | Pacote CommonJS                                          | **Pacote ESM** (`"type": "module"`).. |
-| Validação em runtime   | `valibot` validava options, argumentos e objetos `where` | **Removida** — a validação agora é apenas em nível de tipos, e o `valibot` deixou de ser dependência. Os tipos de erro `DECORATOR` e `VALIDATOR` saíram junto.                   |
-| Logs de operação lenta | `logSlowThresholdMs` e linhas `WARN` de operação lenta   | **Removidos** — as durações só são logadas em `DEBUG`.                                                                                                                           |
+| Área                   | v2                                                       | v3                                                                                                                                                             |
+| ---------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js                | 18+                                                      | **22+**                                                                                                                                                        |
+| Formato de módulo      | Pacote CommonJS                                          | **Pacote ESM** (`"type": "module"`)..                                                                                                                          |
+| Validação em runtime   | `valibot` validava options, argumentos e objetos `where` | **Removida** — a validação agora é apenas em nível de tipos, e o `valibot` deixou de ser dependência. Os tipos de erro `DECORATOR` e `VALIDATOR` saíram junto. |
+| Logs de operação lenta | `logSlowThresholdMs` e linhas `WARN` de operação lenta   | **Removidos** — as durações só são logadas em `DEBUG`.                                                                                                         |
 
 ## Métodos base
 
