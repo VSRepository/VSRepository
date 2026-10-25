@@ -75,6 +75,7 @@ export type { SimpleMethodOptions } from "./types/utils/simple-methods-options.t
 export type { SimpleAdapterMethodOptions } from "./types/adapter/simple-adapter-method-options.type.js";
 export type { RestrictAdapterMethodOptions } from "./types/adapter/restrict-adapter-method-options.type.js";
 export type { CompiledQuery } from "./types/utils/compiled-query.type.js";
+export type { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";
