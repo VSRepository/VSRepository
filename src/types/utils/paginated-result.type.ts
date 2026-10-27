@@ -1,5 +1,6 @@
 /**
- * Result of `VSQueryBuilder.getResultAndCount()`.
+ * Result of `VSRepository.findAndCount()`, of the `findAndCountBy…`/`findAndCountWhere…` dynamic methods
+ * and of `VSQueryBuilder.getResultAndCount()`.
  *
  * @publicApi
  */

@@ -49,16 +49,17 @@ Available automatically on every `VSRepository` subclass. `where` is a [`VSRepoW
 
 **Reading**
 
-| Method                             | Description                                                                                                    |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `find(where?, options?)`           | Returns every record matching `where` (all records if omitted); accepts `pagination` and `order` in `options`. |
-| `findOne(where?, options?)`        | Returns the first record matching `where`, or `null`.                                                          |
-| `findOneOrThrow(where?, options?)` | Same as `findOne`, but throws if nothing matches.                                                              |
-| `get(id, options?)`                | Fetches a record by primary key, or `null`.                                                                    |
-| `getOrThrow(id, options?)`         | Fetches a record by primary key, throwing if not found.                                                        |
-| `count(where?, options?)`          | Counts the records matching `where` (all records if omitted).                                                  |
-| `exists(where?, options?)`         | Checks whether at least one record matches `where`, returning `boolean`.                                       |
-| `has(id, options?)`                | Checks whether a record with the given primary key exists, returning `boolean`.                                |
+| Method                             | Description                                                                                                                               |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `find(where?, options?)`           | Returns every record matching `where` (all records if omitted); accepts `pagination` and `order` in `options`.                            |
+| `findAndCount(where?, options?)`   | Same as `find`, but also returns the total of matching records — see [Finding records and their total](#finding-records-and-their-total). |
+| `findOne(where?, options?)`        | Returns the first record matching `where`, or `null`.                                                                                     |
+| `findOneOrThrow(where?, options?)` | Same as `findOne`, but throws if nothing matches.                                                                                         |
+| `get(id, options?)`                | Fetches a record by primary key, or `null`.                                                                                               |
+| `getOrThrow(id, options?)`         | Fetches a record by primary key, throwing if not found.                                                                                   |
+| `count(where?, options?)`          | Counts the records matching `where` (all records if omitted).                                                                             |
+| `exists(where?, options?)`         | Checks whether at least one record matches `where`, returning `boolean`.                                                                  |
+| `has(id, options?)`                | Checks whether a record with the given primary key exists, returning `boolean`.                                                           |
 
 **Writing**
 
@@ -119,13 +120,34 @@ await userRepository.update({ email: "maria@email.com" }, { active: false });
 await userRepository.deleteMany({ active: false });
 ```
 
+### Finding records and their total
+
+`findAndCount(where?, options?)` fetches the records matching `where` **and** the total number of matching records in a single call — the usual building block of a paginated listing. It resolves to a [`PaginatedResult`](./utility-types.md): `{ result: Entity[]; count: number }`.
+
+- `result` honors `order`, `pagination` and the repository's `defaultOrdering` (just like `find`).
+- `count` ignores `order` and `pagination` on purpose: it's the total of records matching `where`, so you can compute the number of pages.
+- Both queries use the same resolved `where` (including the soft-delete/`see` filter) and the same `db`, and run one after the other.
+
+```typescript
+const pageSize = 20;
+
+const { result, count } = await userRepository.findAndCount(
+    { active: true },
+    { order: { createdAt: "desc" }, pagination: { limit: pageSize, offset: 40 } },
+);
+
+const totalPages = Math.ceil(count / pageSize);
+```
+
+The same operation is available as a [dynamic method](./dynamic-methods.md#available-prefixes) (`findAndCountBy`, `findAndCountWhere`) and, for queries assembled at runtime, as [`getResultAndCount()`](./query-builder.md#pagination-with-getresultandcount) on the query builder.
+
 ### Method options
 
 Most methods accept an options object as their last argument, with a shape that depends on the method:
 
 | Type                                      | Fields                                                    | Used by                                                                                                                                                                                                           |
 | ----------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order` | `find`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — the read methods, which also apply `defaultOrdering` unless `order` is passed.                                                                         |
+| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order` | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — the read methods, which also apply `defaultOrdering` unless `order` is passed.                                                         |
 | `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                        | Single-record methods that return an `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `merge`, `delete`, `remove`, `increment`, ..., the `*Returning` methods and the soft-delete single-record methods. |
 | `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                               | Methods that don't return a shaped `Entity` — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, the `*Many` numeric methods and the soft-delete batch methods.  |
 

@@ -42,35 +42,37 @@ class UserRepository extends VSRepository<User, string> {
 
 ## Available prefixes
 
-| Prefix                     | Returns          | Notes                                                                               |
-| -------------------------- | ---------------- | ----------------------------------------------------------------------------------- |
-| `findBy`                   | `Entity[]`       | Field filters follow the prefix.                                                    |
-| `findOneBy`                | `Entity \| null` | Field filters follow the prefix; single result.                                     |
-| `findOneOrThrowBy`         | `Entity`         | Throws if no record is found.                                                       |
-| `findOneOrThrow`           | `Entity`         | No field filters; applies only soft-delete/`see`.                                   |
-| `findOneOrThrowWhere`      | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findWhere`                | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findOneWhere`             | `Entity \| null` | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findOne`                  | `Entity \| null` | No field filters; applies only soft-delete/`see`.                                   |
-| `countBy`                  | `number`         | Field filters follow the prefix.                                                    |
-| `countWhere`               | `number`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `count`                    | `number`         | No field filters.                                                                   |
-| `existsBy`                 | `boolean`        | Field filters follow the prefix.                                                    |
-| `existsWhere`              | `boolean`        | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `updateBy`                 | `Entity`         | Field filters + `DeepPartial<Entity>` as argument.                                  |
-| `updateWhere`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
-| `updateManyBy`             | `CountResult`    | Field filters + `DeepPartial<Entity>`.                                              |
-| `updateManyWhere`          | `CountResult`    | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
-| `updateManyReturningBy`    | `Entity[]`       | Field filters + `DeepPartial<Entity>`.                                              |
-| `updateManyReturningWhere` | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
-| `upsertBy`                 | `Entity`         | Field filters + `create`/`update` payloads.                                         |
-| `upsertWhere`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument, then `create`/`update` payloads. |
-| `deleteBy`                 | `Entity`         | Field filters follow the prefix.                                                    |
-| `deleteWhere`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `deleteManyBy`             | `CountResult`    | Field filters follow the prefix.                                                    |
-| `deleteManyWhere`          | `CountResult`    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `deleteManyReturningBy`    | `Entity[]`       | Field filters follow the prefix.                                                    |
-| `deleteManyReturningWhere` | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| Prefix                     | Returns                     | Notes                                                                               |
+| -------------------------- | --------------------------- | ----------------------------------------------------------------------------------- |
+| `findBy`                   | `Entity[]`                  | Field filters follow the prefix.                                                    |
+| `findOneBy`                | `Entity \| null`            | Field filters follow the prefix; single result.                                     |
+| `findAndCountBy`           | `PaginatedResult<Entity[]>` | Field filters follow the prefix; resolves to `{ result, count }`.                   |
+| `findAndCountWhere`        | `PaginatedResult<Entity[]>` | Receives a `VSRepoWhere<T>` as the first argument; resolves to `{ result, count }`. |
+| `findOneOrThrowBy`         | `Entity`                    | Throws if no record is found.                                                       |
+| `findOneOrThrow`           | `Entity`                    | No field filters; applies only soft-delete/`see`.                                   |
+| `findOneOrThrowWhere`      | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findWhere`                | `Entity[]`                  | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findOneWhere`             | `Entity \| null`            | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findOne`                  | `Entity \| null`            | No field filters; applies only soft-delete/`see`.                                   |
+| `countBy`                  | `number`                    | Field filters follow the prefix.                                                    |
+| `countWhere`               | `number`                    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `count`                    | `number`                    | No field filters.                                                                   |
+| `existsBy`                 | `boolean`                   | Field filters follow the prefix.                                                    |
+| `existsWhere`              | `boolean`                   | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `updateBy`                 | `Entity`                    | Field filters + `DeepPartial<Entity>` as argument.                                  |
+| `updateWhere`              | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `updateManyBy`             | `CountResult`               | Field filters + `DeepPartial<Entity>`.                                              |
+| `updateManyWhere`          | `CountResult`               | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `updateManyReturningBy`    | `Entity[]`                  | Field filters + `DeepPartial<Entity>`.                                              |
+| `updateManyReturningWhere` | `Entity[]`                  | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `upsertBy`                 | `Entity`                    | Field filters + `create`/`update` payloads.                                         |
+| `upsertWhere`              | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument, then `create`/`update` payloads. |
+| `deleteBy`                 | `Entity`                    | Field filters follow the prefix.                                                    |
+| `deleteWhere`              | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `deleteManyBy`             | `CountResult`               | Field filters follow the prefix.                                                    |
+| `deleteManyWhere`          | `CountResult`               | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `deleteManyReturningBy`    | `Entity[]`                  | Field filters follow the prefix.                                                    |
+| `deleteManyReturningWhere` | `Entity[]`                  | Receives a `VSRepoWhere<T>` as the first argument.                                  |
 
 > `groupBy` is **not planned** — it doesn't map cleanly onto the ORM-agnostic contract. `aggregate` as a separate prefix is also unlikely to be implemented: the most common aggregate operations (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) are already available as dedicated base methods — see [Atomic and aggregate methods](./base-methods.md#atomic-and-aggregate-methods). For anything more complex — including `groupBy` — use a `@QueryMethod` with raw SQL or the [raw query builder](./raw-query-builder.md#raw-query-builder) (`createRawQueryBuilder()`), which exposes `groupBy`/`having` directly.
 
@@ -166,7 +168,7 @@ These keywords are only recognized **after** the relation name, never at the ver
 
 ## Ordering and pagination
 
-Available on the `find…` family — `findBy`, `findWhere`, `findOneBy`, `findOneWhere`, `findOne`, `findOneOrThrowBy`, `findOneOrThrowWhere` and `findOneOrThrow`:
+Available on the `find…` family — `findBy`, `findWhere`, `findAndCountBy`, `findAndCountWhere`, `findOneBy`, `findOneWhere`, `findOne`, `findOneOrThrowBy`, `findOneOrThrowWhere` and `findOneOrThrow`:
 
 | Suffix                                     | Effect                                                                                                                                                                                                                   |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -196,6 +198,24 @@ declare findByNameContainsIgnoreCaseOrderedAndPaginated:
 // findOne with no filter (equivalent to findOneOrThrow with no filter, but returns null instead of throwing)
 @DynamicMethod()
 declare findOne: (options?: MethodOptions<User>) => Promise<User | null>;
+```
+
+### `findAndCount…` and the total
+
+`findAndCountBy` and `findAndCountWhere` are the dynamic counterparts of the [`findAndCount`](./base-methods.md#finding-records-and-their-total) base method: they run a `findMany` and a `count` with the same resolved `where` and resolve to a [`PaginatedResult`](./utility-types.md) — `{ result: Entity[]; count: number }`. `order` and `pagination` (through the suffixes above or through `options`) only affect `result`; `count` is the total of records matching the filter.
+
+```typescript
+@DynamicMethod()
+declare findAndCountByActivePaginated: (
+    active: boolean,
+    pagination: Pagination,
+    options?: MethodOptions<User>,
+) => Promise<PaginatedResult<User[]>>;
+
+@DynamicMethod()
+declare findAndCountWhere: (where: VSRepoWhere<User>, options?: MethodOptions<User>) => Promise<PaginatedResult<User[]>>;
+
+const { result, count } = await userRepository.findAndCountByActivePaginated(true, { limit: 20, offset: 0 });
 ```
 
 ### `order` and `pagination` through `options`

@@ -40,7 +40,7 @@ The base methods were reworked around `where` filters instead of primary-key lis
 | `increment(pk, field, value, options?)` (and `decrement`, `multiply`, `divide`)                              | `increment(field, value, where, options?)` — selected by a `where`, plus `incrementMany`/`decrementMany`/`multiplyMany`/`divideMany` |
 | `get`, `getOrThrow`, `save`, `remove`, `patch`, `merge`, `has`, `softRemove`, `sum`, `average`, `min`, `max` | Still there, same names (`get`/`getOrThrow` also accept `order`/`pagination` now)                                                    |
 
-New base methods: `find`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany`, plus the static `VSRepository.setGlobalConfig()`, `getQueryBuilder()` and `getRawQueryBuilder()`, and the instance `getAdapter()`. See [Base methods](./base-methods.md).
+New base methods: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany`, plus the static `VSRepository.setGlobalConfig()`, `getQueryBuilder()` and `getRawQueryBuilder()`, and the instance `getAdapter()`. See [Base methods](./base-methods.md).
 
 The options types were also refined: `MethodOptions` gained `pagination` and `order`, and the new `SimpleMethodOptions` (no `pagination`/`order`) is what single-record methods accept — see [Method options](./base-methods.md#method-options).
 
@@ -74,6 +74,7 @@ Use `@EnableSoftDelete()` with no argument plus `VSRepository.setGlobalConfig({ 
 - **`Distinct<Fields>` suffix removed**, together with `distinct` on the query builder — there's no distinct support in the core anymore; use [`selectDistinct()`](./raw-query-builder.md#building-the-query) on the raw query builder.
 - **`Optional` keyword removed.**
 - **`order`/`pagination` through `options`** — dynamic methods now forward `options.order` and `options.pagination` to the adapter, so a plain `findByActive(active, options?)` can be ordered and paginated per call. See [Ordering and pagination](./dynamic-methods.md#ordering-and-pagination).
+- **`findAndCountBy`/`findAndCountWhere` added** — dynamic counterparts of the new `findAndCount` base method; they resolve to a `PaginatedResult` (`{ result, count }`). See [`findAndCount…` and the total](./dynamic-methods.md#findandcount-and-the-total).
 - **New filter aliases** — `Is` prefix (`IsBetween`, `IsIn`, `IsNull`, ...), `Equal`/`NotEqual`, `Containing`, `StartingWith`, `EndingWith`, `IgnoringCase`, `Gt`/`Gte`/`Lt`/`Lte`, `After`/`Before`, `True`/`False`/`Null`/`NotNull`, and the new `Like`/`NotLike` filters (`like` in `VSRepoWhere`). See [Field filters](./dynamic-methods.md#field-filters).
 - **Relation keywords** (`With`, `Without`, `Some`, `Every`, `None`) are no longer recognized at the very start of a field name, so `findByWithDependents` resolves to the field `withDependents`.
 

@@ -40,7 +40,7 @@ Os métodos base foram retrabalhados em torno de filtros `where` em vez de lista
 | `increment(pk, field, value, options?)` (e `decrement`, `multiply`, `divide`)                                | `increment(field, value, where, options?)` — selecionado por um `where`, mais `incrementMany`/`decrementMany`/`multiplyMany`/`divideMany` |
 | `get`, `getOrThrow`, `save`, `remove`, `patch`, `merge`, `has`, `softRemove`, `sum`, `average`, `min`, `max` | Continuam existindo, com os mesmos nomes (`get`/`getOrThrow` agora também aceitam `order`/`pagination`)                                   |
 
-Métodos base novos: `find`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany`, além dos estáticos `VSRepository.setGlobalConfig()`, `getQueryBuilder()` e `getRawQueryBuilder()`, e do `getAdapter()` de instância. Veja [Métodos base](./base-methods.pt-BR.md).
+Métodos base novos: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany`, além dos estáticos `VSRepository.setGlobalConfig()`, `getQueryBuilder()` e `getRawQueryBuilder()`, e do `getAdapter()` de instância. Veja [Métodos base](./base-methods.pt-BR.md).
 
 Os tipos de options também foram refinados: o `MethodOptions` ganhou `pagination` e `order`, e o novo `SimpleMethodOptions` (sem `pagination`/`order`) é o que os métodos de um único registro aceitam — veja [Options dos métodos](./base-methods.pt-BR.md#options-dos-métodos).
 
@@ -74,6 +74,7 @@ Use `@EnableSoftDelete()` sem argumento junto com `VSRepository.setGlobalConfig(
 - **Sufixo `Distinct<Campos>` removido**, junto com o `distinct` do query builder — o core não tem mais suporte a distinct; use o [`selectDistinct()`](./raw-query-builder.pt-BR.md) do raw query builder.
 - **Palavra-chave `Optional` removida.**
 - **`order`/`pagination` via `options`** — os métodos dinâmicos agora repassam `options.order` e `options.pagination` ao adapter, então um simples `findByActive(active, options?)` pode ser ordenado e paginado a cada chamada. Veja [Ordenação e paginação](./dynamic-methods.pt-BR.md#ordenação-e-paginação).
+- **`findAndCountBy`/`findAndCountWhere` adicionados** — versões dinâmicas do novo método base `findAndCount`; resolvem para um `PaginatedResult` (`{ result, count }`). Veja [`findAndCount…` e o total](./dynamic-methods.pt-BR.md#findandcount-e-o-total).
 - **Novos aliases de filtro** — prefixo `Is` (`IsBetween`, `IsIn`, `IsNull`, ...), `Equal`/`NotEqual`, `Containing`, `StartingWith`, `EndingWith`, `IgnoringCase`, `Gt`/`Gte`/`Lt`/`Lte`, `After`/`Before`, `True`/`False`/`Null`/`NotNull`, e os novos filtros `Like`/`NotLike` (`like` no `VSRepoWhere`). Veja [Filtros de campo](./dynamic-methods.pt-BR.md#filtros-de-campo).
 - **Palavras-chave de relação** (`With`, `Without`, `Some`, `Every`, `None`) não são mais reconhecidas bem no começo do nome de um campo, então `findByWithDependents` resolve para o campo `withDependents`.
 

@@ -20,7 +20,7 @@ Beyond the entity-shaping types covered above (`VSRepoSelect`, `VSRepoRelations`
 | `SeeMode`                                           | `"active" \| "removed" \| "all"` — controls visibility of soft-deleted records.                                                                                                                                                                                                   | [Soft-delete](./base-methods.md#soft-delete).                                                                                                                                                       |
 | `DeepPartial<T>`                                    | Recursively makes every property of `T` optional, including nested objects and array elements.                                                                                                                                                                                    | `save`, `create`, `update`, `patch`, `merge`, `upsert`, and the dynamic writing methods.                                                                                                            |
 | `CountResult`                                       | `{ count: number }` — the shape returned by batch operations.                                                                                                                                                                                                                     | `createMany`, `updateMany`, `deleteMany`, `softDeleteMany`, `restoreMany` and the `*Many` numeric methods.                                                                                          |
-| `PaginatedResult<T>`                                | `{ result: T; count: number }` — what `getResultAndCount()` resolves to.                                                                                                                                                                                                          | [Query builder](./query-builder.md#pagination-with-getresultandcount).                                                                                                                              |
+| `PaginatedResult<T>`                                | `{ result: T; count: number }` — what `findAndCount()`, `findAndCountBy…`/`findAndCountWhere…` and `getResultAndCount()` resolve to.                                                                                                                                              | [Base methods](./base-methods.md#finding-records-and-their-total), [Query builder](./query-builder.md#pagination-with-getresultandcount).                                                           |
 | `ClientOrTransaction<K>`                            | The ORM's client or transaction type (`K["dbClient"] \| K["dbTransaction"]`) — the type of the `db` option.                                                                                                                                                                       | [Transactions](./transactions.md#transactions).                                                                                                                                                     |
 | `VSRepoGlobalConfig`                                | Shape accepted by `VSRepository.setGlobalConfig()`: `softDeleteField`, `logLevel`, `lazyDynamicMethods`, `vsPlaceholders`.                                                                                                                                                        | [Global configuration](./base-methods.md#global-configuration).                                                                                                                                     |
 | `GetPlaceholderFn` / `CompiledQuery`                | `(index: number) => string` placeholder renderer, and the `{ query, args }` result of `VSSql.compile()`.                                                                                                                                                                          | [Writing an adapter](./writing-an-adapter.md), [`VSSql`](./query-methods.md#parameterized-fragments-with-vssql).                                                                                    |
@@ -67,6 +67,15 @@ const order: Ordering<User> = { createdAt: "desc" };
 const chained: Ordering<User> = [{ name: "asc" }, { createdAt: "desc" }];
 
 await userRepository.find({}, { order: chained });
+```
+
+Scalar fields take a sort direction (`"asc"`/`"desc"`, lower or upper case). **To-one relations** (a `many-to-one` or `one-to-one` field) take a nested ordering of the related entity:
+
+```typescript
+// Post -> author (to-one) -> company (to-one)
+const order: Ordering<Post> = { author: { company: { name: "asc" } }, createdAt: "desc" };
+
+await postRepository.find({}, { order });
 ```
 
 [⬆️ Back to top](#top)

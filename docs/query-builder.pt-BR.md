@@ -25,15 +25,15 @@ Para queries cujo SQL é específico demais para o modelo desse builder — fun�
 
 ## Construindo a query
 
-| Método                 | Descrição                                                                                                                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `select(select)`       | Campos (e campos de relações aninhadas) a selecionar — mesmo formato de [`select` e `relations`](./select-and-relations.pt-BR.md#select-e-relations). Substitui qualquer `select` anterior. |
-| `relations(relations)` | Relações a carregar junto. Substitui qualquer `relations` anterior.                                                                                                                         |
-| `where(where)`         | O filtro: o mesmo `VSRepoWhere` usado no resto da biblioteca (operadores de campo, filtros de relação e `AND`/`OR`/`NOT`). Substitui qualquer filtro anterior.                              |
-| `orderBy(order)`       | Um objeto ou um array de objetos com `"asc"`/`"desc"` (minúsculo ou maiúsculo). Apenas campos escalares podem ser ordenados. Substitui qualquer ordenação anterior.                         |
-| `limit(limit)`         | Número máximo de registros. Precisa ser um inteiro não negativo.                                                                                                                            |
-| `offset(offset)`       | Número de registros a pular. Precisa ser um inteiro não negativo.                                                                                                                           |
-| `see(mode)`            | Visibilidade do soft-delete: `"active"` (padrão), `"removed"` ou `"all"`. Veja [Soft-delete com `see()`](#soft-delete-com-see).                                                             |
+| Método                 | Descrição                                                                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `select(select)`       | Campos (e campos de relações aninhadas) a selecionar — mesmo formato de [`select` e `relations`](./select-and-relations.pt-BR.md#select-e-relations). Substitui qualquer `select` anterior.                  |
+| `relations(relations)` | Relações a carregar junto. Substitui qualquer `relations` anterior.                                                                                                                                          |
+| `where(where)`         | O filtro: o mesmo `VSRepoWhere` usado no resto da biblioteca (operadores de campo, filtros de relação e `AND`/`OR`/`NOT`). Substitui qualquer filtro anterior.                                               |
+| `orderBy(order)`       | Um objeto ou um array de objetos com `"asc"`/`"desc"` (minúsculo ou maiúsculo). Campos escalares e relações to-one (como uma ordenação aninhada) podem ser ordenados. Substitui qualquer ordenação anterior. |
+| `limit(limit)`         | Número máximo de registros. Precisa ser um inteiro não negativo.                                                                                                                                             |
+| `offset(offset)`       | Número de registros a pular. Precisa ser um inteiro não negativo.                                                                                                                                            |
+| `see(mode)`            | Visibilidade do soft-delete: `"active"` (padrão), `"removed"` ou `"all"`. Veja [Soft-delete com `see()`](#soft-delete-com-see).                                                                              |
 
 Chamar `where()` de novo substitui o filtro anterior, e o filtro de [soft-delete](#soft-delete-com-see) é adicionado por cima dele quando a query roda. Como o builder é mutável, um filtro que depende de entradas opcionais é mais fácil de montar como objeto antes:
 

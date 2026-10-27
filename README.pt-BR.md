@@ -17,7 +17,7 @@ O VSRepository é uma **biblioteca de repository pattern agnóstica de ORM para 
 
 O VSRepository permite criar repositories fortemente tipados com:
 
-- **Métodos base** automáticos: `find`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow`, `save`, `create`, `createMany`, `update`, `updateMany`, `upsert`, `patch`, `merge`, `delete`, `deleteMany`, `remove`, `count`, `exists`, `has`, além de métodos atômicos (`increment`, ...) e de agregação (`sum`, ...)
+- **Métodos base** automáticos: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow`, `save`, `create`, `createMany`, `update`, `updateMany`, `upsert`, `patch`, `merge`, `delete`, `deleteMany`, `remove`, `count`, `exists`, `has`, além de métodos atômicos (`increment`, ...) e de agregação (`sum`, ...)
 - **Soft-delete nativo** com `@EnableSoftDelete`: `softDelete`, `softRemove`, `softDeleteMany`, `restore`, `recover`, `restoreMany`
 - **Métodos dinâmicos** inferidos a partir do nome de um campo `declare` via o decorador `@DynamicMethod`: `findOneByEmail`, `findByStatusPaginated`, `updateById`
 - **Métodos de query SQL raw** através do decorador `@QueryMethod` (ignorando totalmente o engine de parsing por nome), fragmentos parametrizados `VSSql` para chamadas pontuais de `query()`, e placeholders agnósticos `?1`, `?2` com `vsPlaceholders`
