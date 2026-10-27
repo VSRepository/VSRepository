@@ -209,6 +209,28 @@ describe("DynamicMethodsResolver", () => {
             expect(repo.findByAge).toBeTypeOf("function");
         });
 
+        it("should resolve a redeclared dynamic method only once using the child definition", async () => {
+            class BaseRepository {
+                _vsrepocache = new Map();
+
+                @DynamicMethod({ proxyTo: "findByName" })
+                declare findByValue: any;
+            }
+
+            class UserRepository extends BaseRepository {
+                @DynamicMethod({ proxyTo: "findByAge" })
+                declare findByValue: any;
+            }
+
+            const repo = new UserRepository();
+
+            expect(resolver.resolve(repo as any)).toBe(1);
+
+            await repo.findByValue("value");
+
+            expect(adapter.findMany).toHaveBeenCalledWith({ age: "value" }, expect.anything());
+        });
+
         it("should store the resolver of each method in the repository cache", () => {
             const repo = buildRepo("findByName");
 
@@ -1083,6 +1105,32 @@ describe("DynamicMethodsResolver", () => {
 
             expect(resolver.resolveQueries(repo as any)).toBe(2);
             expect(repo.ping).toBeTypeOf("function");
+        });
+
+        it("should resolve a redeclared query method only once using the child definition", async () => {
+            class BaseRepository {
+                _vsrepocache = new Map();
+
+                @QueryMethod("select 1")
+                declare ping: any;
+            }
+
+            class UserRepository extends BaseRepository {
+                @QueryMethod("select 2")
+                declare ping: any;
+            }
+
+            const repo = new UserRepository();
+
+            expect(resolver.resolveQueries(repo as any)).toBe(1);
+
+            await repo.ping();
+
+            expect(adapter.query).toHaveBeenCalledWith("select 2", {
+                db: "default-db",
+                args: [],
+                modifying: false,
+            });
         });
 
         it("should compile the vs placeholders using the adapter placeholder", async () => {
