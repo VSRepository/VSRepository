@@ -265,6 +265,21 @@ describe("DynamicMethodsResolver", () => {
                 expect((adapter as any)[adapterMethod]).toHaveBeenCalledWith({ name: "Ana" }, { db: "default-db" });
             });
 
+            it("shoud map findAndCountByName to adapter.findMany and adapter.count", async () => {
+                const repo = buildRepo("findAndCountByName");
+
+                const order = [{ id: "desc" }];
+                const pagination = { take: 2 };
+
+                await repo.findAndCountByName!("João", { order, pagination });
+
+                expect((adapter as any).findMany).toHaveBeenCalledWith(
+                    { name: "João" },
+                    { db: "default-db", pagination, order },
+                );
+                expect((adapter as any).count).toHaveBeenCalledWith({ name: "João" }, { db: "default-db" });
+            });
+
             it.each([
                 ["updateByName", "update"],
                 ["updateManyByName", "updateMany"],
@@ -312,6 +327,17 @@ describe("DynamicMethodsResolver", () => {
                     { name: { contains: "A" } },
                     { db: "default-db" },
                 );
+            });
+
+            it("should map findAndCountWhere to adapter.findMnay and adapter.count using the provided where", async () => {
+                const repo = buildRepo("findAndCountWhere");
+
+                const where = { name: { contains: "A" } };
+
+                await repo.findAndCountWhere!(where);
+
+                expect((adapter as any).findMany).toHaveBeenCalledWith(where, { db: "default-db" });
+                expect((adapter as any).count).toHaveBeenCalledWith(where, { db: "default-db" });
             });
 
             it.each([

@@ -425,7 +425,8 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /**
-     * Returns the records matching `where` along with their total count.
+     * Fetches records matching `where` and the total number of matching records.
+     * `result` honors the configured ordering and pagination, while `count` ignores them.
      */
     async findAndCount(
         where?: VSRepoWhere<Entity>,
