@@ -937,14 +937,22 @@ export class DynamicMethodsResolver<T, K> {
     }
 
     resolve(instance: VSRepository<T, K, any>): number {
-        const dynamicMethods: VSRepoMethod<T>[] =
-            Reflect.getMetadata(DYNAMIC_METHODS_KEY, instance.constructor.prototype) ?? [];
+        const dynamicMethodsMap: Map<string | symbol, DynamicMethodOptions> | undefined = Reflect.getMetadata(
+            DYNAMIC_METHODS_KEY,
+            instance.constructor.prototype,
+        );
 
-        if (dynamicMethods.length) {
-            this.logger.logDebug(`Resolving ${dynamicMethods.length} dynamic method(s):`, dynamicMethods);
-        } else {
+        if (!dynamicMethodsMap?.size) {
             this.logger.logDebug("No dynamic methods to resolve");
+
+            return 0;
         }
+
+        const dynamicMethods = dynamicMethodsMap
+            .entries()
+            .reduce<VSRepoMethod[]>((prev, cur) => [...prev, { propertyKey: cur[0], ...cur[1] }], []);
+
+        this.logger.logDebug(`Resolving ${dynamicMethods.length} dynamic method(s):`, dynamicMethods);
 
         for (const method of dynamicMethods) {
             if (typeof method.propertyKey === "symbol") {
@@ -1102,14 +1110,25 @@ export class DynamicMethodsResolver<T, K> {
     }
 
     resolveQueries(instance: VSRepository<T, K, any>): number {
-        const queryMethods: VSRepoQuery[] =
-            Reflect.getMetadata(QUERY_METHODS_KEY, instance.constructor.prototype) ?? [];
+        const queryMethodsMap: Map<string | symbol, VSRepoQuery> | undefined = Reflect.getMetadata(
+            QUERY_METHODS_KEY,
+            instance.constructor.prototype,
+        );
 
-        if (queryMethods.length) {
-            this.logger.logDebug(`Resolving ${queryMethods.length} query method(s):`, queryMethods);
-        } else {
+        if (!queryMethodsMap?.size) {
             this.logger.logDebug("No query methods to resolve");
+
+            return 0;
         }
+
+        const queryMethods = queryMethodsMap
+            .entries()
+            .reduce<(VSRepoQuery & { propertyKey: string | symbol })[]>(
+                (prev, cur) => [...prev, { propertyKey: cur[0], ...cur[1] }],
+                [],
+            );
+
+        this.logger.logDebug(`Resolving ${queryMethods.length} query method(s):`, queryMethods);
 
         for (const method of queryMethods) {
             const originalKey = method.propertyKey;

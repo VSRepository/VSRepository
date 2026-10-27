@@ -1,7 +1,5 @@
 import { DYNAMIC_METHODS_KEY } from "../internal/constants/dynamic-methods-key.constant.js";
-import { getOwnMetadataList } from "../internal/utils/get-own-metadata-list.util.js";
 import { DynamicMethodOptions } from "../types/decorators/dynamic-method-options.type.js";
-import { VSRepoMethod } from "../types/vsrepo/vsrepo-method.type.js";
 
 /**
  * Declares a dynamic method on a `VSRepository` subclass. Applied to a `declare` field, its behavior
@@ -22,10 +20,12 @@ import { VSRepoMethod } from "../types/vsrepo/vsrepo-method.type.js";
  */
 export function DynamicMethod<T = any>(options?: DynamicMethodOptions<T>): PropertyDecorator {
     return (target: object, propertyKey: string | symbol) => {
-        const methods = getOwnMetadataList<VSRepoMethod>(DYNAMIC_METHODS_KEY, target);
+        const methodsMap: Map<string | symbol, DynamicMethodOptions> =
+            Reflect.getOwnMetadata(DYNAMIC_METHODS_KEY, target) ??
+            new Map(Reflect.getMetadata(DYNAMIC_METHODS_KEY, target) ?? []);
 
-        methods.push({ ...options, propertyKey });
+        methodsMap.set(propertyKey, options ?? {});
 
-        Reflect.defineMetadata(DYNAMIC_METHODS_KEY, methods, target);
+        Reflect.defineMetadata(DYNAMIC_METHODS_KEY, methodsMap, target);
     };
 }

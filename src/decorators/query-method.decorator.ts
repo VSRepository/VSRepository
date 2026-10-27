@@ -1,5 +1,4 @@
 import { QUERY_METHODS_KEY } from "../internal/constants/query-methods-key.constant.js";
-import { getOwnMetadataList } from "../internal/utils/get-own-metadata-list.util.js";
 import type { QueryMethodOptions } from "../types/decorators/query-method-options.type.js";
 import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
 
@@ -26,10 +25,12 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  */
 export function QueryMethod(value: string, options?: QueryMethodOptions): PropertyDecorator {
     return (target: object, propertyKey: string | symbol) => {
-        const methods = getOwnMetadataList<VSRepoQuery>(QUERY_METHODS_KEY, target);
+        const methodsMap: Map<string | symbol, VSRepoQuery> =
+            Reflect.getOwnMetadata(QUERY_METHODS_KEY, target) ??
+            new Map(Reflect.getMetadata(QUERY_METHODS_KEY, target) ?? []);
 
-        methods.push({ ...options, value, propertyKey });
+        methodsMap.set(propertyKey, { ...options, value });
 
-        Reflect.defineMetadata(QUERY_METHODS_KEY, methods, target);
+        Reflect.defineMetadata(QUERY_METHODS_KEY, methodsMap, target);
     };
 }
