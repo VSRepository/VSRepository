@@ -104,8 +104,297 @@ export class DynamicMethodsResolver<T, K> {
         return value;
     }
 
-    private resolveDynamicMethodInfo(dynamicMethod: string) {
-        const dynamicMethodInfo: DynamicMethodInfo = {
+    private static readonly supportedMethods: {
+        validate: (dm: string) => boolean;
+        getOverrides: (dm: string) => Partial<DynamicMethodInfo>;
+    }[] = (() => {
+        const $whereMethodBoilerPlate = ({
+            otherParams,
+            argsCount,
+        }: {
+            otherParams?: string[];
+            argsCount?: number;
+        } = {}): Partial<DynamicMethodInfo> => ({
+            ignoreWhere: true,
+            onlyBaseWheres: true,
+            whereIndex: 0,
+            otherParams: otherParams ?? ["where"],
+            argsCount: argsCount ?? 1,
+        });
+
+        return [
+            {
+                validate: dm => dm.startsWith("findOneBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOne",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findMany",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findAndCountBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findAndCountBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    findAndCountMode: true,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findAndCount"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findAndCount", ""),
+                    ignoreOrderByAndPagination: false,
+                    findAndCountMode: true,
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOneOrThrowBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneOrThrowBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOneOrThrow",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOneOrThrowWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneOrThrowWhere", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOneOrThrow",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOneOrThrow"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneOrThrow", ""),
+                    ignoreOrderByAndPagination: false,
+                    ignoreWhere: true,
+                    onlyBaseWheres: true,
+                    method: "findOneOrThrow",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findWhere", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findMany",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOneWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneWhere", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOne",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOne"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOne", ""),
+                    ignoreOrderByAndPagination: false,
+                    ignoreWhere: true,
+                    onlyBaseWheres: true,
+                    method: "findOne",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("countBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("countBy", ""),
+                    ignoreSelect: true,
+                    method: "count",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("countWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("countWhere", ""),
+                    ignoreSelect: true,
+                    method: "count",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("count"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("count", ""),
+                    ignoreSelect: true,
+                    ignoreWhere: true,
+                    onlyBaseWheres: true,
+                    method: "count",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("existsBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("existsBy", ""),
+                    ignoreSelect: true,
+                    existsMode: true,
+                    method: "exists",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("existsWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("existsWhere", ""),
+                    ignoreSelect: true,
+                    existsMode: true,
+                    method: "exists",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyReturningBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyReturningBy", ""),
+                    method: "updateManyReturning",
+                    dataIndex: -2,
+                    otherParams: ["data"],
+                    argsCount: 1,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyReturningWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyReturningWhere", ""),
+                    method: "updateManyReturning",
+                    dataIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyBy", ""),
+                    ignoreSelect: true,
+                    method: "updateMany",
+                    dataIndex: -2,
+                    otherParams: ["data"],
+                    argsCount: 1,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyWhere", ""),
+                    ignoreSelect: true,
+                    method: "updateMany",
+                    dataIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateBy", ""),
+                    method: "update",
+                    dataIndex: -2,
+                    otherParams: ["data"],
+                    argsCount: 1,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateWhere", ""),
+                    method: "update",
+                    dataIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("upsertBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("upsertBy", ""),
+                    method: "upsert",
+                    createIndex: -3,
+                    updateIndex: -2,
+                    otherParams: ["create", "update"],
+                    argsCount: 2,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("upsertWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("upsertWhere", ""),
+                    method: "upsert",
+                    createIndex: -3,
+                    updateIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "create", "update"], argsCount: 3 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyReturningBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyReturningBy", ""),
+                    method: "deleteManyReturning",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyReturningWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyReturningWhere", ""),
+                    method: "deleteManyReturning",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyBy", ""),
+                    ignoreSelect: true,
+                    method: "deleteMany",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyWhere", ""),
+                    ignoreSelect: true,
+                    method: "deleteMany",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteBy", ""),
+                    method: "delete",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteWhere", ""),
+                    method: "delete",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+        ];
+    })();
+
+    private resolveDynamicMethodInfo(dynamicMethod: string): DynamicMethodInfo {
+        const override = DynamicMethodsResolver.supportedMethods.find(m => m.validate(dynamicMethod));
+
+        if (!override) {
+            this.logAndThrowError(`Unknown dynamic method: ${dynamicMethod}.`);
+        }
+
+        return {
             onlyBaseWheres: false,
             ignoreWhere: false,
             ignoreOrderByAndPagination: true,
@@ -117,197 +406,8 @@ export class DynamicMethodsResolver<T, K> {
             whereParams: [],
             otherParams: [],
             originalDynamicMethodName: dynamicMethod,
+            ...override.getOverrides(dynamicMethod),
         };
-
-        if (dynamicMethod.startsWith("findOneBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.method = "findOne";
-        } else if (dynamicMethod.startsWith("findBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.method = "findMany";
-        } else if (dynamicMethod.startsWith("findOneOrThrowBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneOrThrowBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.method = "findOneOrThrow";
-        } else if (dynamicMethod.startsWith("findOneOrThrowWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneOrThrowWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-            dynamicMethodInfo.method = "findOneOrThrow";
-        } else if (dynamicMethod.startsWith("findOneOrThrow")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneOrThrow", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "findOneOrThrow";
-        } else if (dynamicMethod.startsWith("countBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("countBy", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "count";
-        } else if (dynamicMethod.startsWith("countWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("countWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "count";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("count")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("count", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "count";
-        } else if (dynamicMethod.startsWith("existsBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("existsBy", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.existsMode = true;
-            dynamicMethodInfo.method = "exists";
-        } else if (dynamicMethod.startsWith("existsWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("existsWhere", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.existsMode = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "exists";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("updateManyReturningBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyReturningBy", "");
-            dynamicMethodInfo.method = "updateManyReturning";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("updateManyReturningWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyReturningWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "updateManyReturning";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "data");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("updateManyBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyBy", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "updateMany";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("updateManyWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyWhere", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "updateMany";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "data");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("updateBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateBy", "");
-            dynamicMethodInfo.method = "update";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("updateWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "update";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "data");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("upsertBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("upsertBy", "");
-            dynamicMethodInfo.method = "upsert";
-            dynamicMethodInfo.createIndex = -3;
-            dynamicMethodInfo.updateIndex = -2;
-            dynamicMethodInfo.otherParams.push("create", "update");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("upsertWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("upsertWhere", "");
-            dynamicMethodInfo.method = "upsert";
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.createIndex = -3;
-            dynamicMethodInfo.updateIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "create", "update");
-            dynamicMethodInfo.argsCount += 3;
-        } else if (dynamicMethod.startsWith("deleteManyReturningBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyReturningBy", "");
-            dynamicMethodInfo.method = "deleteManyReturning";
-        } else if (dynamicMethod.startsWith("deleteManyReturningWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyReturningWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "deleteManyReturning";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("deleteManyBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyBy", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "deleteMany";
-        } else if (dynamicMethod.startsWith("deleteManyWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyWhere", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "deleteMany";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("deleteBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteBy", "");
-            dynamicMethodInfo.method = "delete";
-        } else if (dynamicMethod.startsWith("deleteWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-            dynamicMethodInfo.method = "delete";
-        } else if (dynamicMethod.startsWith("findWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "findMany";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("findOneWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "findOne";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("findOne")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOne", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "findOne";
-        } else {
-            this.logAndThrowError(`Unknown dynamic method: ${dynamicMethod}.`);
-        }
-
-        return dynamicMethodInfo;
     }
 
     private resolveDynamicMethodCustomization(
@@ -721,8 +821,7 @@ export class DynamicMethodsResolver<T, K> {
 
         // console.log(this.adapter)
 
-        const vsrepoArgs: VSRepoArgs<T> = {};
-        vsrepoArgs.options = { db: options.db ?? this.adapter.getDbClient() };
+        const vsrepoArgs: VSRepoArgs<T> = { options: { db: options.db ?? this.adapter.getDbClient() } };
 
         if (!withoutWhere) {
             vsrepoArgs.where =
@@ -962,16 +1061,27 @@ export class DynamicMethodsResolver<T, K> {
                 );
 
                 try {
-                    // * Todos os métodos do adapter seguem essa precedencia de parametros
-                    const argsOrdered: any[] = [
-                        vsrepoArgs.where,
-                        vsrepoArgs.obj,
-                        vsrepoArgs.create,
-                        vsrepoArgs.update,
-                        vsrepoArgs.options,
-                    ].filter(arg => arg !== undefined);
+                    let result: any;
 
-                    const result = await (this.adapter as any)[dynamicMethodInfo.method](...argsOrdered);
+                    if (dynamicMethodInfo.findAndCountMode) {
+                        const records = await (this.adapter as any).findMany(vsrepoArgs.where, vsrepoArgs.options);
+                        const count = await (this.adapter as any).count(vsrepoArgs.where, {
+                            db: vsrepoArgs.options.db,
+                        });
+
+                        result = { result: records, count };
+                    } else {
+                        // * Todos os métodos do adapter seguem essa precedencia de parametros
+                        const argsOrdered: any[] = [
+                            vsrepoArgs.where,
+                            vsrepoArgs.obj,
+                            vsrepoArgs.create,
+                            vsrepoArgs.update,
+                            vsrepoArgs.options,
+                        ].filter(arg => arg !== undefined);
+
+                        result = await (this.adapter as any)[dynamicMethodInfo.method](...argsOrdered);
+                    }
 
                     this.logger.endPerformLog(start);
 

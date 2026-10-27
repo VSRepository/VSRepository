@@ -14,4 +14,5 @@ export type DynamicMethodInfo = {
     createIndex?: number;
     whereIndex?: number;
     originalDynamicMethodName: string;
+    findAndCountMode?: boolean;
 };

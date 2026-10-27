@@ -6,5 +6,5 @@ export type VSRepoArgs<T> = {
     obj?: object;
     create?: object;
     update?: object;
-    options?: AdapterMethodOptions<T>;
+    options: AdapterMethodOptions<T>;
 };
