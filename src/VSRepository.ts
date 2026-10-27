@@ -29,6 +29,7 @@ import { ENABLE_SOFT_DELETE_KEY } from "./internal/constants/enable-soft-delete-
 import { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
 import { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
 import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
+import { PaginatedResult } from "./types/utils/paginated-result.type.js";
 
 /**
  * ORM-agnostic base repository. Extend it and provide an adapter to get the base methods
@@ -419,6 +420,27 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                     this.resolveDefaultOrdering(opt),
                 ),
             "find",
+            options,
+        );
+    }
+
+    /**
+     * Returns the records matching `where` along with their total count.
+     */
+    async findAndCount(
+        where?: VSRepoWhere<Entity>,
+        options?: MethodOptions<Entity, OrmTypes>,
+    ): Promise<PaginatedResult<Entity[]>> {
+        return this.execBaseMethod(
+            async opt => {
+                const whereResolved = this.mergeWheresResolver.resolve(opt.see, where);
+
+                const result = await this.adapter.findMany(whereResolved, this.resolveDefaultOrdering(opt));
+                const count = await this.adapter.count(whereResolved, { db: opt.db });
+
+                return { result, count };
+            },
+            "findAndCount",
             options,
         );
     }
