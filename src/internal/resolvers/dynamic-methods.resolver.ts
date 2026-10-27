@@ -148,9 +148,9 @@ export class DynamicMethodsResolver<T, K> {
                 }),
             },
             {
-                validate: dm => dm.startsWith("findAndCount"),
+                validate: dm => dm.startsWith("findAndCountWhere"),
                 getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findAndCount", ""),
+                    keyToMapReplaced: dm.replace("findAndCountWhere", ""),
                     ignoreOrderByAndPagination: false,
                     findAndCountMode: true,
                     ...$whereMethodBoilerPlate(),
