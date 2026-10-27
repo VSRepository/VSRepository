@@ -500,6 +500,29 @@ describe("VSRepository", () => {
             expect(result).toBe(sentinel);
         });
 
+        it("findAndCount should call the adapter and return its PaginatedResult", async () => {
+            const sentinel1 = { returned: true };
+            const sentinel2 = { returned: true };
+
+            mocks.findMany!.mockResolvedValue(sentinel1);
+            mocks.count!.mockResolvedValue(sentinel2);
+
+            const result = await make().findAndCount(
+                { id: "some" },
+                { pagination: { limit: 2 }, order: { id: "DESC" } },
+            );
+
+            expect(mocks.findMany).toHaveBeenCalledTimes(1);
+            expect(mocks.findMany).toHaveBeenCalledWith(
+                { id: "some" },
+                { pagination: { limit: 2 }, order: { id: "DESC" }, db: DB.db },
+            );
+            expect(mocks.count).toHaveBeenCalledTimes(1);
+            expect(mocks.count).toHaveBeenCalledWith({ id: "some" }, DB);
+            expect(result.result).toBe(sentinel1);
+            expect(result.count).toBe(sentinel2);
+        });
+
         describe("options", () => {
             it("should use the db provided in the options", async () => {
                 await make().find(W, { db: "tx" });
