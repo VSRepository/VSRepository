@@ -9,5 +9,5 @@ export type AdapterQueryOptions = {
     /** Database client or transaction to run the query in. */
     db?: any;
     /** Whether the statement modifies data (`INSERT`/`UPDATE`/`DELETE`). */
-    modifying: boolean;
+    modifying?: boolean;
 };
