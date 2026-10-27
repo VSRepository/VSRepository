@@ -33,7 +33,7 @@ Os tipos que você vai encontrar pelo contrato estão todos documentados em [Tip
 
 ## O contrato `VSRepoAdapter`
 
-O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos abaixo são `abstract`, exceto o `getPkName()` opcional no final. Esta é a visão geral — as assinaturas exatas e o JSDoc de cada método ficam em [`src/VSRepoAdapter.ts`](https://github.com/jaobrabo123/VSRepository/blob/main/src/VSRepoAdapter.ts), que é a fonte de verdade do contrato:
+O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos abaixo são `abstract`, exceto o `getPkName()` opcional no final. Esta é a visão geral — as assinaturas exatas e o JSDoc de cada método ficam em [`src/VSRepoAdapter.ts`](https://github.com/VSRepository/VSRepository/blob/main/src/VSRepoAdapter.ts), que é a fonte de verdade do contrato:
 
 | Grupo                     | Métodos                                                                                      | Papel                                                                                                                                                   |
 | ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,13 +70,13 @@ Duas regras cobrem os corpos dos métodos:
     }
     ```
 
-Pra uma implementação completa e funcional, veja o repositório externo [`VSRepoPrisma7Adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter).
+Pra uma implementação completa e funcional, veja o repositório externo [`VSRepoPrisma7Adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter).
 
 ## Persistência de relações depende do adapter
 
 O core não sabe persistir relações: um `save`/`create`/`update`/`upsert` com um campo de relação no payload (por exemplo, `{ name: "Ana", address: { city: "Recife" } }`) chega ao adapter exatamente assim, e é o adapter quem decide como transformar isso em escritas no ORM — `create`/`connectOrCreate`/`disconnect` aninhados no Prisma, inserts e updates feitos imperativamente no Drizzle, e assim por diante.
 
-Adapters como o [`VSRepoPrisma7Adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) e o [`VSRepoDrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) fazem isso por meio de uma configuração de `relations` no construtor, que descreve para cada campo de relação a cardinalidade (`oto`/`otm`/`mto`/`mtm`), como tratar itens já existentes e ausentes do payload (`restriction`), se a relação aceita `null` (`nullable`) e as colunas de chave estrangeira envolvidas. Note que essa configuração de _escrita_ é diferente do `relations` passado nas options de um método, que apenas controla o carregamento na leitura (veja [`select` e `relations`](./select-and-relations.pt-BR.md)).
+Adapters como o [`VSRepoPrisma7Adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) e o [`VSRepoDrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) fazem isso por meio de uma configuração de `relations` no construtor, que descreve para cada campo de relação a cardinalidade (`oto`/`otm`/`mto`/`mtm`), como tratar itens já existentes e ausentes do payload (`restriction`), se a relação aceita `null` (`nullable`) e as colunas de chave estrangeira envolvidas. Note que essa configuração de _escrita_ é diferente do `relations` passado nas options de um método, que apenas controla o carregamento na leitura (veja [`select` e `relations`](./select-and-relations.pt-BR.md)).
 
 É de grande importância que o seu adapter implemente algo parecido: sem isso, quem usa o adapter precisa persistir cada relação manualmente, item por item, e perde boa parte do ganho do `VSRepository`. Isso **não é obrigatório** — um adapter que repassa o payload ao ORM sem tratar relações continua cumprindo o contrato — mas, se você escolher não implementar, deixe isso explícito na documentação do adapter.
 
@@ -150,7 +150,7 @@ Um adapter oficial é publicado sob o escopo `@vsrepo` no npm, que o projeto con
 - um environment `npm-publish`, que é onde o acesso é concedido e revisado;
 - `npm stage publish --tag <dist-tag>`, que faz o stage do release em vez de publicar direto no `latest`; o workflow deriva a dist-tag da tag git (`v1.2.0` → `latest`, `v1.2.0-beta.1` → `beta`).
 
-É o mesmo pipeline que o core usa — veja [`.github/workflows/publish.yml`](https://github.com/jaobrabo123/VSRepository/blob/main/.github/workflows/publish.yml). O acesso é concedido uma vez que o checklist abaixo passa.
+É o mesmo pipeline que o core usa — veja [`.github/workflows/publish.yml`](https://github.com/VSRepository/VSRepository/blob/main/.github/workflows/publish.yml). O acesso é concedido uma vez que o checklist abaixo passa.
 
 | Requisito              | O que significa                                                                                                                                                                                                        |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

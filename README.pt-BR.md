@@ -72,7 +72,7 @@ class UserRepository extends VSRepository<User, string> {
 export default new UserRepository();
 ```
 
-> A API do core (`VSRepository`, `VSRepoAdapter`, `DynamicMethod`, `QueryMethod`, `VSRepoError`, enums e tipos) é importada do entry point único `vsrepo`. O adapter concreto vem de um pacote **separado** (`@vsrepo/*-adapter`). No Prisma 7, instale o [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter).
+> A API do core (`VSRepository`, `VSRepoAdapter`, `DynamicMethod`, `QueryMethod`, `VSRepoError`, enums e tipos) é importada do entry point único `vsrepo`. O adapter concreto vem de um pacote **separado** (`@vsrepo/*-adapter`). No Prisma 7, instale o [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter).
 
 ### Usando o repository
 
@@ -127,7 +127,7 @@ O VSRepository é **agnóstico de ORM por design**: o pacote core (`vsrepo`) tra
 
 | Adapter                               | Status                                                                                                                                            |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prisma 7 (`@vsrepo/prisma7-adapter`)  | 🟢 **Lançado** — publicado no npm, com testes. [Código e docs](https://github.com/jaobrabo123/VSRepoPrisma7Adapter).                              |
+| Prisma 7 (`@vsrepo/prisma7-adapter`)  | 🟢 **Lançado** — publicado no npm, com testes. [Código e docs](https://github.com/VSRepository/VSRepoPrisma7Adapter).                             |
 | Drizzle (`@vsrepo/drizzle-adapter`)   | 🔵 **Alpha** — `npm i @vsrepo/drizzle-adapter@alpha`. A API ainda pode mudar. [Repositório](https://github.com/jaobrabo123/VSRepoDrizzleAdapter). |
 | Outros ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planejados, ainda não publicados.** Escreva o seu enquanto isso — é totalmente suportado.                                                    |
 | Adapters customizados                 | 🟢 Totalmente suportados — implemente o `VSRepoAdapter` você mesmo, no seu projeto ou pacote.                                                     |
@@ -150,7 +150,7 @@ O status completo e como instalar cada um: [Status dos adapters](./docs/adapters
 ```
 
 - `reflect-metadata` (já incluso como dependência, importado internamente — você não precisa importá-lo você mesmo)
-- Pelo menos um `VSRepoAdapter` funcional para o seu banco — no Prisma 7, instale o [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) já publicado (veja [Status dos adapters](#status-dos-adapters))
+- Pelo menos um `VSRepoAdapter` funcional para o seu banco — no Prisma 7, instale o [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) já publicado (veja [Status dos adapters](#status-dos-adapters))
 
 ---
 

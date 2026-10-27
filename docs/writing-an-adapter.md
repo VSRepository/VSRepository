@@ -33,7 +33,7 @@ The types you'll meet throughout the contract are all documented in [Utility typ
 
 ## The `VSRepoAdapter` contract
 
-The contract is the abstract class `VSRepoAdapter<T>`. Every method below is `abstract`, except the optional `getPkName()` at the end. This is an overview — the exact signatures and JSDoc for every method live in [`src/VSRepoAdapter.ts`](https://github.com/jaobrabo123/VSRepository/blob/main/src/VSRepoAdapter.ts), which is the source of truth for the contract:
+The contract is the abstract class `VSRepoAdapter<T>`. Every method below is `abstract`, except the optional `getPkName()` at the end. This is an overview — the exact signatures and JSDoc for every method live in [`src/VSRepoAdapter.ts`](https://github.com/VSRepository/VSRepository/blob/main/src/VSRepoAdapter.ts), which is the source of truth for the contract:
 
 | Group                     | Methods                                                                                      | Role                                                                                                                                                         |
 | ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -70,13 +70,13 @@ Two rules cover the method bodies:
     }
     ```
 
-For a full, working implementation, see the external [`VSRepoPrisma7Adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) repo.
+For a full, working implementation, see the external [`VSRepoPrisma7Adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) repo.
 
 ## Relation persistence depends on the adapter
 
 The core doesn't know how to persist relations: a `save`/`create`/`update`/`upsert` with a relation field in the payload (for example, `{ name: "Ana", address: { city: "Recife" } }`) reaches the adapter exactly like that, and it's up to the adapter to decide how to turn it into ORM writes — nested `create`/`connectOrCreate`/`disconnect` in Prisma, inserts and updates performed imperatively in Drizzle, and so on.
 
-Adapters such as [`VSRepoPrisma7Adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) and [`VSRepoDrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) do this through a `relations` config on the constructor, which describes, for each relation field, its cardinality (`oto`/`otm`/`mto`/`mtm`), how to treat items that already exist or are missing from the payload (`restriction`), whether the relation accepts `null` (`nullable`), and the foreign-key columns involved. Note that this _write_ config is different from the `relations` passed in a method's options, which only controls eager loading on reads (see [`select` and `relations`](./select-and-relations.md)).
+Adapters such as [`VSRepoPrisma7Adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) and [`VSRepoDrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) do this through a `relations` config on the constructor, which describes, for each relation field, its cardinality (`oto`/`otm`/`mto`/`mtm`), how to treat items that already exist or are missing from the payload (`restriction`), whether the relation accepts `null` (`nullable`), and the foreign-key columns involved. Note that this _write_ config is different from the `relations` passed in a method's options, which only controls eager loading on reads (see [`select` and `relations`](./select-and-relations.md)).
 
 It is of great importance that your adapter implements something similar: without it, whoever uses the adapter has to persist every relation by hand, item by item, and loses much of what `VSRepository` gives them. It is **not mandatory** — an adapter that forwards the payload to the ORM without handling relations still fulfills the contract — but if you choose not to implement it, state that clearly in the adapter's documentation.
 
@@ -150,7 +150,7 @@ An official adapter is published under the `@vsrepo` scope on npm, which the pro
 - a `npm-publish` environment, which is where access is granted and reviewed;
 - `npm stage publish --tag <dist-tag>`, which stages the release instead of publishing straight to `latest`; the workflow derives the dist-tag from the git tag (`v1.2.0` → `latest`, `v1.2.0-beta.1` → `beta`).
 
-That's the same pipeline the core itself uses — see [`.github/workflows/publish.yml`](https://github.com/jaobrabo123/VSRepository/blob/main/.github/workflows/publish.yml). Access is granted once the checklist below passes.
+That's the same pipeline the core itself uses — see [`.github/workflows/publish.yml`](https://github.com/VSRepository/VSRepository/blob/main/.github/workflows/publish.yml). Access is granted once the checklist below passes.
 
 | Requirement       | What it means                                                                                                                                                                                                          |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

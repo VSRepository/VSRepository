@@ -8,7 +8,7 @@
 
 A v1 foi o release original do VSRepository, **apenas para Prisma**. A v2 é uma reescrita que tornou o núcleo **agnóstico de ORM**: em vez de falar diretamente com o Prisma, toda operação é delegada a um `VSRepoAdapter` plugável, permitindo que a mesma API de repository funcione com Prisma, Drizzle ou qualquer outro ORM/banco que implemente o contrato de adapter.
 
-O código-fonte e a documentação da v1 vivem na branch dedicada [`v1`](https://github.com/jaobrabo123/VSRepository/tree/v1), para quem ainda precisar do release anterior baseado apenas em Prisma.
+O código-fonte e a documentação da v1 vivem na branch dedicada [`v1`](https://github.com/VSRepository/VSRepository/tree/v1), para quem ainda precisar do release anterior baseado apenas em Prisma.
 
 > [!NOTE]
 >
