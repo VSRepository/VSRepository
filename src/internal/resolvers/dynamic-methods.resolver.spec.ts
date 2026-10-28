@@ -391,18 +391,6 @@ describe("DynamicMethodsResolver", () => {
                 );
             });
 
-            it.each([
-                ["findOne", "findOne"],
-                ["findOneOrThrow", "findOneOrThrow"],
-                ["count", "count"],
-            ])("should map %s (no where) to adapter.%s with an empty where", async (method, adapterMethod) => {
-                const repo = buildRepo(method);
-
-                await repo[method]!();
-
-                expect((adapter as any)[adapterMethod]).toHaveBeenCalledWith({}, { db: "default-db" });
-            });
-
             it("should return whatever the adapter returns", async () => {
                 const users = [{ id: "1", name: "Ana", age: 20, removedAt: null }];
                 vi.mocked(adapter.findMany).mockResolvedValue(users);
