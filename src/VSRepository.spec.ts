@@ -76,7 +76,6 @@ const ADAPTER_METHODS = [
     "updateManyReturning",
     "count",
     "exists",
-    "merge",
     "upsert",
     "incrementOne",
     "decrementOne",
@@ -535,12 +534,6 @@ describe("VSRepository", () => {
                 expect(mocks.findOne).toHaveBeenCalledTimes(1);
                 expect(mocks.findOne).toHaveBeenCalledWith(W, DB);
                 expect(result).toEqual({ ...stored, age: 30 });
-            });
-
-            it("should not use the adapter's own merge", async () => {
-                await make().merge(W, { age: 30 });
-
-                expect(mocks.merge).not.toHaveBeenCalled();
             });
 
             it("should not persist anything", async () => {

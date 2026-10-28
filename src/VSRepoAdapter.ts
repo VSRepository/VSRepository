@@ -91,16 +91,6 @@ export abstract class VSRepoAdapter<T> {
     /** Checks whether at least one record matching `where` exists. */
     public abstract exists(where?: VSRepoWhere<T>, options?: RestrictAdapterMethodOptions<T>): Promise<boolean>;
 
-    /**
-     * Fetches a single record matching `where` and returns it deep-merged, in
-     * memory, with the provided object — does **not** persist anything.
-     */
-    public abstract merge<K extends DeepPartial<T>>(
-        where: VSRepoWhere<T>,
-        obj: K,
-        options?: SimpleAdapterMethodOptions<T>,
-    ): Promise<(K & T) | null>;
-
     /** Creates a record if none matches `where`, otherwise updates it. */
     public abstract upsert(
         where: VSRepoWhere<T>,
