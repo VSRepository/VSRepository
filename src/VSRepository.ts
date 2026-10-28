@@ -659,14 +659,14 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         options?: MergeOptions<Entity, OrmTypes>,
     ): Promise<(Entity & U) | null> {
         return this.execBaseMethod(
-            async opt => {
+            async ({ mergeConfig, ...opt }: MergeOptions<Entity, OrmTypes>) => {
                 const entity = await this.adapter.findOne(
                     this.mergeWheresResolver.resolve(opt.see, where),
                     this.resolveDefaultOrdering(opt),
                 );
                 if (!entity) return null;
 
-                return MergeEntitiesResolver.resolve(entity, obj, options?.mergeConfig ?? this.mergeConfig);
+                return MergeEntitiesResolver.resolve(entity, obj, mergeConfig ?? this.mergeConfig);
             },
             "merge",
             options,

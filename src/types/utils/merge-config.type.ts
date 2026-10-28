@@ -5,28 +5,33 @@ import { Primitive } from "./primitive.type.js";
 type ArrayItem<T> = NonNullable<T> extends readonly (infer U)[] ? U : never;
 type IsEntity<T> = T extends Primitive ? false : T extends readonly unknown[] ? false : true;
 
-export type MergeFieldConfig<T> = [T] extends [never]
-    ? {
-          strategy: "concat";
-          whosFirst?: "source" | "target";
+export type MergeFieldConfig<T> =
+    | {
+          strategy: "custom";
+          customFn: (target: T, source: T) => T;
       }
-    : NonNullable<T> extends readonly unknown[]
-      ? IsEntity<ArrayItem<T>> extends true
+    | ([T] extends [never]
           ? {
-                strategy: "to-many";
-                pk: keyof ArrayItem<T> & string;
-                fields?: MergeFields<ArrayItem<T>>;
-            }
-          : {
                 strategy: "concat";
                 whosFirst?: "source" | "target";
             }
-      : IsEntity<NonNullable<T>> extends true
-        ? {
-              strategy: "to-one";
-              fields?: MergeFields<NonNullable<T>>;
-          }
-        : never;
+          : NonNullable<T> extends readonly unknown[]
+            ? IsEntity<ArrayItem<T>> extends true
+                ? {
+                      strategy: "to-many";
+                      pk: keyof ArrayItem<T> & string;
+                      fields?: MergeFields<ArrayItem<T>>;
+                  }
+                : {
+                      strategy: "concat";
+                      whosFirst?: "source" | "target";
+                  }
+            : IsEntity<NonNullable<T>> extends true
+              ? {
+                    strategy: "to-one";
+                    fields?: MergeFields<NonNullable<T>>;
+                }
+              : never);
 
 export type MergeFields<T> = Partial<{
     [K in keyof T]: MergeFieldConfig<T[K]>;

@@ -18,19 +18,20 @@ export class MergeEntitiesResolver {
             if (value === null && mergeConfig?.nullBehavior === "ignore") {
                 continue;
             }
+            if (value == null) {
+                targetAny[key] = value;
+                continue;
+            }
 
             const fieldConfig = mergeConfig?.fields?.[key as keyof Entity];
 
             if (fieldConfig) {
                 if (fieldConfig.strategy === "to-one") {
-                    targetAny[key] =
-                        value === null
-                            ? null
-                            : this.resolve(targetAny[key] ?? {}, value, {
-                                  nullBehavior: mergeConfig?.nullBehavior,
-                                  undefinedBehavior: mergeConfig?.undefinedBehavior,
-                                  fields: fieldConfig.fields as any,
-                              });
+                    targetAny[key] = this.resolve(targetAny[key] ?? {}, value, {
+                        nullBehavior: mergeConfig?.nullBehavior,
+                        undefinedBehavior: mergeConfig?.undefinedBehavior,
+                        fields: fieldConfig.fields as any,
+                    });
                 } else if (fieldConfig.strategy === "to-many") {
                     targetAny[key] = this.mergeToManyRelation(
                         Array.isArray(targetAny[key]) ? targetAny[key] : [],
@@ -43,10 +44,15 @@ export class MergeEntitiesResolver {
                         },
                     );
                 } else if (fieldConfig.strategy === "concat") {
+                    const sourceList: unknown[] = value;
+                    const targetList: unknown[] = Array.isArray(targetAny[key]) ? targetAny[key] : [];
+
                     targetAny[key] =
                         fieldConfig.whosFirst === "source"
-                            ? value.concat(targetAny[key])
-                            : targetAny[key].concat(value);
+                            ? sourceList.concat(targetList)
+                            : targetList.concat(sourceList);
+                } else if (fieldConfig.strategy === "custom") {
+                    targetAny[key] = fieldConfig.customFn(targetAny[key], value);
                 }
 
                 continue;
