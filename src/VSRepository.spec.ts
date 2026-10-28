@@ -468,7 +468,6 @@ describe("VSRepository", () => {
                 "updateManyReturning",
                 [W, { age: 1 }, DB],
             ],
-            ["merge", r => r.merge("1", { age: 1 }), "merge", [{ id: "1" }, { age: 1 }, DB]],
             ["count", r => r.count(W), "count", [W, DB]],
             ["count (no where)", r => r.count(), "count", [{}, DB]],
             ["exists", r => r.exists(W), "exists", [W, DB]],
@@ -521,6 +520,92 @@ describe("VSRepository", () => {
             expect(mocks.count).toHaveBeenCalledWith({ id: "some" }, DB);
             expect(result.result).toBe(sentinel1);
             expect(result.count).toBe(sentinel2);
+        });
+
+        describe("merge", () => {
+            const stored: User = { id: "1", name: "Ana", age: 20, score: 0, deletedAt: null };
+
+            beforeEach(() => {
+                mocks.findOne!.mockResolvedValue({ ...stored });
+            });
+
+            it("should fetch the record with findOne and return it merged with the given object", async () => {
+                const result = await make().merge(W, { age: 30 });
+
+                expect(mocks.findOne).toHaveBeenCalledTimes(1);
+                expect(mocks.findOne).toHaveBeenCalledWith(W, DB);
+                expect(result).toEqual({ ...stored, age: 30 });
+            });
+
+            it("should not use the adapter's own merge", async () => {
+                await make().merge(W, { age: 30 });
+
+                expect(mocks.merge).not.toHaveBeenCalled();
+            });
+
+            it("should not persist anything", async () => {
+                await make().merge(W, { age: 30 });
+
+                for (const method of ["save", "saveMany", "create", "update", "updateMany", "upsert"]) {
+                    expect(mocks[method]).not.toHaveBeenCalled();
+                }
+            });
+
+            it("should return null when the record does not exist", async () => {
+                mocks.findOne!.mockResolvedValue(null);
+
+                const result = await make().merge(W, { age: 30 });
+
+                expect(result).toBeNull();
+            });
+
+            it("should use the db provided in the options", async () => {
+                await make().merge(W, { age: 30 }, { db: "tx" });
+
+                expect(mocks.findOne).toHaveBeenCalledWith(W, { db: "tx" });
+            });
+
+            describe("mergeConfig", () => {
+                it("should use the one given in the repository options", async () => {
+                    const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                    const result = await repo.merge(W, { name: null as any, age: 30 });
+
+                    expect(result).toEqual({ ...stored, age: 30 });
+                });
+
+                it("should prefer the one given in the method options", async () => {
+                    const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                    const result = await repo.merge(
+                        W,
+                        { name: null as any },
+                        { mergeConfig: { nullBehavior: "keep" } },
+                    );
+
+                    expect(result).toEqual({ ...stored, name: null });
+                });
+
+                it("should overwrite null values when there is no config at all", async () => {
+                    const result = await make().merge(W, { deletedAt: null, name: null as any });
+
+                    expect(result).toEqual({ ...stored, name: null });
+                });
+
+                it("should ignore undefined values by default", async () => {
+                    const result = await make().merge(W, { name: undefined });
+
+                    expect(result).toEqual(stored);
+                });
+
+                it("should keep undefined values when configured", async () => {
+                    const result = await make({ mergeConfig: { undefinedBehavior: "keep" } }).merge(W, {
+                        age: undefined,
+                    } as Partial<User>);
+
+                    expect(result?.age).toBeUndefined();
+                });
+            });
         });
 
         describe("options", () => {
@@ -614,6 +699,7 @@ describe("VSRepository", () => {
                 ["findOneOrThrow", "findOneOrThrow", (r: UserRepository, o?: object) => r.findOneOrThrow(W, o)],
                 ["get", "findOne", (r: UserRepository, o?: object) => r.get(W.name, o)],
                 ["getOrThrow", "findOneOrThrow", (r: UserRepository, o?: object) => r.getOrThrow(W.name, o)],
+                ["merge", "findOne", (r: UserRepository, o?: object) => r.merge(W, { age: 1 }, o)],
             ])("%s should apply it", async (_name, adapterMethod, run) => {
                 await run(make({ defaultOrdering }));
 
@@ -652,6 +738,7 @@ describe("VSRepository", () => {
                 ["find", (r, o) => r.find(W, o), "findMany", W],
                 ["findOne", (r, o) => r.findOne(W, o), "findOne", W],
                 ["get", (r, o) => r.get("1", o), "findOne", { id: "1" }],
+                ["merge", (r, o) => r.merge(W, { age: 1 }, o), "findOne", W],
                 ["delete", (r, o) => r.delete(W, o), "delete", W],
                 ["update", (r, o) => r.update(W, { age: 1 }, o), "update", W],
                 ["count", (r, o) => r.count(W, o), "count", W],
