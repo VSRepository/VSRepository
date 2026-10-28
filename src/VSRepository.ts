@@ -30,6 +30,8 @@ import { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js"
 import { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
 import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
 import { PaginatedResult } from "./types/utils/paginated-result.type.js";
+import { MergeConfig, MergeOptions } from "./types/utils/merge-config.type.js";
+import { MergeEntitiesResolver } from "./internal/resolvers/merge-entities.resolver.js";
 
 /**
  * ORM-agnostic base repository. Extend it and provide an adapter to get the base methods
@@ -63,6 +65,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private softDeleteField?: string;
     private readonly defaultOrdering?: Ordering<Entity>;
     private readonly vsPlaceholders: boolean;
+    private readonly mergeConfig?: MergeConfig<Entity>;
 
     private dynamicMethodsResolved = false;
     private alreadyWarnedResolveDynamicMethods = false;
@@ -96,6 +99,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
         this.defaultOrdering = options.defaultOrdering;
         this.vsPlaceholders = options.vsPlaceholders ?? VSRepository.globalConfig.vsPlaceholders ?? true;
+        this.mergeConfig = options.mergeConfig;
 
         this.resolveSoftDelete();
 
@@ -650,12 +654,20 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      * Nothing is persisted: pass the result to `save` or `patch` to write it. Returns `null` if the record doesn't exist.
      */
     async merge<U extends DeepPartial<Entity>>(
-        id: PKType,
+        where: VSRepoWhere<Entity>,
         obj: U,
-        options?: SimpleMethodOptions<Entity, OrmTypes>,
-    ): Promise<(U & Entity) | null> {
+        options?: MergeOptions<Entity, OrmTypes>,
+    ): Promise<(Entity & U) | null> {
         return this.execBaseMethod(
-            opt => this.adapter.merge<U>(this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)), obj, opt),
+            async opt => {
+                const entity = await this.adapter.findOne(
+                    this.mergeWheresResolver.resolve(opt.see, where),
+                    this.resolveDefaultOrdering(opt),
+                );
+                if (!entity) return null;
+
+                return MergeEntitiesResolver.resolve(entity, obj, options?.mergeConfig ?? this.mergeConfig);
+            },
             "merge",
             options,
         );

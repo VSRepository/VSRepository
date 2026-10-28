@@ -50,6 +50,7 @@ export type { DynamicMethodOptions } from "./types/decorators/dynamic-method-opt
 export type { QueryMethodOptions } from "./types/decorators/query-method-options.type.js";
 export type { CountResult } from "./types/utils/count-result.type.js";
 export type { DeepPartial } from "./types/utils/deep-partial.type.js";
+export type { MergeConfig, MergeFieldConfig, MergeFields, MergeOptions } from "./types/utils/merge-config.type.js";
 export type { KeysOfType } from "./types/utils/keys-of-type.type.js";
 export type { MethodOptions } from "./types/utils/methods-options.type.js";
 export type { InferMethodReturn } from "./types/utils/infer-method-return.type.js";

@@ -1,6 +1,7 @@
 import { VSRepoAdapter } from "../../VSRepoAdapter.js";
 import { VSLogLevel } from "../../internal/enums/vs-log-level.enum.js";
 import { KeysOfType } from "../utils/keys-of-type.type.js";
+import { MergeConfig } from "../utils/merge-config.type.js";
 import { Ordering } from "../utils/ordering.type.js";
 
 /**
@@ -35,4 +36,6 @@ export type VSRepoOptions<T, K> = {
      * @default true
      */
     vsPlaceholders?: boolean;
+
+    mergeConfig?: MergeConfig<T>;
 };
