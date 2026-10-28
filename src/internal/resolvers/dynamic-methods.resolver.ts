@@ -174,16 +174,6 @@ export class DynamicMethodsResolver<T, K> {
                 }),
             },
             {
-                validate: dm => dm.startsWith("findOneOrThrow"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findOneOrThrow", ""),
-                    ignoreOrderByAndPagination: false,
-                    ignoreWhere: true,
-                    onlyBaseWheres: true,
-                    method: "findOneOrThrow",
-                }),
-            },
-            {
                 validate: dm => dm.startsWith("findWhere"),
                 getOverrides: dm => ({
                     keyToMapReplaced: dm.replace("findWhere", ""),
@@ -202,16 +192,6 @@ export class DynamicMethodsResolver<T, K> {
                 }),
             },
             {
-                validate: dm => dm.startsWith("findOne"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findOne", ""),
-                    ignoreOrderByAndPagination: false,
-                    ignoreWhere: true,
-                    onlyBaseWheres: true,
-                    method: "findOne",
-                }),
-            },
-            {
                 validate: dm => dm.startsWith("countBy"),
                 getOverrides: dm => ({
                     keyToMapReplaced: dm.replace("countBy", ""),
@@ -226,16 +206,6 @@ export class DynamicMethodsResolver<T, K> {
                     ignoreSelect: true,
                     method: "count",
                     ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("count"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("count", ""),
-                    ignoreSelect: true,
-                    ignoreWhere: true,
-                    onlyBaseWheres: true,
-                    method: "count",
                 }),
             },
             {
