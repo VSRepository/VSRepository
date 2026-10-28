@@ -606,6 +606,41 @@ describe("MergeEntitiesResolver", () => {
             });
         });
 
+        describe("custom strategy", () => {
+            it("should call customFn with the target and source values and use its return", () => {
+                const result = MergeEntitiesResolver.resolve(
+                    user,
+                    { tags: ["c", "d"] },
+                    {
+                        fields: {
+                            tags: {
+                                strategy: "custom",
+                                customFn: (target, source) => [...(target ?? []), ...(source ?? [])],
+                            },
+                        },
+                    },
+                );
+
+                expect(result.tags).toEqual(["a", "b", "c", "d"]);
+            });
+
+            it("should allow customFn to replace the field value entirely", () => {
+                const customFn = vi.fn((target: string[] | undefined, source: string[]) => [
+                    ...(target ?? []),
+                    ...source.filter(value => !target?.includes(value)),
+                ]);
+
+                const result = MergeEntitiesResolver.resolve(
+                    user,
+                    { tags: ["b", "c"] },
+                    { fields: { tags: { strategy: "custom", customFn } } },
+                );
+
+                expect(customFn).toHaveBeenCalledWith(["a", "b"], ["b", "c"]);
+                expect(result.tags).toEqual(["a", "b", "c"]);
+            });
+        });
+
         describe("combined strategies", () => {
             it("should apply every strategy in a single call", () => {
                 const result = MergeEntitiesResolver.resolve(
