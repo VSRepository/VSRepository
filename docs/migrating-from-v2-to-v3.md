@@ -73,6 +73,7 @@ Use `@EnableSoftDelete()` with no argument plus `VSRepository.setGlobalConfig({ 
 - **`IgnoreConflicts` suffix removed** — pass `ignoreConflicts: true` to `createMany`/`createManyReturning`.
 - **`Distinct<Fields>` suffix removed**, together with `distinct` on the query builder — there's no distinct support in the core anymore; use [`selectDistinct()`](./raw-query-builder.md#building-the-query) on the raw query builder.
 - **`Optional` keyword removed.**
+- **Unfiltered `findOneOrThrow`, `findOne` and `count` dynamic methods removed** — dynamic methods must use a `By` or `Where` variant; use the corresponding base method when no dynamic filter is needed.
 - **`order`/`pagination` through `options`** — dynamic methods now forward `options.order` and `options.pagination` to the adapter, so a plain `findByActive(active, options?)` can be ordered and paginated per call. See [Ordering and pagination](./dynamic-methods.md#ordering-and-pagination).
 - **`findAndCountBy`/`findAndCountWhere` added** — dynamic counterparts of the new `findAndCount` base method; they resolve to a `PaginatedResult` (`{ result, count }`). See [`findAndCount…` and the total](./dynamic-methods.md#findandcount-and-the-total).
 - **New filter aliases** — `Is` prefix (`IsBetween`, `IsIn`, `IsNull`, ...), `Equal`/`NotEqual`, `Containing`, `StartingWith`, `EndingWith`, `IgnoringCase`, `Gt`/`Gte`/`Lt`/`Lte`, `After`/`Before`, `True`/`False`/`Null`/`NotNull`, and the new `Like`/`NotLike` filters (`like` in `VSRepoWhere`). See [Field filters](./dynamic-methods.md#field-filters).

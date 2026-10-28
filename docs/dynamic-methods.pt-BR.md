@@ -49,14 +49,11 @@ class UserRepository extends VSRepository<User, string> {
 | `findAndCountBy`           | `PaginatedResult<Entity[]>` | Filtros de campo seguem o prefixo; resolve para `{ result, count }`.                      |
 | `findAndCountWhere`        | `PaginatedResult<Entity[]>` | Recebe um `VSRepoWhere<T>` como primeiro argumento; resolve para `{ result, count }`.     |
 | `findOneOrThrowBy`         | `Entity`                    | Lança erro se não encontrar.                                                              |
-| `findOneOrThrow`           | `Entity`                    | Sem filtros de campo; aplica só soft-delete/`see`.                                        |
 | `findOneOrThrowWhere`      | `Entity`                    | Recebe um `VSRepoWhere<T>` como primeiro argumento.                                       |
 | `findWhere`                | `Entity[]`                  | Recebe um `VSRepoWhere<T>` como primeiro argumento.                                       |
 | `findOneWhere`             | `Entity \| null`            | Recebe um `VSRepoWhere<T>` como primeiro argumento.                                       |
-| `findOne`                  | `Entity \| null`            | Sem filtros de campo; aplica só soft-delete/`see`.                                        |
 | `countBy`                  | `number`                    | Filtros de campo seguem o prefixo.                                                        |
 | `countWhere`               | `number`                    | Recebe um `VSRepoWhere<T>` como primeiro argumento.                                       |
-| `count`                    | `number`                    | Sem filtros de campo.                                                                     |
 | `existsBy`                 | `boolean`                   | Filtros de campo seguem o prefixo.                                                        |
 | `existsWhere`              | `boolean`                   | Recebe um `VSRepoWhere<T>` como primeiro argumento.                                       |
 | `updateBy`                 | `Entity`                    | Filtros de campo + `DeepPartial<Entity>` como argumento.                                  |
@@ -168,7 +165,7 @@ Essas palavras-chave só são reconhecidas **depois** do nome da relação, nunc
 
 ## Ordenação e paginação
 
-Disponíveis na família `find…` — `findBy`, `findWhere`, `findAndCountBy`, `findAndCountWhere`, `findOneBy`, `findOneWhere`, `findOne`, `findOneOrThrowBy`, `findOneOrThrowWhere` e `findOneOrThrow`:
+Disponíveis na família `find…` — `findBy`, `findWhere`, `findAndCountBy`, `findAndCountWhere`, `findOneBy`, `findOneWhere`, `findOneOrThrowBy` e `findOneOrThrowWhere`:
 
 | Sufixo                                     | Efeito                                                                                                                                                                                                                           |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -195,9 +192,6 @@ declare findByActiveOrderByCreatedAtDescPaginated:
 declare findByNameContainsIgnoreCaseOrderedAndPaginated:
     (name: string, order: Ordering<User>, pagination: Pagination, options?: MethodOptions<User>) => Promise<User[]>;
 
-// findOne sem filtro (equivalente ao findOneOrThrow sem filtro, mas retorna null em vez de lançar)
-@DynamicMethod()
-declare findOne: (options?: MethodOptions<User>) => Promise<User | null>;
 ```
 
 ### `findAndCount…` e o total
