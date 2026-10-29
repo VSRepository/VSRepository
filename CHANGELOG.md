@@ -17,7 +17,6 @@ All notable changes to this project will be documented in this file.
 - Documented the default behavior of the merge options: `undefinedBehavior` defaults to `"ignore"`, `nullBehavior` defaults to `"keep"`, and array `concat` strategies default to `whosFirst: "target"`
 - New `mergeConfig` option, in the repository's constructor options and in the options of `merge()` (which replaces the repository's one for that call), to configure how the merge is done: `undefinedBehavior` (default `"ignore"`), `nullBehavior` (default `"keep"`) and per-field strategies in `fields` (`to-one`, `to-many`, `concat` — `whosFirst` defaults to `"target"` — and `custom`)
 
-
 ### Changed
 
 - `AdapterQueryOptions.modifying` is now optional
