@@ -1,6 +1,6 @@
 {
   "name": "vsrepo",
-  "version": "3.0.0-dev.1",
+  "version": "3.0.0-dev.2",
   "description": "ORM-agnostic repository pattern library",
   "homepage": "https://github.com/VSRepository/VSRepository#readme",
   "repository": {
@@ -34,9 +34,9 @@
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
     "build": "bun run clean && tsc -p tsconfig.build.json",
     "prepack": "bun run build",
-    "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
     "lint": "oxlint --type-aware src/ test/",
-    "lint:fix": "oxlint --fix",
+    "lint:fix": "oxlint --fix src/ test/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:docs": "prettier --write \"docs/**/*.md\" \"./*.md\"",
@@ -59,7 +59,7 @@
   ],
   "author": {
     "email": "joaodev.azevedo@outlook.com",
-    "url": "https://github.com/VSRepository",
+    "url": "https://github.com/jaobrabo123",
     "name": "João Pedro Azevedo Freire Mecenas"
   },
   "license": "MIT",

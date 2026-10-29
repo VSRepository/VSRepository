@@ -26,7 +26,7 @@ bun install
 | `bun run full-validation` | `typecheck` + `lint` + `format:check` + `test` — o gate a rodar antes de abrir um PR.                                                |
 | `bun run build`           | `clean` + `tsc -p tsconfig.build.json` — compila `src/` em `dist/` com `rootDir: src`, gerando JS e as declarações `.d.ts`.          |
 | `bun run test`            | `vitest run` — roda todos os `*.spec.ts` uma vez (comportamento em runtime contra adapters falsos, mais checagens em nível de tipo). |
-| `bun run typecheck`       | `tsc --noEmit -p tsconfig.build.json` — validação de tipagem.                                                                        |
+| `bun run typecheck`       | `tsc --noEmit` — validação de tipagem.                                                                                               |
 | `bun run lint`            | `oxlint --type-aware src/ test/`.                                                                                                    |
 | `bun run format:check`    | Prettier em modo de check sobre `src/**/*.ts` e `test/**/*.ts`.                                                                      |
 | `bun run format:docs`     | Prettier sobre `docs/**/*.md` e os `*.md` da raiz — rode depois de editar a documentação (`format:docs:check` só verifica).          |

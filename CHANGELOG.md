@@ -6,6 +6,55 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev.2] - 2026-10-27
+
+### Added
+
+- New base method `findAndCount(where?, options?)`, which returns the matching records and the total of matching records as a `PaginatedResult` (`{ result, count }`) — `result` honors `order`, `pagination` and `defaultOrdering`, while `count` ignores `order` and `pagination`
+- New dynamic-method prefixes `findAndCountBy` and `findAndCountWhere`, the dynamic counterparts of `findAndCount` (they accept the `Paginated`, `Ordered` and `OrderBy` suffixes like the rest of the `find…` family)
+- `Ordering`/`OrderByField` now accept **to-one relations** as a nested ordering of the related entity (up to 3 levels deep), e.g. `{ author: { company: { name: "asc" } } }`
+- Exported `MergeConfig`, `MergeFieldConfig`, `MergeFields`, and `MergeOptions` for public use with `VSRepository.merge()` and per-call merge customization
+- Documented the default behavior of the merge options: `undefinedBehavior` defaults to `"ignore"`, `nullBehavior` defaults to `"keep"`, and array `concat` strategies default to `whosFirst: "target"`
+- New `mergeConfig` option, in the repository's constructor options and in the options of `merge()` (which replaces the repository's one for that call), to configure how the merge is done: `undefinedBehavior` (default `"ignore"`), `nullBehavior` (default `"keep"`) and per-field strategies in `fields` (`to-one`, `to-many`, `concat` — `whosFirst` defaults to `"target"` — and `custom`)
+
+
+### Changed
+
+- `AdapterQueryOptions.modifying` is now optional
+- `PaginatedResult` is now also the return type of `findAndCount` and of the `findAndCount…` dynamic methods (it was only returned by `VSQueryBuilder.getResultAndCount()`)
+- Internal: the dynamic method resolver now describes each supported prefix in a declarative table instead of a long `if`/`else` chain
+- Inherited `@DynamicMethod` and `@QueryMethod` declarations with the same property key are now deduplicated, with the child declaration taking precedence
+- **BREAKING:** `merge()` now takes a `where` instead of a primary key — `merge(where, obj, options?)` — and accepts `MergeOptions` (`MethodOptions` plus `mergeConfig`); it is implemented by `VSRepository` itself, in memory, on top of the adapter's `findOne` (applying `defaultOrdering`)
+
+### Removed
+
+- **BREAKING:** Dynamic methods without `By` or `Where` are no longer supported for `findOneOrThrow`, `findOne` and `count`; use the corresponding base methods or add a `By`/`Where` filter
+- **BREAKING:** The `merge` method was removed from the `VSRepoAdapter` contract — adapters no longer need to implement it
+
+## [3.0.0-dev.2] - 2026-10-27 (Português)
+
+### Adicionado
+
+- Novo método base `findAndCount(where?, options?)`, que retorna os registros que baterem e o total de registros que batem como um `PaginatedResult` (`{ result, count }`) — `result` respeita `order`, `pagination` e `defaultOrdering`, enquanto `count` ignora `order` e `pagination`
+- Novos prefixos de métodos dinâmicos `findAndCountBy` e `findAndCountWhere`, as versões dinâmicas do `findAndCount` (aceitam os sufixos `Paginated`, `Ordered` e `OrderBy` como o resto da família `find…`)
+- `Ordering`/`OrderByField` agora aceitam **relações to-one** como uma ordenação aninhada da entidade relacionada (até 3 níveis de profundidade), ex.: `{ author: { company: { name: "asc" } } }`
+- Tipos exportados `MergeConfig`, `MergeFieldConfig`, `MergeFields` e `MergeOptions` para uso público com `VSRepository.merge()` e customização do merge por chamada
+- Documentação do comportamento padrão das opções de merge: `undefinedBehavior` usa `"ignore"`, `nullBehavior` usa `"keep"` e `concat` em arrays usa `whosFirst: "target"` por padrão
+- Nova option `mergeConfig`, nas options do construtor do repository e nas options do `merge()` (que substitui a do repository naquela chamada), para configurar como o merge é feito: `undefinedBehavior` (padrão `"ignore"`), `nullBehavior` (padrão `"keep"`) e estratégias por campo em `fields` (`to-one`, `to-many`, `concat` — `whosFirst` tem padrão `"target"` — e `custom`)
+
+### Alterado
+
+- `AdapterQueryOptions.modifying` agora é opcional
+- `PaginatedResult` agora também é o tipo de retorno do `findAndCount` e dos métodos dinâmicos `findAndCount…` (antes só era retornado pelo `VSQueryBuilder.getResultAndCount()`)
+- Interno: o resolver de métodos dinâmicos agora descreve cada prefixo suportado em uma tabela declarativa, em vez de uma longa cadeia de `if`/`else`
+- Declarações herdadas de `@DynamicMethod` e `@QueryMethod` com a mesma chave de propriedade agora são deduplicadas, com a declaração da classe filha tendo precedência
+- **BREAKING:** O `merge()` agora recebe um `where` em vez de uma chave primária — `merge(where, obj, options?)` — e aceita `MergeOptions` (`MethodOptions` mais `mergeConfig`); ele é implementado pelo próprio `VSRepository`, em memória, em cima do `findOne` do adapter (aplicando o `defaultOrdering`)
+
+### Removido
+
+- **BREAKING:** Métodos dinâmicos sem `By` ou `Where` não são mais suportados para `findOneOrThrow`, `findOne` e `count`; use os métodos base correspondentes ou adicione um filtro `By`/`Where`
+- **BREAKING:** O método `merge` foi removido do contrato do `VSRepoAdapter` — os adapters não precisam mais implementá-lo
+
 ## [3.0.0-dev.1] - 2026-10-25
 
 ### Added
@@ -537,7 +586,7 @@ All notable changes to this project will be documented in this file.
 - `VSRepoAdapterError` with a dedicated `AdapterErrorCode`, including a new `INVALID_ADAPTER_CONFIG` code, for surfacing adapter-level failures
 - `VSLogger` exported for use inside custom adapters
 - JSDoc added to every public API surface (everything marked `@publicApi`)
-- First official adapter published: [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) (Prisma 7); other ORMs (Prisma 8, TypeORM, Drizzle) are planned but not yet published
+- First official adapter published: [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) (Prisma 7); other ORMs (Prisma 8, TypeORM, Drizzle) are planned but not yet published
 
 ### Fixed
 
@@ -578,7 +627,7 @@ All notable changes to this project will be documented in this file.
 - `VSRepoAdapterError` com um `AdapterErrorCode` dedicado, incluindo um novo código `INVALID_ADAPTER_CONFIG`, para expor falhas em nível de adapter
 - `VSLogger` agora é exportado para uso dentro de adapters customizados
 - JSDoc adicionado a toda a API pública (tudo marcado com `@publicApi`)
-- Primeiro adapter oficial publicado: [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) (Prisma 7); outros ORMs (Prisma 8, TypeORM, Drizzle) estão planejados mas ainda não publicados
+- Primeiro adapter oficial publicado: [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) (Prisma 7); outros ORMs (Prisma 8, TypeORM, Drizzle) estão planejados mas ainda não publicados
 
 ### Corrigido
 
