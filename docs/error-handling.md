@@ -6,7 +6,7 @@
 
 # Error handling
 
-The error model is built around a single base `VSRepoError` class carrying a `type: VSRepoErrorType`, plus a dedicated `VSRepoAdapterError` subclass (see below) for failures coming from the underlying ORM/database. (If you're migrating from v1, this is covered in [Migrating from v1](./migrating-from-v1.md).)
+The error model is built around a single base `VSRepoError` class carrying a `type: VSRepoErrorType`, plus a dedicated `VSRepoAdapterError` subclass (see below) for failures coming from the underlying ORM/database. (If you're migrating from v1, this is covered in [Migrating from v1 to v2](./migrating-from-v1-to-v2.md).)
 
 ```typescript
 import { VSRepoError } from "vsrepo";
@@ -20,15 +20,15 @@ try {
 }
 ```
 
-| `VSRepoErrorType` | Raised when                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `DECORATOR`       | Invalid arguments were passed to `@DynamicMethod` or `@QueryMethod`.                                                                 |
-| `RESOLVER`        | The library failed to resolve a dynamic/query method's configuration into a callable method (e.g. an unknown method name).           |
-| `DYNAMIC`         | A resolved dynamic/query method failed at runtime (e.g. missing arguments).                                                          |
-| `VALIDATOR`       | Invalid method options or arguments were detected during validation (e.g. a missing `pkName` when the adapter has no `getPkName()`). |
-| `BASE`            | Invalid usage of a base method (`get`, `save`, `remove`, etc).                                                                       |
-| `ADAPTER`         | A `VSRepoAdapter` failed while talking to the underlying ORM/database — always thrown as `VSRepoAdapterError`.                       |
-| `QUERY_BUILDER`   | An invalid argument was passed to a [query builder](./query-builder.md#validation-and-errors) method (e.g. a negative `limit`).      |
+| `VSRepoErrorType` | Raised when                                                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RESOLVER`        | The library failed to resolve a dynamic/query method's configuration into a callable method (e.g. an unknown method name).                                          |
+| `DYNAMIC`         | A resolved dynamic/query method failed at runtime (e.g. missing arguments).                                                                                         |
+| `VS_PLACEHOLDERS` | Failure while resolving VSRepository placeholders (`?1`, `?2`, ...) in a raw query — e.g. an index with no matching argument.                                       |
+| `BASE`            | Invalid usage of a base method (`get`, `save`, `remove`, etc), or invalid repository configuration (e.g. a missing `pkName` when the adapter has no `getPkName()`). |
+| `ADAPTER`         | A `VSRepoAdapter` failed while talking to the underlying ORM/database — always thrown as `VSRepoAdapterError`.                                                      |
+| `QUERY_BUILDER`   | An invalid argument was passed to a [query builder](./query-builder.md#validation-and-errors) method (e.g. a negative `limit`).                                     |
+| `VSSQL`           | Invalid usage of the `VSSql` class (e.g. `VSSql.join()` with an empty list, or `VSSql.raw()` with a non-string).                                                    |
 
 ## `VSRepoAdapterError` and `AdapterErrorCode`
 
@@ -120,5 +120,9 @@ console.log(AdapterErrorCode.UNIQUE_CONSTRAINT_VIOLATION); // "UNIQUE_CONSTRAINT
 ### `VSRepoError` vs. raw ORM errors
 
 Non-adapter usage/config mistakes throw the base `VSRepoError`. Failures raised _by the underlying ORM_ while an adapter method runs are **wrapped** in `VSRepoAdapterError` (classified by an `AdapterErrorCode`, with the original error preserved in `originalError`) instead of propagating raw — this is what makes callers independent of any specific ORM's error shape.
+
+> [!NOTE]
+>
+> Since v3 the library no longer validates option/argument shapes at runtime — the `DECORATOR` and `VALIDATOR` error types were removed with it. Runtime errors remain for things types can't express, like an unknown dynamic-method name or a negative `limit`.
 
 [⬆️ Back to top](#top)

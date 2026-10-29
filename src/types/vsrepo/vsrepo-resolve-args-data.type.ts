@@ -1,6 +1,6 @@
-import { VSRepository } from "../../VSRepository";
-import { Pagination } from "../utils/pagination.type";
-import { MethodOptions } from "../utils/methods-options.type";
+import { VSRepository } from "../../VSRepository.js";
+import { Pagination } from "../utils/pagination.type.js";
+import { MethodOptions } from "../utils/methods-options.type.js";
 
 export interface VSRepoResolveArgsData<T, K> {
     instance: VSRepository<T, K>;
@@ -16,5 +16,4 @@ export interface VSRepoResolveArgsData<T, K> {
     ordering?: object | object[];
     ignoreConflicts?: boolean;
     withOrderingAndPagination?: boolean;
-    distinctKeys?: string[];
 }

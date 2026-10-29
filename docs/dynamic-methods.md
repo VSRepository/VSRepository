@@ -38,73 +38,74 @@ class UserRepository extends VSRepository<User, string> {
 }
 ```
 
-> **`MethodOptions` is always accepted:** every dynamic method, whatever its prefix, accepts an optional `MethodOptions<Entity, OrmTypes>` (`select`, `relations`, `see`, `db`, ...) as its **last** argument — the resolver treats the argument beyond what the name requires as `MethodOptions` and validates it as such. You still need to **declare it in the TS signature** for TypeScript to let you pass it (as in every example above); the examples further down sometimes omit it for brevity when demonstrating something else, but it's available on all of them too.
+> **`MethodOptions` is always accepted:** every dynamic method, whatever its prefix, accepts an optional `MethodOptions<Entity, OrmTypes>` (`select`, `relations`, `see`, `db`, ...) as its **last** argument — the resolver treats the argument beyond what the name requires as `MethodOptions`. You still need to **declare it in the TS signature** for TypeScript to let you pass it (as in every example above); the examples further down sometimes omit it for brevity when demonstrating something else, but it's available on all of them too.
 
 ## Available prefixes
 
-| Prefix                     | Returns          | Notes                                                                               |
-| -------------------------- | ---------------- | ----------------------------------------------------------------------------------- |
-| `findBy`                   | `Entity[]`       | Field filters follow the prefix.                                                    |
-| `findOneBy`                | `Entity \| null` | Field filters follow the prefix; single result.                                     |
-| `findOneOrThrowBy`         | `Entity`         | Throws if no record is found.                                                       |
-| `findOneOrThrow`           | `Entity`         | No field filters; applies only soft-delete/`see`.                                   |
-| `findOneOrThrowWhere`      | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findWhere`                | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findOneWhere`             | `Entity \| null` | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `findOne`                  | `Entity \| null` | No field filters; applies only soft-delete/`see`.                                   |
-| `countBy`                  | `number`         | Field filters follow the prefix.                                                    |
-| `countWhere`               | `number`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `count`                    | `number`         | No field filters.                                                                   |
-| `existsBy`                 | `boolean`        | Field filters follow the prefix.                                                    |
-| `existsWhere`              | `boolean`        | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `create`                   | `Entity`         | Receives `DeepPartial<Entity>` as argument.                                         |
-| `createMany`               | `CountResult`    | Receives `DeepPartial<Entity>[]` as argument; supports `IgnoreConflicts`.           |
-| `createManyReturning`      | `Entity[]`       | Receives `DeepPartial<Entity>[]` as argument; supports `IgnoreConflicts`.           |
-| `updateBy`                 | `Entity`         | Field filters + `DeepPartial<Entity>` as argument.                                  |
-| `updateWhere`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
-| `updateManyBy`             | `CountResult`    | Field filters + `DeepPartial<Entity>`.                                              |
-| `updateManyWhere`          | `CountResult`    | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
-| `updateManyReturningBy`    | `Entity[]`       | Field filters + `DeepPartial<Entity>`.                                              |
-| `updateManyReturningWhere` | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
-| `upsertBy`                 | `Entity`         | Field filters + `create`/`update` payloads.                                         |
-| `upsertWhere`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument, then `create`/`update` payloads. |
-| `deleteBy`                 | `Entity`         | Field filters follow the prefix.                                                    |
-| `deleteWhere`              | `Entity`         | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `deleteManyBy`             | `CountResult`    | Field filters follow the prefix.                                                    |
-| `deleteManyWhere`          | `CountResult`    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
-| `deleteManyReturningBy`    | `Entity[]`       | Field filters follow the prefix.                                                    |
-| `deleteManyReturningWhere` | `Entity[]`       | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| Prefix                     | Returns                     | Notes                                                                               |
+| -------------------------- | --------------------------- | ----------------------------------------------------------------------------------- |
+| `findBy`                   | `Entity[]`                  | Field filters follow the prefix.                                                    |
+| `findOneBy`                | `Entity \| null`            | Field filters follow the prefix; single result.                                     |
+| `findAndCountBy`           | `PaginatedResult<Entity[]>` | Field filters follow the prefix; resolves to `{ result, count }`.                   |
+| `findAndCountWhere`        | `PaginatedResult<Entity[]>` | Receives a `VSRepoWhere<T>` as the first argument; resolves to `{ result, count }`. |
+| `findOneOrThrowBy`         | `Entity`                    | Throws if no record is found.                                                       |
+| `findOneOrThrowWhere`      | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findWhere`                | `Entity[]`                  | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `findOneWhere`             | `Entity \| null`            | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `countBy`                  | `number`                    | Field filters follow the prefix.                                                    |
+| `countWhere`               | `number`                    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `existsBy`                 | `boolean`                   | Field filters follow the prefix.                                                    |
+| `existsWhere`              | `boolean`                   | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `updateBy`                 | `Entity`                    | Field filters + `DeepPartial<Entity>` as argument.                                  |
+| `updateWhere`              | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `updateManyBy`             | `CountResult`               | Field filters + `DeepPartial<Entity>`.                                              |
+| `updateManyWhere`          | `CountResult`               | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `updateManyReturningBy`    | `Entity[]`                  | Field filters + `DeepPartial<Entity>`.                                              |
+| `updateManyReturningWhere` | `Entity[]`                  | Receives a `VSRepoWhere<T>` as the first argument, then `DeepPartial<Entity>`.      |
+| `upsertBy`                 | `Entity`                    | Field filters + `create`/`update` payloads.                                         |
+| `upsertWhere`              | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument, then `create`/`update` payloads. |
+| `deleteBy`                 | `Entity`                    | Field filters follow the prefix.                                                    |
+| `deleteWhere`              | `Entity`                    | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `deleteManyBy`             | `CountResult`               | Field filters follow the prefix.                                                    |
+| `deleteManyWhere`          | `CountResult`               | Receives a `VSRepoWhere<T>` as the first argument.                                  |
+| `deleteManyReturningBy`    | `Entity[]`                  | Field filters follow the prefix.                                                    |
+| `deleteManyReturningWhere` | `Entity[]`                  | Receives a `VSRepoWhere<T>` as the first argument.                                  |
 
 > `groupBy` is **not planned** — it doesn't map cleanly onto the ORM-agnostic contract. `aggregate` as a separate prefix is also unlikely to be implemented: the most common aggregate operations (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) are already available as dedicated base methods — see [Atomic and aggregate methods](./base-methods.md#atomic-and-aggregate-methods). For anything more complex — including `groupBy` — use a `@QueryMethod` with raw SQL or the [raw query builder](./raw-query-builder.md#raw-query-builder) (`createRawQueryBuilder()`), which exposes `groupBy`/`having` directly.
 
 ## Field filters
 
-Applied as suffixes to the field name inside the method:
+Applied as suffixes to the field name inside the method. Several filters have aliases — use whichever reads best:
 
-| Suffix              | Meaning                                                          | Argument                             |
-| ------------------- | ---------------------------------------------------------------- | ------------------------------------ |
-| _(none)_ / `Equals` | equality (`=`)                                                   | yes                                  |
-| `Not` / `NotEquals` | negation                                                         | yes                                  |
-| `In`                | is one of                                                        | yes (array)                          |
-| `NotIn`             | is none of                                                       | yes (array)                          |
-| `Contains`          | substring match                                                  | yes                                  |
-| `NotContains`       | negated substring match                                          | yes                                  |
-| `StartsWith`        | prefix match                                                     | yes                                  |
-| `NotStartsWith`     | negated prefix match                                             | yes                                  |
-| `EndsWith`          | suffix match                                                     | yes                                  |
-| `NotEndsWith`       | negated suffix match                                             | yes                                  |
-| `GreaterThan`       | `>`                                                              | yes                                  |
-| `GreaterThanEqual`  | `>=`                                                             | yes                                  |
-| `LessThan`          | `<`                                                              | yes                                  |
-| `LessThanEqual`     | `<=`                                                             | yes                                  |
-| `Between`           | inclusive range                                                  | yes (`[min, max]` tuple)             |
-| `NotBetween`        | outside an inclusive range                                       | yes (`[min, max]` tuple)             |
-| `IsNull`            | field is `null`                                                  | no                                   |
-| `IsNotNull`         | field is not `null`                                              | no                                   |
-| `IsTrue`            | field is `true`                                                  | no                                   |
-| `IsFalse`           | field is `false`                                                 | no                                   |
-| `IgnoreCase`        | case-insensitive combinator for text filters                     | yes                                  |
-| `Optional`          | optional flag to make it explicit that the parameter is optional | yes _(in practice, nothing changes)_ |
+| Suffix                               | Meaning                                      | Argument                 |
+| ------------------------------------ | -------------------------------------------- | ------------------------ |
+| _(none)_ / `Is` / `Equals` / `Equal` | equality (`=`)                               | yes                      |
+| `Not` / `NotEquals` / `NotEqual`     | negation                                     | yes                      |
+| `In`                                 | is one of                                    | yes (array)              |
+| `NotIn`                              | is none of                                   | yes (array)              |
+| `Contains` / `Containing`            | substring match                              | yes                      |
+| `NotContains` / `NotContaining`      | negated substring match                      | yes                      |
+| `StartsWith` / `StartingWith`        | prefix match                                 | yes                      |
+| `NotStartsWith` / `NotStartingWith`  | negated prefix match                         | yes                      |
+| `EndsWith` / `EndingWith`            | suffix match                                 | yes                      |
+| `NotEndsWith` / `NotEndingWith`      | negated suffix match                         | yes                      |
+| `Like`                               | SQL `LIKE` pattern (e.g. `"na%"`)            | yes                      |
+| `NotLike`                            | negated `LIKE` pattern                       | yes                      |
+| `GreaterThan` / `Gt`                 | `>`                                          | yes                      |
+| `GreaterThanEqual` / `Gte`           | `>=`                                         | yes                      |
+| `LessThan` / `Lt`                    | `<`                                          | yes                      |
+| `LessThanEqual` / `Lte`              | `<=`                                         | yes                      |
+| `After`                              | `>` — reads naturally on dates               | yes                      |
+| `Before`                             | `<` — reads naturally on dates               | yes                      |
+| `Between`                            | inclusive range                              | yes (`[min, max]` tuple) |
+| `NotBetween`                         | outside an inclusive range                   | yes (`[min, max]` tuple) |
+| `Null` / `IsNull`                    | field is `null`                              | no                       |
+| `NotNull` / `IsNotNull`              | field is not `null`                          | no                       |
+| `True` / `IsTrue`                    | field is `true`                              | no                       |
+| `False` / `IsFalse`                  | field is `false`                             | no                       |
+| `IgnoreCase` / `IgnoringCase`        | case-insensitive combinator for text filters | yes                      |
+
+Every filter except `IgnoreCase` also accepts an optional `Is` prefix (`IsBetween`, `IsIn`, `IsNotLike`, `IsGreaterThan`, ...), so `findByAgeIsBetween` and `findByAgeBetween` are the same method.
 
 ```typescript
 @DynamicMethod()
@@ -112,9 +113,18 @@ declare findByNameContainsIgnoreCase: (name: string) => Promise<User[]>;
 
 @DynamicMethod()
 declare findByAgeBetween: (age: [number, number]) => Promise<User[]>;
+
+@DynamicMethod()
+declare findByEmailLike: (pattern: string) => Promise<User[]>; // e.g. "%@gmail.com"
+
+@DynamicMethod()
+declare findByCreatedAtAfter: (date: Date) => Promise<User[]>;
+
+@DynamicMethod()
+declare findByDeletedAtNull: () => Promise<User[]>;
 ```
 
-> **Keyword collisions in field names:** a suffix/operator is only recognized at a camelCase boundary — followed by an uppercase letter, a non-ASCII character, or (for field suffixes) the end of the name — so `findByOrganizationId` and `findByNotes` resolve to the fields `organizationId` and `notes`, not to the `Or`/`Not` keywords. This still leaves one case ambiguous: a field whose name genuinely _ends_ at such a boundary with the same letters as a keyword (e.g. `checkIn`, which reads as field `check` + the `In` suffix by default). Append `Equals` (or `NotEquals`) to force equality and disambiguate: `findByCheckInEquals` resolves to the field `checkIn`.
+> **Keyword collisions in field names:** a suffix/operator is only recognized at a camelCase boundary — followed by an uppercase letter, a non-ASCII character, or (for field suffixes) the end of the name — so `findByOrganizationId` and `findByNotes` resolve to the fields `organizationId` and `notes`, not to the `Or`/`Not` keywords. This still leaves one case ambiguous: a field whose name genuinely _ends_ at such a boundary with the same letters as a keyword (e.g. `checkIn`, which reads as field `check` + the `In` suffix by default). Append `Equals` (or `Is`) to force equality and disambiguate: `findByCheckInEquals` resolves to the field `checkIn`.
 
 ## Logical operators
 
@@ -151,7 +161,11 @@ declare findByAddressWithCityStartsWithIgnoreCase: (city: string) => Promise<Use
 declare findByProductsSome: () => Promise<User[]>;
 ```
 
-## Ordering, pagination and distinct
+These keywords are only recognized **after** the relation name, never at the very start of a field name — so `findByWithDependents` resolves to the field `withDependents`, and `findBySonWithWithDependents` to the `withDependents` field of the `son` relation.
+
+## Ordering and pagination
+
+Available on the `find…` family — `findBy`, `findWhere`, `findAndCountBy`, `findAndCountWhere`, `findOneBy`, `findOneWhere`, `findOneOrThrowBy` and `findOneOrThrowWhere`:
 
 | Suffix                                     | Effect                                                                                                                                                                                                                   |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -160,14 +174,12 @@ declare findByProductsSome: () => Promise<User[]>;
 | `OrderedAndPaginated`                      | Injects `order` as the antepenultimate, then `pagination` as the penultimate — both before `MethodOptions`.                                                                                                              |
 | `PaginatedAndOrdered`                      | Injects `pagination` as the antepenultimate, then `order` as the penultimate — both before `MethodOptions`.                                                                                                              |
 | `OrderBy<Field>Asc` / `OrderBy<Field>Desc` | Bakes a fixed ordering directly into the method name — chain fields with `And` (e.g. `OrderByCreatedAtAscAndNameDesc`). No `order` argument needed. _Note: If you do not specify `Asc` or `Desc`, it defaults to `Asc`._ |
-| `Distinct<Field>And<Field>...`             | Bakes fixed `distinct` fields directly into the method name (only valid on `findBy`/`findWhere`-family methods).                                                                                                         |
-| `IgnoreConflicts`                          | On `createMany`/`createManyReturning`, skips records that would violate a unique constraint instead of throwing.                                                                                                         |
 
 > [!WARNING]
 >
 > **Parameter order:** `pagination` and `order` are always placed **before** the optional `MethodOptions<T>` last argument. When both `order` and `pagination` are present, their relative order follows the suffix name (`OrderedAndPaginated` → order, pagination; `PaginatedAndOrdered` → pagination, order).
 >
-> Using `Paginated`/`Ordered`/`OrderBy`, `Distinct` or `IgnoreConflicts` on a prefix that doesn't support them (e.g. `Distinct` on `findOneBy`, `Paginated` on `existsBy`, `IgnoreConflicts` on `create`) throws a `VSRepoError` (`RESOLVER`) when the repository is constructed, rather than silently becoming part of the field name.
+> Using `Paginated`/`Ordered`/`OrderBy` on a prefix that doesn't support them (e.g. `Paginated` on `existsBy`) throws a `VSRepoError` (`RESOLVER`) when the repository is constructed, rather than silently becoming part of the field name.
 
 ```typescript
 // Paginated: pagination is the penultimate param (before MethodOptions)
@@ -180,38 +192,55 @@ declare findByActiveOrderByCreatedAtDescPaginated:
 declare findByNameContainsIgnoreCaseOrderedAndPaginated:
     (name: string, order: Ordering<User>, pagination: Pagination, options?: MethodOptions<User>) => Promise<User[]>;
 
-@DynamicMethod()
-declare createManyIgnoreConflicts: (data: DeepPartial<User>[]) => Promise<CountResult>;
-
-// createManyReturning: same as createMany, but returns the created records
-@DynamicMethod()
-declare createManyReturningIgnoreConflicts: (data: DeepPartial<User>[]) => Promise<User[]>;
-
-// findOne with no filter (equivalent to findOneOrThrow with no filter, but returns null instead of throwing)
-@DynamicMethod()
-declare findOne: (options?: MethodOptions<User>) => Promise<User | null>;
 ```
 
-> [!WARNING]
->
-> **Precedence between `Distinct` and `OrderBy`:** when both are used in the same method name, **`Distinct` must come before `OrderBy`**:
->
-> ```typescript
-> @DynamicMethod()
-> declare findByActiveDistinctNameOrderByCreatedAtDesc:
->     (active: boolean) => Promise<User[]>;
-> ```
->
-> Putting `OrderBy` before `Distinct` (e.g. `findByActiveOrderByCreatedAtDescDistinctName`) is not a valid pattern and throws a `VSRepoError` (`RESOLVER`) when the repository is constructed: `The "Distinct" modifier cannot appear after the "OrderBy" modifier.`
+### `findAndCount…` and the total
+
+`findAndCountBy` and `findAndCountWhere` are the dynamic counterparts of the [`findAndCount`](./base-methods.md#finding-records-and-their-total) base method: they run a `findMany` and a `count` with the same resolved `where` and resolve to a [`PaginatedResult`](./utility-types.md) — `{ result: Entity[]; count: number }`. `order` and `pagination` (through the suffixes above or through `options`) only affect `result`; `count` is the total of records matching the filter.
+
+```typescript
+@DynamicMethod()
+declare findAndCountByActivePaginated: (
+    active: boolean,
+    pagination: Pagination,
+    options?: MethodOptions<User>,
+) => Promise<PaginatedResult<User[]>>;
+
+@DynamicMethod()
+declare findAndCountWhere: (where: VSRepoWhere<User>, options?: MethodOptions<User>) => Promise<PaginatedResult<User[]>>;
+
+const { result, count } = await userRepository.findAndCountByActivePaginated(true, { limit: 20, offset: 0 });
+```
+
+### `order` and `pagination` through `options`
+
+Without those suffixes, `order` and `pagination` can still be passed in the `options` argument (`MethodOptions` accepts both), so the same method can be reused with different ordering/pagination per call:
+
+```typescript
+@DynamicMethod()
+declare findByActive: (active: boolean, options?: MethodOptions<User>) => Promise<User[]>;
+
+await userRepository.findByActive(true, { order: { name: "asc" }, pagination: { limit: 20, offset: 40 } });
+```
+
+When more than one source defines the ordering, the first one that exists wins:
+
+1. the `order` argument injected by `Ordered`/`OrderedAndPaginated`/`PaginatedAndOrdered`;
+2. `options.order`;
+3. the `OrderBy…` baked into the method name;
+4. the decorator's `injectOrdering`;
+5. the repository's `defaultOrdering`.
+
+For pagination, the injected `pagination` argument wins over `options.pagination`.
 
 ## Decorator options
 
 `@DynamicMethod<T>(options?)` accepts:
 
-| Option           | Type          | Description                                                                                                                      |
-| ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `proxyTo`        | `string`      | Redirects the method's logic to another valid dynamic-method pattern — useful for names that don't follow the naming convention. |
-| `injectOrdering` | `Ordering<T>` | Fixed ordering automatically injected, overriding the repository's `defaultOrdering`.                                            |
+| Option           | Type          | Description                                                                                                                           |
+| ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `proxyTo`        | `string`      | Redirects the method's logic to another valid dynamic-method pattern — useful for names that don't follow the naming convention.      |
+| `injectOrdering` | `Ordering<T>` | Fixed ordering automatically injected, overriding the repository's `defaultOrdering` (but not an `options.order` passed on the call). |
 
 ```typescript
 // proxyTo: gives the method a custom name while reusing an existing pattern
@@ -305,7 +334,7 @@ class UserRepository extends VSRepository<User, string> {
     @DynamicMethod()
     declare findByEmail: (email: string) => Promise<User[]>;
 
-    // e.g. called from Nest's onModuleInit
+    // e.g. called from NestJS's onModuleInit
     init() {
         this.resolveDynamicMethods();
     }

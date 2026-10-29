@@ -1,6 +1,5 @@
 /**
- * Return type of batch operations that report how many records were affected,
- * such as `removeList`, `softRemoveList`, and `restoreList`.
+ * Return type of batch operations that report how many records were affected.
  *
  * @publicApi
  */

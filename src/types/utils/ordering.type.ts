@@ -1,4 +1,4 @@
-import { Primitive } from "./primitive.type";
+import { Primitive } from "./primitive.type.js";
 
 /**
  * Sort direction accepted by `Ordering`. Case-insensitive: both the
@@ -9,28 +9,28 @@ import { Primitive } from "./primitive.type";
 export type SortDirection = "asc" | "desc" | "ASC" | "DESC";
 
 /**
- * Ordering shape for a single level of an entity's fields.
- *
- * @template T Entity type being ordered.
+ * Ordering shape for an entity's fields. Primitive fields take a
+ * `SortDirection`; to-one relations take a nested ordering of the related entity.
  *
  * @publicApi
  */
-export type OrderByField<T> = {
-    [P in keyof T as NonNullable<T[P]> extends Primitive ? P : never]?: SortDirection;
+export type OrderByField<T, Depth extends unknown[] = []> = {
+    [P in keyof T]?: NonNullable<T[P]> extends Primitive
+        ? SortDirection
+        : NonNullable<T[P]> extends readonly unknown[]
+          ? never
+          : Depth["length"] extends 3 // limite de profundidade
+            ? never
+            : OrderByField<NonNullable<T[P]>, [...Depth, unknown]>;
 };
 
 /**
- * Ordering accepted by repository methods that support `order`, such as `getAll` or a dynamic method with `Ordered`.
- *
- * Can be a single ordering object or a list of chained orderings, applied in
- * the order they're declared.
- *
- * @template T Entity type being ordered.
+ * Ordering accepted by methods that support `order`: a single object or a list of them,
+ * applied in the order declared.
  *
  * @example
  * ```typescript
- * const order: Ordering<User> = { createdAt: "desc" };
- * const chained: Ordering<User> = [{ name: "asc" }, { createdAt: "desc" }];
+ * const order: Ordering<User> = [{ name: "asc" }, { createdAt: "desc" }];
  * ```
  *
  * @publicApi

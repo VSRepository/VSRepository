@@ -1,30 +1,14 @@
-import { VSRepoError } from "../../errors/VSRepoError";
-import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum";
-import { VSSql } from "./vs-sql.util";
+import { VSRepoError } from "../../errors/VSRepoError.js";
+import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { VSSql } from "./vs-sql.util.js";
 
 export class VSPlaceholdersParser {
     /**
-     * Parses a raw SQL string written with VSRepository's own agnostic,
-     * positional placeholders — `?1`, `?2`, ... (1-based, Spring Data JPA style)
-     * — into a `VSSql` fragment, so it compiles through `adapter.getPlaceholder()`
-     * exactly like any other `VSSql`. Enabled via `vsPlaceholders: true` in the
-     * `VSRepository` constructor options.
+     * Parses a raw SQL string written with VSRepository's positional placeholders (`?1`, `?2`, ...; 1-based)
+     * into a `VSSql` fragment. An index may repeat (each occurrence becomes its own parameter), and a `?N`
+     * inside a single-quoted string literal is left untouched.
      *
-     * The same index may appear more than once (`?1 ... ?1`) to reuse the same
-     * argument — each *occurrence* becomes its own placeholder/value pair in the
-     * compiled output (duplicating the value in `args` rather than trying to
-     * reference a single bound parameter twice), since not every adapter
-     * supports referencing one bound parameter more than once.
-     *
-     * A `?N` inside a single-quoted string literal (e.g. `'keep ?1 literally'`)
-     * is *not* interpreted as a placeholder — it is passed through to the SQL
-     * untouched and consumes no `args` entry. Standard SQL escapes are
-     * respected: `''` inside a literal does not end it, so a literal like
-     * `'it''s ?1'` is fully skipped. There is no escape mechanism outside a
-     * literal — if a query needs literal `?` + digits text in an unquoted
-     * context, build that part with a `VSSql` fragment instead. Matching only
-     * triggers on `?` immediately followed by a digit, so operators like
-     * PostgreSQL's `?`, `?|` and `?&` are unaffected.
+     * @throws VSRepoError If a placeholder references an index outside `args`.
      *
      * @internal
      */
@@ -48,9 +32,14 @@ export class VSPlaceholdersParser {
             const position = Number(match[1]);
 
             if (!Number.isInteger(position) || position < 1 || position > args.length) {
+                const reason =
+                    args.length === 0
+                        ? "no arguments were provided in 'args'."
+                        : `expected a number between 1 and ${args.length} (the length of 'args').`;
+
                 throw new VSRepoError(
-                    `Invalid 'vsPlaceholders' reference '?${match[1]}' in query — expected a number between 1 and ${args.length} (the length of 'args').`,
-                    VSRepoErrorType.VALIDATOR,
+                    `Invalid 'vsPlaceholders' reference '?${match[1]}' in query — ${reason}`,
+                    VSRepoErrorType.VS_PLACEHOLDERS,
                 );
             }
 
@@ -61,9 +50,6 @@ export class VSPlaceholdersParser {
 
         chunks.push(query.slice(lastIndex));
 
-        // `VSSql.sql` only ever reads `strings` by index (`strings[0]`, `strings[i + 1]`)
-        // and never touches `.raw`, so a plain string array built at runtime works
-        // the same as a real tagged-template `TemplateStringsArray` here.
-        return VSSql.sql(chunks as unknown as TemplateStringsArray, ...values);
+        return VSSql.create(chunks, values);
     }
 }

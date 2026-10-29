@@ -1,8 +1,8 @@
-import { VSRawQueryBuilder } from "../../internal/utils/vs-raw-query-builder.util";
-import { VSSql } from "../../internal/utils/vs-sql.util";
+import { VSRawQueryBuilder } from "../../internal/utils/vs-raw-query-builder.util.js";
+import { VSSql } from "../../internal/utils/vs-sql.util.js";
 
-/** Anything that can be used as a CTE's body in {@link VSRawQueryBuilder.with}/
- * {@link VSRawQueryBuilder.withRecursive}.
+/**
+ * A CTE body: a `VSSql` fragment, a builder, or a function that receives a sub-builder.
  *
  * @publicApi
  */

@@ -1,73 +1,78 @@
-import { VSRepoError } from "../../errors/VSRepoError";
-import { DynamicMethodOptions } from "../../types/decorators/dynamic-method-options.type";
-import { DynamicMethodCustomization } from "../../types/dynamic-methods/dynamic-method-customization.type";
-import { DynamicMethodInfo } from "../../types/dynamic-methods/dynamic-method-info.type";
-import { DynamicMethodWhereOps } from "../../types/dynamic-methods/dynamic-method-where-ops.type";
-import { Ordering } from "../../types/utils/ordering.type";
-import { VSRepoArgs } from "../../types/vsrepo/vsrepo-args.type";
-import { VSRepoMethod } from "../../types/vsrepo/vsrepo-method.type";
-import { MethodOptions } from "../../types/utils/methods-options.type";
-import { VSRepoPrettyWhere } from "../../types/vsrepo/vsrepo-pretty-where.type";
-import { VSRepoQuery } from "../../types/vsrepo/vsrepo-query.type";
-import { VSRepoResolveArgsData } from "../../types/vsrepo/vsrepo-resolve-args-data.type";
-import { VSRepoUglyWhere } from "../../types/vsrepo/vsrepo-ugly-where.type";
-import { VSRepoAdapter } from "../../VSRepoAdapter";
-import { VSRepository } from "../../VSRepository";
-import { DYNAMIC_METHODS_KEY } from "../constants/dynamic-methods-key.constant";
-import { QUERY_METHODS_KEY } from "../constants/query-methods-key.constant";
-import { VSLogLevel } from "../enums/vs-log-level.enum";
-import { uncapitalize } from "../utils/uncapitalize.util";
-import { VSLogger } from "../utils/vs-logger.util";
-import { VSRepoValidator } from "../validators/vsrepo.validator";
-import { MergeWheresResolver } from "./merge-wheres.resolver";
+import { VSRepoError } from "../../errors/VSRepoError.js";
+import { DynamicMethodOptions } from "../../types/decorators/dynamic-method-options.type.js";
+import { DynamicMethodCustomization } from "../../types/dynamic-methods/dynamic-method-customization.type.js";
+import { DynamicMethodInfo } from "../../types/dynamic-methods/dynamic-method-info.type.js";
+import { DynamicMethodWhereOps } from "../../types/dynamic-methods/dynamic-method-where-ops.type.js";
+import { Ordering } from "../../types/utils/ordering.type.js";
+import { VSRepoArgs } from "../../types/vsrepo/vsrepo-args.type.js";
+import { VSRepoMethod } from "../../types/vsrepo/vsrepo-method.type.js";
+import { MethodOptions } from "../../types/utils/methods-options.type.js";
+import { VSRepoPrettyWhere } from "../../types/vsrepo/vsrepo-pretty-where.type.js";
+import { VSRepoQuery } from "../../types/vsrepo/vsrepo-query.type.js";
+import { VSRepoResolveArgsData } from "../../types/vsrepo/vsrepo-resolve-args-data.type.js";
+import { VSRepoUglyWhere } from "../../types/vsrepo/vsrepo-ugly-where.type.js";
+import { VSRepoAdapter } from "../../VSRepoAdapter.js";
+import { VSRepository } from "../../VSRepository.js";
+import { DYNAMIC_METHODS_KEY } from "../constants/dynamic-methods-key.constant.js";
+import { QUERY_METHODS_KEY } from "../constants/query-methods-key.constant.js";
+import { VSLogLevel } from "../enums/vs-log-level.enum.js";
+import { uncapitalize } from "../utils/uncapitalize.util.js";
+import { VSLogger } from "../utils/vs-logger.util.js";
+import { MergeWheresResolver } from "./merge-wheres.resolver.js";
 import merge from "deepmerge";
-import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum";
-import { DEBUG_ARG_SYMBOL } from "../constants/debug-arg-symbol.constant";
-import { DbArg } from "../utils/db-arg.util";
-import { VSPlaceholdersParser } from "../utils/vs-placeholder-parser.util";
+import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { DEBUG_ARG_SYMBOL } from "../constants/debug-arg-symbol.constant.js";
+import { DbArg } from "../utils/db-arg.util.js";
+import { VSPlaceholdersParser } from "../utils/vs-placeholder-parser.util.js";
 
 export class DynamicMethodsResolver<T, K> {
     constructor(
         private readonly logger: VSLogger,
         private readonly adapter: VSRepoAdapter<T>,
         private readonly mergeWheresResolver: MergeWheresResolver<T>,
-        private readonly validator: VSRepoValidator<T, K>,
         private readonly defaultOrdering?: Ordering<T>,
-        private readonly vsPlaceholders: boolean = false,
+        private readonly vsPlaceholders: boolean = true,
     ) {}
 
-    private static keywordTemplate = (keyword: string, allowAtTheEnd = false) =>
-        new RegExp(`${keyword}(?=[\\p{Lu}]|[^\\p{ASCII}]${allowAtTheEnd ? "|$" : ""})`, "u");
+    private static keywordTemplate = (keyword: string, allowAtTheEnd = false, allowIs = false, requirePrefix = false) =>
+        new RegExp(
+            `${requirePrefix ? "(?<!^)" : ""}${allowIs ? "(?:Is)?" : ""}${keyword}(?=[\\p{Lu}]|[^\\p{ASCII}]${allowAtTheEnd ? "|$" : ""})`,
+            "u",
+        );
 
     private static fieldModifiers = {
-        IsNull: this.keywordTemplate("IsNull", true),
-        IsNotNull: this.keywordTemplate("IsNotNull", true),
-        IsTrue: this.keywordTemplate("IsTrue", true),
-        IsFalse: this.keywordTemplate("IsFalse", true),
-        IgnoreCase: this.keywordTemplate("IgnoreCase", true),
-        Optional: this.keywordTemplate("Optional", true),
-        NotBetween: this.keywordTemplate("NotBetween", true),
-        Between: this.keywordTemplate("Between", true),
-        NotStartsWith: this.keywordTemplate("NotStartsWith", true),
-        StartsWith: this.keywordTemplate("StartsWith", true),
-        NotEndsWith: this.keywordTemplate("NotEndsWith", true),
-        EndsWith: this.keywordTemplate("EndsWith", true),
-        NotContains: this.keywordTemplate("NotContains", true),
-        Contains: this.keywordTemplate("Contains", true),
-        LessThanEqual: this.keywordTemplate("LessThanEqual", true),
-        LessThan: this.keywordTemplate("LessThan", true),
-        GreaterThanEqual: this.keywordTemplate("GreaterThanEqual", true),
-        GreaterThan: this.keywordTemplate("GreaterThan", true),
-        NotIn: this.keywordTemplate("NotIn", true),
-        In: this.keywordTemplate("In", true),
-        Not: this.keywordTemplate("Not", true),
-        Equals: this.keywordTemplate("Equals", true),
-        NotEquals: this.keywordTemplate("NotEquals", true),
-        Without: this.keywordTemplate("Without", true),
-        With: this.keywordTemplate("With", true),
-        Some: this.keywordTemplate("Some", true),
-        Every: this.keywordTemplate("Every", true),
-        None: this.keywordTemplate("None", true),
+        IsNull: this.keywordTemplate("Null", true, true),
+        IsNotNull: this.keywordTemplate("NotNull", true, true),
+        IsTrue: this.keywordTemplate("True", true, true),
+        IsFalse: this.keywordTemplate("False", true, true),
+        IgnoreCase: this.keywordTemplate("(IgnoreCase|IgnoringCase)", true),
+        NotBetween: this.keywordTemplate("NotBetween", true, true),
+        Between: this.keywordTemplate("Between", true, true),
+        NotStartsWith: this.keywordTemplate("(NotStartsWith|NotStartingWith)", true, true),
+        StartsWith: this.keywordTemplate("(StartsWith|StartingWith)", true, true),
+        NotEndsWith: this.keywordTemplate("(NotEndsWith|NotEndingWith)", true, true),
+        EndsWith: this.keywordTemplate("(EndsWith|EndingWith)", true, true),
+        NotContains: this.keywordTemplate("(NotContains|NotContaining)", true, true),
+        Contains: this.keywordTemplate("(Contains|Containing)", true, true),
+        NotLike: this.keywordTemplate("NotLike", true, true),
+        Like: this.keywordTemplate("Like", true, true),
+        LessThanEqual: this.keywordTemplate("(LessThanEqual|Lte)", true, true),
+        LessThan: this.keywordTemplate("(LessThan|Lt)", true, true),
+        GreaterThanEqual: this.keywordTemplate("(GreaterThanEqual|Gte)", true, true),
+        GreaterThan: this.keywordTemplate("(GreaterThan|Gt)", true, true),
+        After: this.keywordTemplate("After", true, true),
+        Before: this.keywordTemplate("Before", true, true),
+        NotIn: this.keywordTemplate("NotIn", true, true),
+        In: this.keywordTemplate("In", true, true),
+        Not: this.keywordTemplate("Not", true, true),
+        Is: this.keywordTemplate("Is", true),
+        Equals: this.keywordTemplate("(Equals|Equal)", true, true),
+        NotEquals: this.keywordTemplate("(NotEquals|NotEqual)", true, true),
+        Without: this.keywordTemplate("Without", true, false, true),
+        With: this.keywordTemplate("With", true, false, true),
+        Some: this.keywordTemplate("Some", true, false, true),
+        Every: this.keywordTemplate("Every", true, false, true),
+        None: this.keywordTemplate("None", true, false, true),
     };
 
     private static operators = {
@@ -77,13 +82,11 @@ export class DynamicMethodsResolver<T, K> {
     };
 
     private static customizationModifiers = {
-        Distinct: this.keywordTemplate("Distinct"),
         OrderBy: this.keywordTemplate("OrderBy"),
         PaginatedAndOrdered: /PaginatedAndOrdered$/,
         OrderedAndPaginated: /OrderedAndPaginated$/,
         Paginated: /Paginated$/,
         Ordered: /Ordered$/,
-        IgnoreConflicts: /IgnoreConflicts$/,
     };
 
     private logAndThrowError(errorMessage: string): never {
@@ -92,17 +95,276 @@ export class DynamicMethodsResolver<T, K> {
         throw new VSRepoError(errorMessage, VSRepoErrorType.RESOLVER);
     }
 
-    private validateIndexedArg<R>(args: any[], positionIndex: number, validate: (value: unknown) => R): R {
+    private getValue<R>(args: any[], positionIndex: number): R {
         const value = args.at(positionIndex);
         if (value === DEBUG_ARG_SYMBOL) {
             return `<args>[${positionIndex < 0 ? args.length + positionIndex : positionIndex}]` as R;
         }
 
-        return validate(value);
+        return value;
     }
 
-    private resolveDynamicMethodInfo(dynamicMethod: string) {
-        const dynamicMethodInfo: DynamicMethodInfo = {
+    private static readonly supportedMethods: {
+        validate: (dm: string) => boolean;
+        getOverrides: (dm: string) => Partial<DynamicMethodInfo>;
+    }[] = (() => {
+        const $whereMethodBoilerPlate = ({
+            otherParams,
+            argsCount,
+        }: {
+            otherParams?: string[];
+            argsCount?: number;
+        } = {}): Partial<DynamicMethodInfo> => ({
+            ignoreWhere: true,
+            onlyBaseWheres: true,
+            whereIndex: 0,
+            otherParams: otherParams ?? ["where"],
+            argsCount: argsCount ?? 1,
+        });
+
+        return [
+            {
+                validate: dm => dm.startsWith("findOneBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOne",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findMany",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findAndCountBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findAndCountBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    findAndCountMode: true,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findAndCountWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findAndCountWhere", ""),
+                    ignoreOrderByAndPagination: false,
+                    findAndCountMode: true,
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOneOrThrowBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneOrThrowBy", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOneOrThrow",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOneOrThrowWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneOrThrowWhere", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOneOrThrow",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findWhere", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findMany",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("findOneWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("findOneWhere", ""),
+                    ignoreOrderByAndPagination: false,
+                    method: "findOne",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("countBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("countBy", ""),
+                    ignoreSelect: true,
+                    method: "count",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("countWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("countWhere", ""),
+                    ignoreSelect: true,
+                    method: "count",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("existsBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("existsBy", ""),
+                    ignoreSelect: true,
+                    existsMode: true,
+                    method: "exists",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("existsWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("existsWhere", ""),
+                    ignoreSelect: true,
+                    existsMode: true,
+                    method: "exists",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyReturningBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyReturningBy", ""),
+                    method: "updateManyReturning",
+                    dataIndex: -2,
+                    otherParams: ["data"],
+                    argsCount: 1,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyReturningWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyReturningWhere", ""),
+                    method: "updateManyReturning",
+                    dataIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyBy", ""),
+                    ignoreSelect: true,
+                    method: "updateMany",
+                    dataIndex: -2,
+                    otherParams: ["data"],
+                    argsCount: 1,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateManyWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateManyWhere", ""),
+                    ignoreSelect: true,
+                    method: "updateMany",
+                    dataIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateBy", ""),
+                    method: "update",
+                    dataIndex: -2,
+                    otherParams: ["data"],
+                    argsCount: 1,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("updateWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("updateWhere", ""),
+                    method: "update",
+                    dataIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("upsertBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("upsertBy", ""),
+                    method: "upsert",
+                    createIndex: -3,
+                    updateIndex: -2,
+                    otherParams: ["create", "update"],
+                    argsCount: 2,
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("upsertWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("upsertWhere", ""),
+                    method: "upsert",
+                    createIndex: -3,
+                    updateIndex: -2,
+                    ...$whereMethodBoilerPlate({ otherParams: ["where", "create", "update"], argsCount: 3 }),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyReturningBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyReturningBy", ""),
+                    method: "deleteManyReturning",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyReturningWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyReturningWhere", ""),
+                    method: "deleteManyReturning",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyBy", ""),
+                    ignoreSelect: true,
+                    method: "deleteMany",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteManyWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteManyWhere", ""),
+                    ignoreSelect: true,
+                    method: "deleteMany",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteBy"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteBy", ""),
+                    method: "delete",
+                }),
+            },
+            {
+                validate: dm => dm.startsWith("deleteWhere"),
+                getOverrides: dm => ({
+                    keyToMapReplaced: dm.replace("deleteWhere", ""),
+                    method: "delete",
+                    ...$whereMethodBoilerPlate(),
+                }),
+            },
+        ];
+    })();
+
+    private resolveDynamicMethodInfo(dynamicMethod: string): DynamicMethodInfo {
+        const override = DynamicMethodsResolver.supportedMethods.find(m => m.validate(dynamicMethod));
+
+        if (!override) {
+            this.logAndThrowError(`Unknown dynamic method: ${dynamicMethod}.`);
+        }
+
+        return {
             onlyBaseWheres: false,
             ignoreWhere: false,
             ignoreOrderByAndPagination: true,
@@ -111,231 +373,11 @@ export class DynamicMethodsResolver<T, K> {
             argsCount: 0,
             method: "unknown",
             existsMode: false,
-            ignoreIgnoreConflicts: true,
-            ignoreDistinct: true,
             whereParams: [],
             otherParams: [],
             originalDynamicMethodName: dynamicMethod,
+            ...override.getOverrides(dynamicMethod),
         };
-
-        if (dynamicMethod.startsWith("findOneBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.method = "findOne";
-        } else if (dynamicMethod.startsWith("findBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreDistinct = false;
-            dynamicMethodInfo.method = "findMany";
-        } else if (dynamicMethod.startsWith("findOneOrThrowBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneOrThrowBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.method = "findOneOrThrow";
-        } else if (dynamicMethod.startsWith("findOneOrThrowWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneOrThrowWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-            dynamicMethodInfo.method = "findOneOrThrow";
-        } else if (dynamicMethod.startsWith("findOneOrThrow")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneOrThrow", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "findOneOrThrow";
-        } else if (dynamicMethod.startsWith("countBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("countBy", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "count";
-        } else if (dynamicMethod.startsWith("countWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("countWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "count";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("count")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("count", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "count";
-        } else if (dynamicMethod.startsWith("existsBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("existsBy", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.existsMode = true;
-            dynamicMethodInfo.method = "exists";
-        } else if (dynamicMethod.startsWith("existsWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("existsWhere", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.existsMode = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "exists";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("createManyReturning")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("createManyReturning", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.ignoreIgnoreConflicts = false;
-            dynamicMethodInfo.method = "createManyReturning";
-            dynamicMethodInfo.dataIndex = 0;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("createMany")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("createMany", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreIgnoreConflicts = false;
-            dynamicMethodInfo.method = "createMany";
-            dynamicMethodInfo.dataIndex = 0;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("create")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("create", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.method = "create";
-            dynamicMethodInfo.dataIndex = 0;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("updateManyReturningBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyReturningBy", "");
-            dynamicMethodInfo.method = "updateManyReturning";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("updateManyReturningWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyReturningWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "updateManyReturning";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "data");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("updateManyBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyBy", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "updateMany";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("updateManyWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateManyWhere", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "updateMany";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "data");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("updateBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateBy", "");
-            dynamicMethodInfo.method = "update";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.otherParams.push("data");
-            dynamicMethodInfo.argsCount++;
-        } else if (dynamicMethod.startsWith("updateWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("updateWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "update";
-            dynamicMethodInfo.dataIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "data");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("upsertBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("upsertBy", "");
-            dynamicMethodInfo.method = "upsert";
-            dynamicMethodInfo.createIndex = -3;
-            dynamicMethodInfo.updateIndex = -2;
-            dynamicMethodInfo.otherParams.push("create", "update");
-            dynamicMethodInfo.argsCount += 2;
-        } else if (dynamicMethod.startsWith("upsertWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("upsertWhere", "");
-            dynamicMethodInfo.method = "upsert";
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.createIndex = -3;
-            dynamicMethodInfo.updateIndex = -2;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where", "create", "update");
-            dynamicMethodInfo.argsCount += 3;
-        } else if (dynamicMethod.startsWith("deleteManyReturningBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyReturningBy", "");
-            dynamicMethodInfo.method = "deleteManyReturning";
-        } else if (dynamicMethod.startsWith("deleteManyReturningWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyReturningWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "deleteManyReturning";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("deleteManyBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyBy", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.method = "deleteMany";
-        } else if (dynamicMethod.startsWith("deleteManyWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteManyWhere", "");
-            dynamicMethodInfo.ignoreSelect = true;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "deleteMany";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("deleteBy")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteBy", "");
-            dynamicMethodInfo.method = "delete";
-        } else if (dynamicMethod.startsWith("deleteWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("deleteWhere", "");
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-            dynamicMethodInfo.method = "delete";
-        } else if (dynamicMethod.startsWith("findWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.ignoreDistinct = false;
-            dynamicMethodInfo.method = "findMany";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("findOneWhere")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOneWhere", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "findOne";
-            dynamicMethodInfo.whereIndex = 0;
-            dynamicMethodInfo.otherParams.push("where");
-            dynamicMethodInfo.argsCount += 1;
-        } else if (dynamicMethod.startsWith("findOne")) {
-            dynamicMethodInfo.keyToMapReplaced = dynamicMethod.replace("findOne", "");
-            dynamicMethodInfo.ignoreOrderByAndPagination = false;
-            dynamicMethodInfo.ignoreWhere = true;
-            dynamicMethodInfo.onlyBaseWheres = true;
-            dynamicMethodInfo.method = "findOne";
-        } else {
-            this.logAndThrowError(`Unknown dynamic method: ${dynamicMethod}.`);
-        }
-
-        return dynamicMethodInfo;
     }
 
     private resolveDynamicMethodCustomization(
@@ -343,24 +385,6 @@ export class DynamicMethodsResolver<T, K> {
         methodData: DynamicMethodOptions<T>,
     ) {
         const dynamicMethodCustomization: DynamicMethodCustomization = {};
-
-        if (!dynamicMethodInfo.ignoreIgnoreConflicts) {
-            if (
-                DynamicMethodsResolver.customizationModifiers.IgnoreConflicts.test(dynamicMethodInfo.keyToMapReplaced)
-            ) {
-                dynamicMethodInfo.keyToMapReplaced = dynamicMethodInfo.keyToMapReplaced.replace(
-                    DynamicMethodsResolver.customizationModifiers.IgnoreConflicts,
-                    "",
-                );
-                dynamicMethodCustomization.ignoreConflicts = true;
-            }
-        } else if (
-            DynamicMethodsResolver.customizationModifiers.IgnoreConflicts.test(dynamicMethodInfo.keyToMapReplaced)
-        ) {
-            this.logAndThrowError(
-                `This dynamic method prefix doesn't support the "IgnoreConflicts" modifier: ${dynamicMethodInfo.originalDynamicMethodName}.`,
-            );
-        }
 
         if (!dynamicMethodInfo.ignoreOrderByAndPagination) {
             if (
@@ -428,12 +452,6 @@ export class DynamicMethodsResolver<T, K> {
             );
 
             if (keySplitedOrderBy[1]) {
-                if (DynamicMethodsResolver.customizationModifiers.Distinct.test(keySplitedOrderBy[1])) {
-                    this.logAndThrowError(
-                        `The "Distinct" modifier cannot appear after the "OrderBy" modifier: ${dynamicMethodInfo.originalDynamicMethodName}.`,
-                    );
-                }
-
                 const orderByFields = keySplitedOrderBy[1]
                     .split(DynamicMethodsResolver.operators.And)
                     .map(uncapitalize);
@@ -464,24 +482,6 @@ export class DynamicMethodsResolver<T, K> {
             );
         }
 
-        if (!dynamicMethodInfo.ignoreDistinct) {
-            const keySplitedDistinct = dynamicMethodInfo.keyToMapReplaced.split(
-                DynamicMethodsResolver.customizationModifiers.Distinct,
-            );
-
-            if (keySplitedDistinct[1]) {
-                dynamicMethodCustomization.distinctKeys = keySplitedDistinct[1]
-                    .split(DynamicMethodsResolver.operators.And)
-                    .map(uncapitalize);
-            }
-
-            dynamicMethodInfo.keyToMapReplaced = keySplitedDistinct[0]!;
-        } else if (DynamicMethodsResolver.customizationModifiers.Distinct.test(dynamicMethodInfo.keyToMapReplaced)) {
-            this.logAndThrowError(
-                `This dynamic method prefix doesn't support the "Distinct" modifier: ${dynamicMethodInfo.originalDynamicMethodName}.`,
-            );
-        }
-
         return dynamicMethodCustomization;
     }
 
@@ -489,16 +489,16 @@ export class DynamicMethodsResolver<T, K> {
         const uglyWhere: VSRepoUglyWhere = { name: "", pushProperty: "$$$" };
         let nullMode: "is" | "not" | undefined = undefined;
 
-        if (DynamicMethodsResolver.fieldModifiers.IsNull.test(keySplitedAnd)) {
-            uglyWhere.pushProperty = "$$$";
-            uglyWhere.autoInjectVal = null;
-            nullMode = "is";
-            keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IsNull, "");
-        } else if (DynamicMethodsResolver.fieldModifiers.IsNotNull.test(keySplitedAnd)) {
+        if (DynamicMethodsResolver.fieldModifiers.IsNotNull.test(keySplitedAnd)) {
             uglyWhere.pushProperty = "not";
             uglyWhere.autoInjectVal = null;
             nullMode = "not";
             keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IsNotNull, "");
+        } else if (DynamicMethodsResolver.fieldModifiers.IsNull.test(keySplitedAnd)) {
+            uglyWhere.pushProperty = "$$$";
+            uglyWhere.autoInjectVal = null;
+            nullMode = "is";
+            keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IsNull, "");
         } else if (DynamicMethodsResolver.fieldModifiers.IsTrue.test(keySplitedAnd)) {
             uglyWhere.pushProperty = "$$$";
             uglyWhere.autoInjectVal = true;
@@ -512,9 +512,6 @@ export class DynamicMethodsResolver<T, K> {
                 uglyWhere.properties = {};
                 uglyWhere.properties.ignoreCase = true;
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.IgnoreCase, "");
-            }
-            if (DynamicMethodsResolver.fieldModifiers.Optional.test(keySplitedAnd)) {
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Optional, "");
             }
 
             if (DynamicMethodsResolver.fieldModifiers.NotBetween.test(keySplitedAnd)) {
@@ -543,12 +540,12 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.Contains.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "contains";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Contains, "");
-            } else if (DynamicMethodsResolver.fieldModifiers.NotEquals.test(keySplitedAnd)) {
-                uglyWhere.pushProperty = "not";
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotEquals, "");
-            } else if (DynamicMethodsResolver.fieldModifiers.Equals.test(keySplitedAnd)) {
-                uglyWhere.pushProperty = "$$$";
-                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Equals, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.NotLike.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "not.like";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotLike, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Like.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "like";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Like, "");
             } else if (DynamicMethodsResolver.fieldModifiers.LessThanEqual.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "lte";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.LessThanEqual, "");
@@ -561,6 +558,18 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.GreaterThan.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "gt";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.GreaterThan, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.NotEquals.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "not";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotEquals, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Equals.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "$$$";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Equals, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.After.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "gt";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.After, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Before.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "lt";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Before, "");
             } else if (DynamicMethodsResolver.fieldModifiers.NotIn.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "notIn";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.NotIn, "");
@@ -570,14 +579,18 @@ export class DynamicMethodsResolver<T, K> {
             } else if (DynamicMethodsResolver.fieldModifiers.Not.test(keySplitedAnd)) {
                 uglyWhere.pushProperty = "not";
                 keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Not, "");
+            } else if (DynamicMethodsResolver.fieldModifiers.Is.test(keySplitedAnd)) {
+                uglyWhere.pushProperty = "$$$";
+                keySplitedAnd = keySplitedAnd.replace(DynamicMethodsResolver.fieldModifiers.Is, "");
             } else {
                 uglyWhere.pushProperty = "$$$";
             }
         }
 
-        if (DynamicMethodsResolver.fieldModifiers.Without.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.Without);
-            const specificField = keySplitedConector[1];
+        let relMatch: RegExpExecArray | null;
+
+        if ((relMatch = DynamicMethodsResolver.fieldModifiers.Without.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 if (nullMode) {
                     uglyWhere.pushProperty = nullMode === "not" ? "_with" : "_without";
@@ -586,13 +599,13 @@ export class DynamicMethodsResolver<T, K> {
                     uglyWhere.autoInjectVal = {};
                 }
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_without.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.With.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.With);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.With.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 if (nullMode) {
                     uglyWhere.pushProperty = nullMode === "not" ? "_without" : "_with";
@@ -601,43 +614,44 @@ export class DynamicMethodsResolver<T, K> {
                     uglyWhere.autoInjectVal = {};
                 }
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_with.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.Some.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.Some);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.Some.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 uglyWhere.pushProperty = "_some";
                 uglyWhere.autoInjectVal = {};
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_some.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.Every.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.Every);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.Every.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 uglyWhere.pushProperty = "_every";
                 uglyWhere.autoInjectVal = {};
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_every.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
-        } else if (DynamicMethodsResolver.fieldModifiers.None.test(keySplitedAnd)) {
-            const keySplitedConector = keySplitedAnd.split(DynamicMethodsResolver.fieldModifiers.None);
-            const specificField = keySplitedConector[1];
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
+        } else if ((relMatch = DynamicMethodsResolver.fieldModifiers.None.exec(keySplitedAnd))) {
+            const specificField = keySplitedAnd.slice(relMatch.index + relMatch[0].length);
             if (!specificField) {
                 uglyWhere.pushProperty = "_none";
                 uglyWhere.autoInjectVal = {};
             } else {
+                uglyWhere.nestedField = specificField;
                 uglyWhere.pushProperty = `_none.${uncapitalize(specificField)}${uglyWhere.pushProperty === "$$$" ? (uglyWhere.properties ? ".equals" : "") : `.${uglyWhere.pushProperty}`}`;
             }
 
-            keySplitedAnd = keySplitedConector[0]!;
+            keySplitedAnd = keySplitedAnd.slice(0, relMatch.index);
         }
 
         keySplitedAnd = uncapitalize(keySplitedAnd);
@@ -744,7 +758,7 @@ export class DynamicMethodsResolver<T, K> {
                 }
             }
 
-            dynamicMethodInfo.whereParams.push(argName);
+            dynamicMethodInfo.whereParams.push(argName + (arg.nestedField ?? ""));
             return {
                 context,
                 otherProps,
@@ -773,14 +787,11 @@ export class DynamicMethodsResolver<T, K> {
             ordering,
             pagination,
             withOrderingAndPagination,
-            ignoreConflicts,
-            distinctKeys,
         } = data;
 
         // console.log(this.adapter)
 
-        const vsrepoArgs: VSRepoArgs<T> = {};
-        vsrepoArgs.options = { db: options.db ?? this.adapter.getDbClient() };
+        const vsrepoArgs: VSRepoArgs<T> = { options: { db: options.db ?? this.adapter.getDbClient() } };
 
         if (!withoutWhere) {
             vsrepoArgs.where =
@@ -815,16 +826,6 @@ export class DynamicMethodsResolver<T, K> {
             if (pagination) {
                 vsrepoArgs.options.pagination = pagination;
             }
-        }
-
-        if (ignoreConflicts !== undefined) {
-            // * Usado no createMany
-            (vsrepoArgs.options as any).ignoreConflicts = ignoreConflicts;
-        }
-
-        if (distinctKeys !== undefined) {
-            // * Usado no findMany
-            (vsrepoArgs.options as any).distinct = distinctKeys;
         }
 
         return vsrepoArgs;
@@ -906,8 +907,20 @@ export class DynamicMethodsResolver<T, K> {
     }
 
     resolve(instance: VSRepository<T, K, any>): number {
-        const dynamicMethods: VSRepoMethod<T>[] =
-            Reflect.getMetadata(DYNAMIC_METHODS_KEY, instance.constructor.prototype) ?? [];
+        const dynamicMethodsMap: Map<string | symbol, DynamicMethodOptions> | undefined = Reflect.getMetadata(
+            DYNAMIC_METHODS_KEY,
+            instance.constructor.prototype,
+        );
+
+        if (!dynamicMethodsMap?.size) {
+            this.logger.logDebug("No dynamic methods to resolve");
+
+            return 0;
+        }
+
+        const dynamicMethods = dynamicMethodsMap
+            .entries()
+            .reduce<VSRepoMethod[]>((prev, cur) => [...prev, { propertyKey: cur[0], ...cur[1] }], []);
 
         this.logger.logDebug(`Resolving ${dynamicMethods.length} dynamic method(s):`, dynamicMethods);
 
@@ -936,25 +949,22 @@ export class DynamicMethodsResolver<T, K> {
             }
 
             instance._vsrepocache.set(originalKey, (args, methodOptions) => {
+                const options = methodOptions ?? {};
+
                 const vsrepoResolveArgsData: VSRepoResolveArgsData<T, K> = {
                     instance,
-                    options: methodOptions ?? {},
+                    options,
                     withoutWhere: dynamicMethodInfo.ignoreWhere && !dynamicMethodInfo.onlyBaseWheres,
                     specificSelect: undefined, // ? Avaliar quando vai precisar
                     withoutSelect: dynamicMethodInfo.ignoreSelect,
-                    ignoreConflicts: dynamicMethodCustomization.ignoreConflicts,
                     ordering:
                         dynamicMethodCustomization.orderPosition !== undefined
-                            ? this.validateIndexedArg(args, dynamicMethodCustomization.orderPosition, value =>
-                                  this.validator.validateOrdering(value),
-                              )
-                            : (dynamicMethodCustomization.injectOrdering ?? this.defaultOrdering),
+                            ? this.getValue(args, dynamicMethodCustomization.orderPosition)
+                            : (options.order ?? dynamicMethodCustomization.injectOrdering ?? this.defaultOrdering),
                     pagination:
                         dynamicMethodCustomization.paginationPosition !== undefined
-                            ? this.validateIndexedArg(args, dynamicMethodCustomization.paginationPosition, value =>
-                                  this.validator.validatePagination(value),
-                              )
-                            : undefined,
+                            ? this.getValue(args, dynamicMethodCustomization.paginationPosition)
+                            : options.pagination,
                     dataPayload:
                         dynamicMethodInfo.dataIndex !== undefined ? args.at(dynamicMethodInfo.dataIndex) : undefined,
                     createPayload:
@@ -966,7 +976,6 @@ export class DynamicMethodsResolver<T, K> {
                             ? args.at(dynamicMethodInfo.updateIndex)
                             : undefined,
                     withOrderingAndPagination: !dynamicMethodInfo.ignoreOrderByAndPagination,
-                    distinctKeys: dynamicMethodCustomization.distinctKeys,
                 };
 
                 if (!dynamicMethodInfo.ignoreWhere) {
@@ -977,9 +986,7 @@ export class DynamicMethodsResolver<T, K> {
                 } else if (dynamicMethodInfo.onlyBaseWheres) {
                     vsrepoResolveArgsData.specificWhere =
                         dynamicMethodInfo.whereIndex !== undefined
-                            ? this.validateIndexedArg(args, dynamicMethodInfo.whereIndex, value =>
-                                  this.validator.validateWhere(value),
-                              )
+                            ? this.getValue(args, dynamicMethodInfo.whereIndex)
                             : {};
                 }
 
@@ -1018,7 +1025,7 @@ export class DynamicMethodsResolver<T, K> {
                     throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
                 } else if (args.length > dynamicMethodInfo.argsCount) {
                     const optionsArg = args[dynamicMethodInfo.argsCount];
-                    methodOptions = this.validator.validateMethodOptions(optionsArg);
+                    methodOptions = optionsArg;
                 } else {
                     args.push("1");
                 }
@@ -1032,16 +1039,27 @@ export class DynamicMethodsResolver<T, K> {
                 );
 
                 try {
-                    // * Todos os métodos do adapter seguem essa precedencia de parametros
-                    const argsOrdered: any[] = [
-                        vsrepoArgs.where,
-                        vsrepoArgs.obj,
-                        vsrepoArgs.create,
-                        vsrepoArgs.update,
-                        vsrepoArgs.options,
-                    ].filter(arg => arg !== undefined);
+                    let result: any;
 
-                    const result = await (this.adapter as any)[dynamicMethodInfo.method](...argsOrdered);
+                    if (dynamicMethodInfo.findAndCountMode) {
+                        const records = await (this.adapter as any).findMany(vsrepoArgs.where, vsrepoArgs.options);
+                        const count = await (this.adapter as any).count(vsrepoArgs.where, {
+                            db: vsrepoArgs.options.db,
+                        });
+
+                        result = { result: records, count };
+                    } else {
+                        // * Todos os métodos do adapter seguem essa precedencia de parametros
+                        const argsOrdered: any[] = [
+                            vsrepoArgs.where,
+                            vsrepoArgs.obj,
+                            vsrepoArgs.create,
+                            vsrepoArgs.update,
+                            vsrepoArgs.options,
+                        ].filter(arg => arg !== undefined);
+
+                        result = await (this.adapter as any)[dynamicMethodInfo.method](...argsOrdered);
+                    }
 
                     this.logger.endPerformLog(start);
 
@@ -1062,8 +1080,23 @@ export class DynamicMethodsResolver<T, K> {
     }
 
     resolveQueries(instance: VSRepository<T, K, any>): number {
-        const queryMethods: VSRepoQuery[] =
-            Reflect.getMetadata(QUERY_METHODS_KEY, instance.constructor.prototype) ?? [];
+        const queryMethodsMap: Map<string | symbol, VSRepoQuery> | undefined = Reflect.getMetadata(
+            QUERY_METHODS_KEY,
+            instance.constructor.prototype,
+        );
+
+        if (!queryMethodsMap?.size) {
+            this.logger.logDebug("No query methods to resolve");
+
+            return 0;
+        }
+
+        const queryMethods = queryMethodsMap
+            .entries()
+            .reduce<(VSRepoQuery & { propertyKey: string | symbol })[]>(
+                (prev, cur) => [...prev, { propertyKey: cur[0], ...cur[1] }],
+                [],
+            );
 
         this.logger.logDebug(`Resolving ${queryMethods.length} query method(s):`, queryMethods);
 
@@ -1073,30 +1106,17 @@ export class DynamicMethodsResolver<T, K> {
             const modifyingQueryMethod = method.modifying ?? false;
             const valueQueryMethod = method.value;
             const singleResult = method.singleResult ?? false;
-            const spreadArgsMode = method.spreadArgs;
 
             (instance as any)[originalKey] = async (...args: unknown[]) => {
                 let db: any;
                 let queryArgs: any[] | undefined;
 
-                if (spreadArgsMode) {
-                    const dbPos = args.at(-1);
-                    if (dbPos instanceof DbArg) {
-                        db = dbPos.getDb();
-                        queryArgs = args.slice(0, -1);
-                    } else {
-                        queryArgs = args;
-                    }
+                const dbPos = args.at(-1);
+                if (dbPos instanceof DbArg) {
+                    db = dbPos.getDb();
+                    queryArgs = args.slice(0, -1);
                 } else {
-                    if (args.length > 1) {
-                        const errorMessage = `This query method was declared without spreadArgs = true, use a single QueryMethodArg instead`;
-                        this.logger.logError(`Cannot run '${String(originalKey)}': ${errorMessage}`);
-
-                        throw new VSRepoError(errorMessage, VSRepoErrorType.DYNAMIC);
-                    }
-                    const queryArgValidated = this.validator.validateQueryMethodArg(args[0]);
-                    db = queryArgValidated.db;
-                    queryArgs = queryArgValidated.args;
+                    queryArgs = args;
                 }
 
                 db ??= this.adapter.getDbClient();
@@ -1105,10 +1125,10 @@ export class DynamicMethodsResolver<T, K> {
                 let finalArgs = queryArgs;
 
                 if (this.vsPlaceholders) {
-                    const compiled = VSPlaceholdersParser.parse(valueQueryMethod, queryArgs ?? []).compile(index =>
-                        this.adapter.getPlaceholder!(index),
+                    const compiled = VSPlaceholdersParser.parse(valueQueryMethod, queryArgs).compile(index =>
+                        this.adapter.getPlaceholder(index),
                     );
-                    finalQuery = compiled.text;
+                    finalQuery = compiled.query;
                     finalArgs = compiled.args;
                 }
 

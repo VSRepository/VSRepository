@@ -25,16 +25,15 @@ For queries whose SQL is too specific for this builder's model — window functi
 
 ## Building the query
 
-| Method                 | Description                                                                                                                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `select(select)`       | Fields (and nested relation fields) to select — same shape as in [`select` and `relations`](./select-and-relations.md#select-and-relations). Replaces any previous `select`. |
-| `relations(relations)` | Relations to eagerly load. Replaces any previous `relations`.                                                                                                                |
-| `where(where)`         | The filter: the same `VSRepoWhere` used by the rest of the library (field operators, relation filters and `AND`/`OR`/`NOT`). Replaces any previous filter.                   |
-| `orderBy(order)`       | An object or an array of objects with `"asc"`/`"desc"` (lower or upper case). Only scalar fields can be ordered. Replaces any previous ordering.                             |
-| `limit(limit)`         | Maximum number of records. Must be a non-negative integer.                                                                                                                   |
-| `offset(offset)`       | Number of records to skip. Must be a non-negative integer.                                                                                                                   |
-| `distinctOn(fields)`   | A primitive field, or an array of them, to apply `distinct` on. Only used by `getResult()`.                                                                                  |
-| `see(mode)`            | Soft-delete visibility: `"active"` (default), `"removed"` or `"all"`. See [Soft-delete with `see()`](#soft-delete-with-see).                                                 |
+| Method                 | Description                                                                                                                                                                             |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `select(select)`       | Fields (and nested relation fields) to select — same shape as in [`select` and `relations`](./select-and-relations.md#select-and-relations). Replaces any previous `select`.            |
+| `relations(relations)` | Relations to eagerly load. Replaces any previous `relations`.                                                                                                                           |
+| `where(where)`         | The filter: the same `VSRepoWhere` used by the rest of the library (field operators, relation filters and `AND`/`OR`/`NOT`). Replaces any previous filter.                              |
+| `orderBy(order)`       | An object or an array of objects with `"asc"`/`"desc"` (lower or upper case). Scalar fields and to-one relations (as a nested ordering) can be ordered. Replaces any previous ordering. |
+| `limit(limit)`         | Maximum number of records. Must be a non-negative integer.                                                                                                                              |
+| `offset(offset)`       | Number of records to skip. Must be a non-negative integer.                                                                                                                              |
+| `see(mode)`            | Soft-delete visibility: `"active"` (default), `"removed"` or `"all"`. See [Soft-delete with `see()`](#soft-delete-with-see).                                                            |
 
 Calling `where()` again replaces the previous filter, and the [soft-delete](#soft-delete-with-see) filter is added on top of it when the query runs. Since the builder is mutable, a filter that depends on optional inputs is easiest to build as an object first:
 
@@ -61,22 +60,22 @@ async function search(filters: { name?: string; onlyActive?: boolean; page: numb
 
 | Method                  | Returns                               | Adapter call         | Sent to the adapter                                                                  |
 | ----------------------- | ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
-| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `order`, `pagination`, `distinct`                    |
+| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `order`, `pagination`                                |
 | `getOneResult()`        | `Entity \| null`                      | `findOne`            | `where`, `select`, `relations`, `order`, `pagination`                                |
 | `getOneResultOrThrow()` | `Entity` (throws if not found)        | `findOneOrThrow`     | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getCount()`            | `number`                              | `count`              | `where`, `order`, `pagination`                                                       |
+| `getCount()`            | `number`                              | `count`              | `where`                                                                              |
 | `getExistence()`        | `boolean`                             | `exists`             | `where`                                                                              |
 | `getResultAndCount()`   | `{ result: Entity[]; count: number }` | `findMany` + `count` | `findMany`: `where`, `select`, `relations`, `order`, `pagination` — `count`: `where` |
 
 Every terminal method also applies the [`see`](#soft-delete-with-see) mode to the `where` and runs on the builder's `db` (see [`setDb()`](#transactions-and-setdb)). Notes:
 
 - Results are typed as the whole `Entity`, just like the base methods — `select` and `relations` change what is loaded, not the type. See [Strict return typing with `InferMethodReturn`](./select-and-relations.md#strict-return-typing-with-infermethodreturn) if you want it narrowed.
-- `distinctOn()` is only sent by `getResult()`: `count` doesn't support `distinct`, so `getCount()`, `getExistence()` and `getResultAndCount()` don't use it.
-- `getCount()` forwards `order` and `pagination` to the adapter's `count`. If you want the total of a builder that has pagination, use `getResultAndCount()` or count from a [`clone()`](#reusing-and-cloning-a-builder) without it.
+- `getCount()` and `getExistence()` only send the `where` (plus the `db`): `order`, `limit`/`offset`, `select` and `relations` are ignored, so a builder that has pagination still counts every matching record.
+- There is no `distinct` support in this builder — for `select distinct`, use [`selectDistinct()`](./raw-query-builder.md#building-the-query) on the raw query builder.
 
 ## Pagination with `getResultAndCount()`
 
-Fetches a page and the total number of matching records in one call, like MikroORM's `getResultAndCount()`. `result` honors `order`, `limit` and `offset`; `count` ignores `order` and `pagination` on purpose — it's the total of records matching the `where`, so you can compute the number of pages. Both queries run in parallel with the same resolved `where` and the same `db`.
+Fetches a page and the total number of matching records in one call, like MikroORM's `getResultAndCount()`. `result` honors `order`, `limit` and `offset`; `count` ignores `order` and `pagination` on purpose — it's the total of records matching the `where`, so you can compute the number of pages. The two queries run one after the other, with the same resolved `where` and the same `db`.
 
 ```typescript
 const pageSize = 20;
@@ -94,7 +93,7 @@ const totalPages = Math.ceil(count / pageSize);
 
 ## Soft-delete with `see()`
 
-On a repository with [`softRemoveKey`](./base-methods.md#soft-delete), the builder only sees non-deleted records by default, like every other method. Use `see()` to change that — it applies to every terminal method (both queries of `getResultAndCount()` included):
+On a repository with [soft-delete enabled](./base-methods.md#soft-delete) (`@EnableSoftDelete`), the builder only sees non-deleted records by default, like every other method. Use `see()` to change that — it applies to every terminal method (both queries of `getResultAndCount()` included):
 
 ```typescript
 await userRepository.createQueryBuilder().getResult(); // default — only non-deleted records
@@ -102,7 +101,7 @@ await userRepository.createQueryBuilder().see("removed").getResult(); // only so
 await userRepository.createQueryBuilder().see("all").getResult(); // everything, ignoring soft-delete
 ```
 
-Repositories without `softRemoveKey` ignore `see()`.
+Repositories without `@EnableSoftDelete` ignore `see()`.
 
 ## Transactions and `setDb()`
 
@@ -119,11 +118,11 @@ await userRepository.transaction(async tx => {
 });
 ```
 
-`setDb()` is also handy together with `clone()` to run the same query against another client without touching the original builder.
+`setDb()` returns the builder itself, so it can be chained (`qb.setDb(tx).getResult()`). It's also handy together with `clone()` to run the same query against another client without touching the original builder.
 
 ## Reusing and cloning a builder
 
-`clone()` returns an independent builder with the same filter, options, `distinctOn` fields, `see` mode and `db`. Changes made to either one afterwards don't affect the other:
+`clone()` returns an independent builder with the same filter, options, `see` mode and `db`. Changes made to either one afterwards don't affect the other:
 
 ```typescript
 const active = userRepository.createQueryBuilder().where({ active: true });
@@ -134,7 +133,7 @@ const firstPage = await active.clone().orderBy({ name: "asc" }).limit(10).getRes
 
 ## Validation and errors
 
-Arguments are validated as soon as they're passed to a chained method, not when the query runs. An invalid one throws a `VSRepoError` with `type: VSRepoErrorType.QUERY_BUILDER`, whose message starts with the offending argument, and leaves the builder unchanged. `limit` and `offset` must be non-negative integers; for the other methods the validation checks the shape of the argument.
+`limit` and `offset` are validated as soon as they're passed, not when the query runs: a value that isn't a non-negative integer throws a `VSRepoError` with `type: VSRepoErrorType.QUERY_BUILDER`, whose message starts with the offending argument, and leaves the builder unchanged.
 
 ```typescript
 import { VSRepoError, VSRepoErrorType } from "vsrepo";
@@ -152,13 +151,12 @@ Errors thrown by the adapter while the query runs (e.g. `VSRepoAdapterError`) ar
 
 ## Query builder logs
 
-The builder uses the repository's logger, so it follows the same `logLevel` and `logSlowThresholdMs` (see [Logging](./logging.md#logging)):
+The builder uses the repository's logger, so it follows the same `logLevel` (see [Logging](./logging.md#logging)):
 
 - `DEBUG` traces every chained call and, for each terminal method, the resolved query: the `see` mode, the final `where` (already including the soft-delete filter) and the options sent to the adapter. The `db` is never logged.
-- Every terminal method is timed as `run query builder <method>`: the duration is logged at `DEBUG` and promoted to `WARN` when it exceeds `logSlowThresholdMs`.
-- Invalid arguments are logged at `ERROR` right before the `VSRepoError` is thrown.
+- Every terminal method is timed as `run query builder <method>`, and the duration is logged at `DEBUG`.
 
-For example, `.where({ active: true }).orderBy({ createdAt: "desc" }).limit(20).getResultAndCount()` on a repository with `softRemoveKey` prints this at `DEBUG` (timestamps and the lines of the chained calls omitted):
+For example, `.where({ active: true }).orderBy({ createdAt: "desc" }).limit(20).getResultAndCount()` on a repository with soft-delete enabled prints this at `DEBUG`:
 
 ```text
 [DEBUG] [UserRepositoryLogger] VSQueryBuilder: getResultAndCount

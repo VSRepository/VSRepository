@@ -6,53 +6,250 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev.2] - 2026-10-27
+
+### Added
+
+- New base method `findAndCount(where?, options?)`, which returns the matching records and the total of matching records as a `PaginatedResult` (`{ result, count }`) — `result` honors `order`, `pagination` and `defaultOrdering`, while `count` ignores `order` and `pagination`
+- New dynamic-method prefixes `findAndCountBy` and `findAndCountWhere`, the dynamic counterparts of `findAndCount` (they accept the `Paginated`, `Ordered` and `OrderBy` suffixes like the rest of the `find…` family)
+- `Ordering`/`OrderByField` now accept **to-one relations** as a nested ordering of the related entity (up to 3 levels deep), e.g. `{ author: { company: { name: "asc" } } }`
+- Exported `MergeConfig`, `MergeFieldConfig`, `MergeFields`, and `MergeOptions` for public use with `VSRepository.merge()` and per-call merge customization
+- Documented the default behavior of the merge options: `undefinedBehavior` defaults to `"ignore"`, `nullBehavior` defaults to `"keep"`, and array `concat` strategies default to `whosFirst: "target"`
+- New `mergeConfig` option, in the repository's constructor options and in the options of `merge()` (which replaces the repository's one for that call), to configure how the merge is done: `undefinedBehavior` (default `"ignore"`), `nullBehavior` (default `"keep"`) and per-field strategies in `fields` (`to-one`, `to-many`, `concat` — `whosFirst` defaults to `"target"` — and `custom`)
+
+### Changed
+
+- `AdapterQueryOptions.modifying` is now optional
+- `PaginatedResult` is now also the return type of `findAndCount` and of the `findAndCount…` dynamic methods (it was only returned by `VSQueryBuilder.getResultAndCount()`)
+- Internal: the dynamic method resolver now describes each supported prefix in a declarative table instead of a long `if`/`else` chain
+- Inherited `@DynamicMethod` and `@QueryMethod` declarations with the same property key are now deduplicated, with the child declaration taking precedence
+- **BREAKING:** `merge()` now takes a `where` instead of a primary key — `merge(where, obj, options?)` — and accepts `MergeOptions` (`MethodOptions` plus `mergeConfig`); it is implemented by `VSRepository` itself, in memory, on top of the adapter's `findOne` (applying `defaultOrdering`)
+
+### Removed
+
+- **BREAKING:** Dynamic methods without `By` or `Where` are no longer supported for `findOneOrThrow`, `findOne` and `count`; use the corresponding base methods or add a `By`/`Where` filter
+- **BREAKING:** The `merge` method was removed from the `VSRepoAdapter` contract — adapters no longer need to implement it
+
+## [3.0.0-dev.2] - 2026-10-27 (Português)
+
+### Adicionado
+
+- Novo método base `findAndCount(where?, options?)`, que retorna os registros que baterem e o total de registros que batem como um `PaginatedResult` (`{ result, count }`) — `result` respeita `order`, `pagination` e `defaultOrdering`, enquanto `count` ignora `order` e `pagination`
+- Novos prefixos de métodos dinâmicos `findAndCountBy` e `findAndCountWhere`, as versões dinâmicas do `findAndCount` (aceitam os sufixos `Paginated`, `Ordered` e `OrderBy` como o resto da família `find…`)
+- `Ordering`/`OrderByField` agora aceitam **relações to-one** como uma ordenação aninhada da entidade relacionada (até 3 níveis de profundidade), ex.: `{ author: { company: { name: "asc" } } }`
+- Tipos exportados `MergeConfig`, `MergeFieldConfig`, `MergeFields` e `MergeOptions` para uso público com `VSRepository.merge()` e customização do merge por chamada
+- Documentação do comportamento padrão das opções de merge: `undefinedBehavior` usa `"ignore"`, `nullBehavior` usa `"keep"` e `concat` em arrays usa `whosFirst: "target"` por padrão
+- Nova option `mergeConfig`, nas options do construtor do repository e nas options do `merge()` (que substitui a do repository naquela chamada), para configurar como o merge é feito: `undefinedBehavior` (padrão `"ignore"`), `nullBehavior` (padrão `"keep"`) e estratégias por campo em `fields` (`to-one`, `to-many`, `concat` — `whosFirst` tem padrão `"target"` — e `custom`)
+
+### Alterado
+
+- `AdapterQueryOptions.modifying` agora é opcional
+- `PaginatedResult` agora também é o tipo de retorno do `findAndCount` e dos métodos dinâmicos `findAndCount…` (antes só era retornado pelo `VSQueryBuilder.getResultAndCount()`)
+- Interno: o resolver de métodos dinâmicos agora descreve cada prefixo suportado em uma tabela declarativa, em vez de uma longa cadeia de `if`/`else`
+- Declarações herdadas de `@DynamicMethod` e `@QueryMethod` com a mesma chave de propriedade agora são deduplicadas, com a declaração da classe filha tendo precedência
+- **BREAKING:** O `merge()` agora recebe um `where` em vez de uma chave primária — `merge(where, obj, options?)` — e aceita `MergeOptions` (`MethodOptions` mais `mergeConfig`); ele é implementado pelo próprio `VSRepository`, em memória, em cima do `findOne` do adapter (aplicando o `defaultOrdering`)
+
+### Removido
+
+- **BREAKING:** Métodos dinâmicos sem `By` ou `Where` não são mais suportados para `findOneOrThrow`, `findOne` e `count`; use os métodos base correspondentes ou adicione um filtro `By`/`Where`
+- **BREAKING:** O método `merge` foi removido do contrato do `VSRepoAdapter` — os adapters não precisam mais implementá-lo
+
+## [3.0.0-dev.1] - 2026-10-25
+
+### Added
+
+- The `WithIgnoreConflicts` type is now exported from the package root
+
+### Changed
+
+- CI now runs the type check and runs the test suite with `npm`
+
+### Removed
+
+- Unused dev dependencies: `jest`, `ts-jest`, `@jest/globals`, `@types/jest`, `cross-env`, `dotenv` and `zod`
+
+## [3.0.0-dev.1] - 2026-10-25 (Português)
+
+### Adicionado
+
+- O tipo `WithIgnoreConflicts` agora é exportado pela raiz do pacote
+
+### Alterado
+
+- A CI agora roda a checagem de tipagem e roda a suíte de testes com `npm`
+
+### Removido
+
+- Dev dependencies não utilizadas: `jest`, `ts-jest`, `@jest/globals`, `@types/jest`, `cross-env`, `dotenv` e `zod`
+
+## [3.0.0-dev] - 2026-10-25
+
+> Major release in development. See [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md) for the full breakdown. The list below may still change before the stable release.
+
+### Changed
+
+- **BREAKING:** The package is now **ESM** (`"type": "module"`) and requires **Node.js 22+** (it was CommonJS on Node 18+)
+- **BREAKING:** Base methods were reworked around `where` filters: `getAll` → `find(where?, options?)`, `getList` → `find` with an `in` filter, `saveList` → `save` (now accepts an array), `removeList` → `deleteMany`, `total` → `count`, `softRemoveList` → `softDeleteMany`, `restore(pk)` → `recover(id)` (`restore` now takes a `where`) and `restoreList` → `restoreMany`
+- **BREAKING:** `increment`, `decrement`, `multiply` and `divide` now take `(field, value, where, options?)` instead of `(pk, field, value, options?)`
+- **BREAKING:** Soft-delete is now enabled with the `@EnableSoftDelete(field?)` class decorator instead of the `softRemoveKey` constructor option
+- **BREAKING:** `getPlaceholder()` is now a required method of `VSRepoAdapter`, and `vsPlaceholders` is **enabled by default**, so raw SQL strings use `?1`, `?2`, ... unless `vsPlaceholders: false` is set
+- **BREAKING:** `@QueryMethod` methods always receive plain positional arguments (the `spreadArgs`/`singleArg` options and the `QueryArgs`/`QueryMethodArg` types were removed); `withDb(tx)` is still the optional last argument
+- **BREAKING:** Runtime validation was removed along with the `valibot` dependency — validation is now type-level only, and the `VSRepoErrorType.DECORATOR` and `VSRepoErrorType.VALIDATOR` types were removed
+- **BREAKING:** Slow-operation logging was removed, including the `logSlowThresholdMs` option — durations are only logged at `DEBUG`
+- **BREAKING:** `TransactionIsolationLevel` was renamed to `VSRepoIsolationLevel`, and `isolationLevel` also accepts the enum's string values (e.g. `"Serializable"`)
+- **BREAKING:** `distinct` support was removed from dynamic methods (the `Distinct` suffix) and from `VSQueryBuilder` (`distinctOn()`) — only `VSRawQueryBuilder` supports it, through `selectDistinct()`
+- **BREAKING:** Dynamic methods no longer support the `create*` prefixes, the `IgnoreConflicts` suffix or the `Optional` keyword — use the new base methods `create`, `createMany` and `createManyReturning` (with `ignoreConflicts`)
+- **BREAKING:** `VSQueryBuilder.setDb()` and `VSRawQueryBuilder.setDb()` now return the builder itself instead of `void`, and `VSQueryBuilder.getCount()` only sends the `where` to the adapter
+- **BREAKING:** The `VSRepoAdapter` contract changed (required `getPlaceholder()`, new `incrementMany`/`decrementMany`/`multiplyMany`/`divideMany`, `order`/`pagination` forwarded to the read methods, stricter option types) — adapters built for v2 must be updated
+- **BREAKING:** `VSSql` errors now have `type: VSRepoErrorType.VSSQL`, and `VSSql.compile()` uses `getVsPlaceholder` by default
+- Dynamic methods now forward `options.order` and `options.pagination` to the adapter, and `get`/`getOrThrow` accept `MethodOptions` and apply the repository's `defaultOrdering`
+- `VSRepoWhere` typing is stricter and more robust (e.g. `between` only on numbers, bigints, dates and decimals; string filters only on strings; `readonly` arrays in relations)
+- `VSRawQueryBuilder.orderBy()` accepts a list of `[column, direction]` tuples, and the generated SQL keywords are lowercase
+- `resolveDynamicMethods()` now logs its `WARN` only once, and the resolver only logs the methods to resolve when there is at least one
+
+### Added
+
+- New base methods: `find`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany` and `getAdapter()`
+- Atomic batch operations: `incrementMany`, `decrementMany`, `multiplyMany` and `divideMany`
+- `@EnableSoftDelete` decorator and `VSRepository.setGlobalConfig()` for shared defaults (`softDeleteField`, `logLevel`, `lazyDynamicMethods`, `vsPlaceholders`)
+- Static `VSRepository.getQueryBuilder()` and `VSRepository.getRawQueryBuilder()`
+- `VSLogLevel.NONE`, which disables logging completely
+- `VSRawQueryBuilder.selectDistinct()`
+- New dynamic-method filter aliases (`Is` prefix, `Equal`/`NotEqual`, `Containing`, `StartingWith`, `EndingWith`, `IgnoringCase`, `Gt`/`Gte`/`Lt`/`Lte`, `After`/`Before`, `True`/`False`/`Null`/`NotNull`) and the new `Like`/`NotLike` filters (`like` in `VSRepoWhere`)
+- Public placeholder helpers `getVsPlaceholder`, `getPostgresPlaceholder`, `getCockroachPlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder` and `getSqlitePlaceholder`, plus the `GetPlaceholderFn` type
+- `VSRepoErrorType.VSSQL` and `VSRepoErrorType.VS_PLACEHOLDERS`
+- New utility types: `ClientOrTransaction`, `SimpleMethodOptions`, `VSRepoGlobalConfig` and `VSRepoLogicalOperators`
+
+### Removed
+
+- Base methods `getAll`, `getList`, `saveList`, `removeList`, `total`, `softRemoveList` and `restoreList` (see the renames above)
+- Constructor options `softRemoveKey` and `logSlowThresholdMs`, `@QueryMethod` options `spreadArgs`/`singleArg`, and the `QueryArgs`/`QueryMethodArg` types
+- `valibot` dependency and every runtime validation built on it
+
+### Fixed
+
+- Relation keywords (`With`, `Without`, `Some`, `Every`, `None`) in dynamic methods are no longer recognized at the start of a field name, fixing names such as `findByWithDependents` and `findBySonWithWithDependents`
+- `get` and `getOrThrow` now apply the repository's `defaultOrdering`
+- `VSQueryBuilder` no longer logs the `db` object
+
+### Documentation
+
+- Every guide (English and Portuguese) was updated for v3, and JSDoc was added or updated on every public API surface
+- New [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md) guide; `migrating-from-v1.md` was renamed to [`migrating-from-v1-to-v2.md`](./docs/migrating-from-v1-to-v2.md)
+
+## [3.0.0-dev] - 2026-10-25 (Português)
+
+> Release major em desenvolvimento. Veja [Migrando da v2 para a v3](./docs/migrating-from-v2-to-v3.pt-BR.md) para o detalhamento completo. A lista abaixo ainda pode mudar antes do release estável.
+
+### Alterado
+
+- **BREAKING:** O pacote agora é **ESM** (`"type": "module"`) e exige **Node.js 22+** (era CommonJS no Node 18+)
+- **BREAKING:** Os métodos base foram retrabalhados em torno de filtros `where`: `getAll` → `find(where?, options?)`, `getList` → `find` com filtro `in`, `saveList` → `save` (agora aceita um array), `removeList` → `deleteMany`, `total` → `count`, `softRemoveList` → `softDeleteMany`, `restore(pk)` → `recover(id)` (o `restore` agora recebe um `where`) e `restoreList` → `restoreMany`
+- **BREAKING:** `increment`, `decrement`, `multiply` e `divide` agora recebem `(field, value, where, options?)` em vez de `(pk, field, value, options?)`
+- **BREAKING:** O soft-delete agora é habilitado com o decorator de classe `@EnableSoftDelete(field?)` em vez da option `softRemoveKey` do construtor
+- **BREAKING:** `getPlaceholder()` agora é um método obrigatório do `VSRepoAdapter`, e o `vsPlaceholders` vem **ativo por padrão**, então strings SQL cruas usam `?1`, `?2`, ... a menos que `vsPlaceholders: false` seja definido
+- **BREAKING:** Os métodos `@QueryMethod` sempre recebem argumentos posicionais simples (as options `spreadArgs`/`singleArg` e os tipos `QueryArgs`/`QueryMethodArg` foram removidos); `withDb(tx)` continua sendo o último argumento opcional
+- **BREAKING:** A validação em runtime foi removida junto com a dependência `valibot` — a validação agora é apenas em nível de tipos, e os tipos `VSRepoErrorType.DECORATOR` e `VSRepoErrorType.VALIDATOR` foram removidos
+- **BREAKING:** Os logs de operação lenta foram removidos, incluindo a option `logSlowThresholdMs` — as durações só são logadas em `DEBUG`
+- **BREAKING:** `TransactionIsolationLevel` foi renomeado para `VSRepoIsolationLevel`, e `isolationLevel` também aceita os valores string do enum (ex.: `"Serializable"`)
+- **BREAKING:** O suporte a `distinct` foi removido dos métodos dinâmicos (sufixo `Distinct`) e do `VSQueryBuilder` (`distinctOn()`) — apenas o `VSRawQueryBuilder` o suporta, via `selectDistinct()`
+- **BREAKING:** Os métodos dinâmicos não suportam mais os prefixos `create*`, o sufixo `IgnoreConflicts` nem a palavra-chave `Optional` — use os novos métodos base `create`, `createMany` e `createManyReturning` (com `ignoreConflicts`)
+- **BREAKING:** `VSQueryBuilder.setDb()` e `VSRawQueryBuilder.setDb()` agora retornam o próprio builder em vez de `void`, e o `VSQueryBuilder.getCount()` envia apenas o `where` ao adapter
+- **BREAKING:** O contrato do `VSRepoAdapter` mudou (`getPlaceholder()` obrigatório, novos `incrementMany`/`decrementMany`/`multiplyMany`/`divideMany`, `order`/`pagination` repassados aos métodos de leitura, tipos de options mais rígidos) — adapters feitos para a v2 precisam ser atualizados
+- **BREAKING:** Os erros do `VSSql` agora têm `type: VSRepoErrorType.VSSQL`, e o `VSSql.compile()` usa `getVsPlaceholder` por padrão
+- Os métodos dinâmicos agora repassam `options.order` e `options.pagination` ao adapter, e `get`/`getOrThrow` aceitam `MethodOptions` e aplicam o `defaultOrdering` do repository
+- A tipagem do `VSRepoWhere` ficou mais rígida e robusta (ex.: `between` apenas em números, bigints, datas e decimais; filtros de string apenas em strings; arrays `readonly` em relações)
+- `VSRawQueryBuilder.orderBy()` aceita uma lista de tuplas `[column, direction]`, e as palavras-chave do SQL gerado ficam em minúsculas
+- `resolveDynamicMethods()` agora loga o seu `WARN` apenas uma vez, e o resolver só loga os métodos a resolver quando há pelo menos um
+
+### Adicionado
+
+- Novos métodos base: `find`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany` e `getAdapter()`
+- Operações atômicas em lote: `incrementMany`, `decrementMany`, `multiplyMany` e `divideMany`
+- Decorator `@EnableSoftDelete` e `VSRepository.setGlobalConfig()` para padrões compartilhados (`softDeleteField`, `logLevel`, `lazyDynamicMethods`, `vsPlaceholders`)
+- Métodos estáticos `VSRepository.getQueryBuilder()` e `VSRepository.getRawQueryBuilder()`
+- `VSLogLevel.NONE`, que desativa o logging por completo
+- `VSRawQueryBuilder.selectDistinct()`
+- Novos aliases de filtro nos métodos dinâmicos (prefixo `Is`, `Equal`/`NotEqual`, `Containing`, `StartingWith`, `EndingWith`, `IgnoringCase`, `Gt`/`Gte`/`Lt`/`Lte`, `After`/`Before`, `True`/`False`/`Null`/`NotNull`) e os novos filtros `Like`/`NotLike` (`like` no `VSRepoWhere`)
+- Helpers públicos de placeholder `getVsPlaceholder`, `getPostgresPlaceholder`, `getCockroachPlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder` e `getSqlitePlaceholder`, além do tipo `GetPlaceholderFn`
+- `VSRepoErrorType.VSSQL` e `VSRepoErrorType.VS_PLACEHOLDERS`
+- Novos tipos utilitários: `ClientOrTransaction`, `SimpleMethodOptions`, `VSRepoGlobalConfig` e `VSRepoLogicalOperators`
+
+### Removido
+
+- Os métodos base `getAll`, `getList`, `saveList`, `removeList`, `total`, `softRemoveList` e `restoreList` (veja as renomeações acima)
+- As options de construtor `softRemoveKey` e `logSlowThresholdMs`, as options `spreadArgs`/`singleArg` do `@QueryMethod`, e os tipos `QueryArgs`/`QueryMethodArg`
+- A dependência `valibot` e todas as validações em runtime que dependiam dela
+
+### Corrigido
+
+- As palavras-chave de relação (`With`, `Without`, `Some`, `Every`, `None`) nos métodos dinâmicos não são mais reconhecidas no começo do nome de um campo, corrigindo nomes como `findByWithDependents` e `findBySonWithWithDependents`
+- `get` e `getOrThrow` agora aplicam o `defaultOrdering` do repository
+- O `VSQueryBuilder` não loga mais o objeto `db`
+
+### Documentação
+
+- Todos os guias (inglês e português) foram atualizados para a v3, e JSDoc foi adicionado ou atualizado em toda a superfície pública da API
+- Novo guia [Migrando da v2 para a v3](./docs/migrating-from-v2-to-v3.pt-BR.md); o `migrating-from-v1.md` foi renomeado para [`migrating-from-v1-to-v2.pt-BR.md`](./docs/migrating-from-v1-to-v2.pt-BR.md)
+
 ## [2.7.3] - 2026-09-29
 
 ### Fixed
+
 - `@DynamicMethod` and `@QueryMethod` no longer leak the methods declared in a subclass into its parent class and its sibling classes. The decorators read the list of declared methods with `Reflect.getMetadata`, which walks the prototype chain, and appended to it — so a subclass's first decorator pushed into the very array owned by its parent, and every class in the hierarchy ended up sharing one list. The visible effects were a parent (or sibling) repository resolving methods it never declared, and redeclaring a method in a subclass (e.g. with a different `injectOrdering`) also changing how the parent resolved it. Each class now writes to its own list, seeded with a copy of what it inherits: a subclass still inherits every dynamic and query method of its parent, at any depth, but never alters it. Repositories that don't extend another decorated repository are unaffected
 
 ### Documentation
+
 - New [Inheriting from another repository](./docs/dynamic-methods.md#inheriting-from-another-repository) section in the Dynamic methods guide (linked from the Query methods guide), describing how `@DynamicMethod`/`@QueryMethod` behave across class inheritance
 
 ## [2.7.3] - 2026-09-29 (Português)
 
 ### Corrigido
+
 - `@DynamicMethod` e `@QueryMethod` não vazam mais os métodos declarados numa subclasse para a classe pai nem para as classes irmãs. Os decorators liam a lista de métodos declarados com `Reflect.getMetadata`, que percorre a cadeia de protótipos, e acrescentavam nela — então o primeiro decorator de uma subclasse empurrava para o próprio array do pai, e todas as classes da hierarquia acabavam compartilhando uma única lista. Os efeitos visíveis eram um repository pai (ou irmão) resolvendo métodos que nunca declarou, e redeclarar um método numa subclasse (ex.: com outro `injectOrdering`) também alterando a forma como o pai o resolvia. Agora cada classe escreve na sua própria lista, iniciada com uma cópia do que herda: a subclasse continua herdando todos os métodos dinâmicos e query methods do pai, em qualquer profundidade, mas nunca o altera. Repositories que não estendem outro repository decorado não são afetados
 
 ### Documentação
+
 - Nova seção [Herdando de outro repository](./docs/dynamic-methods.pt-BR.md#herdando-de-outro-repository) no guia de Métodos dinâmicos (com link a partir do guia de Query methods), descrevendo como `@DynamicMethod`/`@QueryMethod` se comportam com herança de classes
 
 ## [2.7.2] - 2026-09-29
 
 ### Fixed
+
 - Corrects the typing of the `VSRepoAdapter` `merge` to correctly return `Promise<(K & T) | null>`, correctly aligning with the behavior of the `VSRepository` `merge` which returns `null` when not found.
 
 ## [2.7.2] - 2026-09-29 (Português)
 
 ### Corrigido
+
 - Corrige a tipagem do método `merge` do `VSRepoAdapter` para retornar corretamente `Promise<(K & T) | null>`, alinhando corretamente ao comportamento do `merge` do `VSRepository` que retorna `null` quando não encontrado
 
 ## [2.7.1] - 2026-09-28
 
 ### Fixed
+
 - A dynamic method now resolves every parameter by its own position instead of relying on the end of the argument list — the `options` are read from the first argument after the expected parameters, and the payload (`data`/`create`/`update`), `order` and `pagination` of a method called with more than one extra argument are now read from the correct slots instead of shifting onto the `options` object. Arguments beyond the expected parameters plus `options` are ignored
 - A failing dynamic method is no longer logged at `ERROR` by the resolver — the error is simply rethrown to the caller and the execution time is still recorded by `endPerformLog`, leaving `ERROR` for validation and guard-clause failures. This is the last call site that still logged it: the base methods, `query()` and the query methods had already stopped in **2.0.0**
 
 ### Documentation
+
 - Both logging guides now describe `ERROR` accurately: it is logged for validation and guard-clause failures right before the `VSRepoError` is thrown, while a failure raised by the adapter itself is no longer logged and simply propagates to the caller
 
 ## [2.7.1] - 2026-09-28 (Português)
 
 ### Corrigido
+
 - Um método dinâmico agora resolve cada parâmetro pela sua própria posição em vez de depender do fim da lista de argumentos — as `options` são lidas do primeiro argumento depois dos parâmetros esperados, e o payload (`data`/`create`/`update`), o `order` e a `pagination` de um método chamado com mais de um argumento extra passam a ser lidos dos slots corretos, em vez de deslocarem para o objeto de options. Argumentos além dos parâmetros esperados mais as options são ignorados
 - Um método dinâmico que falha não é mais logado em `ERROR` pelo resolver — o erro simplesmente é relançado para quem chamou e o tempo de execução continua sendo registrado por `endPerformLog`, deixando o `ERROR` para falhas de validação e de guarda. Esta é a última chamada que ainda registrava o erro: os métodos base, o `query()` e os query methods já haviam parado na **2.0.0**
 
 ### Documentação
+
 - Os dois guias de logging agora descrevem o `ERROR` com precisão: ele é registrado para falhas de validação e de guarda logo antes do `VSRepoError` ser lançado, enquanto uma falha lançada pelo próprio adapter não é mais registrada e simplesmente propaga para quem chamou
 
 ## [2.7.0] - 2026-09-26
 
 ### Added
+
 - **`createRawQueryBuilder(db?)`** — new method on every `VSRepository` that returns a fluent, SQL-agnostic `VSRawQueryBuilder` for hand-written `SELECT` queries too SQL-specific (window functions, vendor-specific syntax, ad-hoc subqueries, CTEs, ...) for `createQueryBuilder()`'s `where`/`relations` model. Chain `select`, `from`, `innerJoin`/`leftJoin`/`rightJoin`/`fullJoin`, `where`/`andWhere`/`orWhere`, `groupBy`, `having`/`andHaving`/`orHaving`, `orderBy`, `limit` and `offset` — each accepting either a raw, trusted string (an identifier, or a parameter-free condition for `on`/`where`/`having`, e.g. `.andWhere("deleted_at is null")`) or a `VSSql` fragment for anything parameterized. `from()`/joins also accept another `VSRawQueryBuilder`, or a subquery function (`sub => sub.select(...)...`) that receives a fresh builder sharing the same `db`/adapter/logger, compiled inline as a subquery; any subquery can also be spliced directly into a `VSSql` fragment via `toVSSql()` (e.g. inside a `WHERE ... IN (...)`). `with(name, query, columns?)`/`withRecursive(name, query, columns?)` add named CTEs (a single `WITH RECURSIVE` clause once any CTE is recursive) that the rest of the query can reference like real tables. Run it with `toVSSql()` (the compiled `VSSql` fragment), `toSql()` (the plain SQL string, rendered with the adapter's placeholder syntax) or `execute<T>()` (runs it through the adapter and returns the result); all three require the adapter to implement `getPlaceholder()`. The builder respects `clone()` and lazy `setDb()`, same as `createQueryBuilder()`, and is exported as `VSRawQueryBuilder`/`VSRawQueryBuilderTarget`/`VSRawQueryBuilderCteQuery`. Every raw string accepted as an identifier, condition, alias or CTE name/column is validated as non-empty/non-blank as soon as it's passed, throwing a `VSRepoError` instead of silently compiling into broken SQL
 - **`VSSql`** — ORM-agnostic, composable SQL fragments for raw queries: build one with `VSSql.sql` (a tagged template where every interpolated value becomes a bound parameter), `VSSql.raw` (inserts trusted, unparameterized text — for identifiers only, never user input), `VSSql.join` (builds a parameterized list, e.g. an `IN (...)`) and `VSSql.empty` (contributes no text/params, for conditional fragments). Fragments nest freely and the placeholder numbering stays correct; passing one to `VSRepository.query()` compiles it through `adapter.getPlaceholder()` — so `VSSql` works with every database and is safe from SQL injection by construction
 - **`vsPlaceholders`** constructor option — when `true`, raw SQL strings passed to `query()` and `@QueryMethod` use VSRepository's own agnostic, 1-based, positional placeholders (`?1`, `?2`, ...) instead of the adapter's native syntax; the same index can repeat (`?1 ... ?1`) to reuse an argument. Requires the adapter to implement `getPlaceholder()` — enabling it without one throws a `VSRepoError`
@@ -60,11 +257,13 @@ All notable changes to this project will be documented in this file.
 - **Query method logs** — `query()` and `@QueryMethod` now log the compiled query and its args at `DEBUG` (the `db` is never logged) and time the execution (`Took Xms ...`, promoted to `WARN` above `logSlowThresholdMs`), like the rest of the library
 
 ### Documentation
+
 - New [Raw query builder](./docs/raw-query-builder.md) guide, covering `createRawQueryBuilder()`, building the query, subqueries (builder or function), CTEs with `with()`/`withRecursive()`, running it (`toVSSql`/`toSql`/`execute`), transactions/`setDb()`, cloning, validation and logs — added to both READMEs' documentation index, with a cross-link from the [Query builder](./docs/query-builder.md) guide
 
 ## [2.7.0] - 2026-09-26 (Português)
 
 ### Adicionado
+
 - **`createRawQueryBuilder(db?)`** — novo método em todo `VSRepository` que retorna um `VSRawQueryBuilder` fluente e agnóstico de SQL para queries `SELECT` escritas à mão, específicas demais (funções de janela, sintaxe específica do banco, subqueries ad-hoc, CTEs, ...) para o modelo `where`/`relations` do `createQueryBuilder()`. Encadeie `select`, `from`, `innerJoin`/`leftJoin`/`rightJoin`/`fullJoin`, `where`/`andWhere`/`orWhere`, `groupBy`, `having`/`andHaving`/`orHaving`, `orderBy`, `limit` e `offset` — cada um aceitando uma string crua e confiável (um identificador, ou uma condição sem parâmetros para `on`/`where`/`having`, ex.: `.andWhere("deleted_at is null")`) ou um fragmento `VSSql` para qualquer coisa parametrizada. `from()`/joins também aceitam outro `VSRawQueryBuilder`, ou uma função de subquery (`sub => sub.select(...)...`) que recebe um builder novo compartilhando o mesmo `db`/adapter/logger, compilada inline como subquery; qualquer subquery também pode ser inserida diretamente num fragmento `VSSql` via `toVSSql()` (ex.: dentro de um `WHERE ... IN (...)`). `with(name, query, columns?)`/`withRecursive(name, query, columns?)` adicionam CTEs nomeadas (uma única cláusula `WITH RECURSIVE` quando qualquer CTE é recursiva) que o resto da query pode referenciar como tabelas normais. Execute com `toVSSql()` (o fragmento `VSSql` compilado), `toSql()` (a string SQL simples, renderizada com a sintaxe de placeholder do adapter) ou `execute<T>()` (executa através do adapter e retorna o resultado); os três exigem que o adapter implemente `getPlaceholder()`. O builder respeita `clone()` e `setDb()` lazy, igual ao `createQueryBuilder()`, e é exportado como `VSRawQueryBuilder`/`VSRawQueryBuilderTarget`/`VSRawQueryBuilderCteQuery`. Toda string crua aceita como identificador, condição, alias ou nome/coluna de CTE é validada como não-vazia/não-em-branco assim que é passada, lançando um `VSRepoError` em vez de compilar silenciosamente em SQL quebrado
 - **`VSSql`** — fragmentos SQL agnósticos de ORM e componíveis para queries raw: monte um com `VSSql.sql` (um template literal com tag em que todo valor interpolado vira um parâmetro ligado), `VSSql.raw` (insere texto confiável e não parametrizado — só para identificadores, nunca input do usuário), `VSSql.join` (monta uma lista parametrizada, ex.: um `IN (...)`) e `VSSql.empty` (não contribui com texto nem parâmetros, para fragmentos condicionais). Fragmentos aninham livremente e a numeração dos placeholders continua correta; passar um para o `VSRepository.query()` compila via `adapter.getPlaceholder()` — então `VSSql` funciona com qualquer banco e é seguro contra SQL injection por construção
 - **Option `vsPlaceholders`** no construtor — quando `true`, strings SQL cruas passadas para `query()` e `@QueryMethod` usam os placeholders próprios, agnósticos, posicionais e de base 1 do VSRepository (`?1`, `?2`, ...) em vez da sintaxe nativa do adapter; o mesmo índice pode se repetir (`?1 ... ?1`) para reutilizar um argumento. Exige que o adapter implemente `getPlaceholder()` — ligar essa option sem ele lança um `VSRepoError`
@@ -72,11 +271,13 @@ All notable changes to this project will be documented in this file.
 - **Logs dos métodos de query** — `query()` e `@QueryMethod` agora logam a query compilada e seus args em `DEBUG` (o `db` nunca é logado) e medem a execução (`Took Xms ...`, promovido para `WARN` acima do `logSlowThresholdMs`), como no resto da biblioteca
 
 ### Documentação
+
 - Novo guia [Raw query builder](./docs/raw-query-builder.pt-BR.md), cobrindo o `createRawQueryBuilder()`, a construção da query, subqueries (builder ou função), CTEs com `with()`/`withRecursive()`, execução (`toVSSql`/`toSql`/`execute`), transações/`setDb()`, clonagem, validação e logs — adicionado ao índice de documentação dos dois READMEs, com um cross-link a partir do guia [Query builder](./docs/query-builder.pt-BR.md)
 
 ## [2.6.0] - 2026-09-24
 
 ### Added
+
 - **`createQueryBuilder(db?)`** — new method on every `VSRepository` that returns a fluent query builder for queries assembled at runtime. Chain `select`, `relations`, `where`, `orderBy`, `limit`, `offset`, `distinctOn` and `see`, then run it with `getResult()`, `getOneResult()`, `getOneResultOrThrow()`, `getCount()`, `getExistence()` or `getResultAndCount()`. `where()` takes the same `VSRepoWhere` filter used by the rest of the library (including `AND`/`OR`/`NOT`). The last terminal method fetches a page and the total of records matching the `where` (ignoring `order`/`pagination`, so it can be used for pagination) in parallel. The builder respects soft-delete (`see("active")` by default), `clone()` derives independent builders from a common base, and `setDb()` lets you choose lazily where the query runs — e.g. build it first and run it inside a `transaction()`. `distinctOn` only affects `getResult()`, since `count` doesn't support `distinct`
 - **`VSQueryBuilder`** — the class is exported from the package entry point, so builders can be typed (e.g. as a function parameter). All its public methods are documented with JSDoc
 - **`VSRepoErrorType.QUERY_BUILDER`** — new error type, thrown as a `VSRepoError` when an invalid argument is passed to a query builder method
@@ -85,16 +286,19 @@ All notable changes to this project will be documented in this file.
 - **`lazyDynamicMethods`** constructor option — when `true`, postpones resolving `@DynamicMethod`/`@QueryMethod` methods until the subclass calls the `protected resolveDynamicMethods()` itself, instead of resolving them synchronously in the constructor. Useful for deferring the resolution cost to a more convenient point in the app's lifecycle (e.g. an async init hook), and lets fields annotated with `@DynamicMethod`/`@QueryMethod` skip the `declare` modifier as long as `resolveDynamicMethods()` is called after calls `super()`. Calling `resolveDynamicMethods()` again after it already resolved once logs a `WARN`, since it's redundant
 
 ### Changed
+
 - `pagination` validation is now stricter: `limit` and `offset` must be non-negative integers. Negative, decimal and infinite values, previously accepted, are now rejected
 - `select` and `relations` passed in the `options` of any method are now validated recursively: every value must be a `boolean` or a nested object (previously any object was accepted)
 - Dynamic-method name parsing is significantly more robust (inspired by Spring Data JPA's `PartTree`): keywords and operators (`Or`, `And`, `AND`, `Not`, `In`, `With`, `Without`, `Some`, `Every`, `None`, `Optional`, ...) are now only recognized at a camelCase word boundary, so field names that merely contain one of these words — `organizationId`, `notes`, `orderId`, `instagramHandle`, `withdrawnAt`, `androidVersion`, `everyoneId`, and the like — are no longer misparsed
 - Using an ordering/pagination suffix (`Paginated`/`Ordered`/`OrderBy...`), `Distinct` or `IgnoreConflicts` on a dynamic-method prefix that doesn't support it, or using `Or` after an `AND` (all caps) block, now throws a `VSRepoError` (`RESOLVER`) when the repository is constructed, instead of silently becoming part of the field name
 
 ### Fixed
+
 - A relation filter (`With`/`Without`/`Some`/`Every`/`None`) combined with equality and `IgnoreCase` (e.g. `findByAddressWithCityEqualsIgnoreCase`) now nests correctly as `{ equals, ignoreCase }`
 - A dynamic-method name that places `Distinct` **after** `OrderBy` (e.g. `findByActiveOrderByCreatedAtDescDistinctName`) now throws a `VSRepoError` (`RESOLVER`) when the repository is constructed, instead of silently parsing `Distinct` as part of a non-existent ordering field
 
 ### Documentation
+
 - Both READMEs document the query builder: new "Query builder" section, a new row in the base methods table, `QUERY_BUILDER` in the error types tables, and a note about the builder in the Logging section
 - Both READMEs document `Equals`/`NotEquals`, the camelCase-boundary rule for keyword collisions (with the `Equals`/`NotEquals` disambiguation example), and the new explicit errors for unsupported suffix/prefix combinations and for `Or` after `AND`
 - New "Lazily resolving dynamic methods" section in the dynamic-methods guide, covering `lazyDynamicMethods`, why `declare` becomes unnecessary once resolution is deferred, and the `WARN` logged on a redundant `resolveDynamicMethods()` call; `lazyDynamicMethods` also added to the constructor options table in the base-methods guide
@@ -105,6 +309,7 @@ All notable changes to this project will be documented in this file.
 ## [2.6.0] - 2026-09-24 (Português)
 
 ### Adicionado
+
 - **`createQueryBuilder(db?)`** — novo método em todo `VSRepository` que retorna um query builder fluente para queries montadas em tempo de execução. Encadeie `select`, `relations`, `where`, `orderBy`, `limit`, `offset`, `distinctOn` e `see`, e execute com `getResult()`, `getOneResult()`, `getOneResultOrThrow()`, `getCount()`, `getExistence()` ou `getResultAndCount()`. O `where()` recebe o mesmo filtro `VSRepoWhere` usado no resto da biblioteca (inclusive `AND`/`OR`/`NOT`). O último método terminal busca uma página e o total de registros que batem com o `where` (ignorando `order`/`pagination`, então serve para paginação) em paralelo. O builder respeita o soft-delete (`see("active")` por padrão), o `clone()` deriva builders independentes de uma base comum, e o `setDb()` permite escolher de forma lazy onde a query roda — ex.: montá-la antes e executá-la dentro de um `transaction()`. O `distinctOn` só afeta o `getResult()`, já que o `count` não suporta `distinct`
 - **`VSQueryBuilder`** — a classe é exportada pelo ponto de entrada do pacote, então dá para tipar builders (ex.: como parâmetro de função). Todos os seus métodos públicos têm JSDoc
 - **`VSRepoErrorType.QUERY_BUILDER`** — novo tipo de erro, lançado como `VSRepoError` quando um argumento inválido é passado para um método do query builder
@@ -113,16 +318,19 @@ All notable changes to this project will be documented in this file.
 - **Option `lazyDynamicMethods` do construtor** — quando `true`, adia a resolução dos métodos `@DynamicMethod`/`@QueryMethod` até que a própria subclasse chame o `protected resolveDynamicMethods()`, em vez de resolvê-los de forma síncrona no construtor. Útil para adiar o custo da resolução para um momento mais oportuno do ciclo de vida da aplicação (ex.: um hook de inicialização assíncrona), e permite que campos anotados com `@DynamicMethod`/`@QueryMethod` dispensem o modificador `declare`, desde que `resolveDynamicMethods()` seja chamado depois de chamar `super()`. Chamar `resolveDynamicMethods()` de novo depois que ele já resolveu uma vez registra um `WARN`, já que é redundante
 
 ### Alterado
+
 - A validação de `pagination` ficou mais estrita: `limit` e `offset` precisam ser inteiros não negativos. Valores negativos, decimais e infinitos, antes aceitos, agora são rejeitados
 - `select` e `relations` passados nas `options` de qualquer método agora são validados recursivamente: todo valor precisa ser `boolean` ou um objeto aninhado (antes qualquer objeto era aceito)
 - A resolução de nomes de métodos dinâmicos ficou bem mais robusta (inspirada no `PartTree` do Spring Data JPA): palavras-chave e operadores (`Or`, `And`, `AND`, `Not`, `In`, `With`, `Without`, `Some`, `Every`, `None`, `Optional`, ...) só são reconhecidos numa fronteira de camelCase, então campos cujo nome apenas contém uma dessas palavras — `organizationId`, `notes`, `orderId`, `instagramHandle`, `withdrawnAt`, `androidVersion`, `everyoneId` e afins — deixam de ser interpretados errado
 - Usar um sufixo de ordenação/paginação (`Paginated`/`Ordered`/`OrderBy...`), `Distinct` ou `IgnoreConflicts` num prefixo de método dinâmico que não os suporta, ou usar `Or` depois de um bloco `AND` (maiúsculo), agora lança um `VSRepoError` (`RESOLVER`) ao construir o repository, em vez de virar silenciosamente parte do nome do campo
 
 ### Corrigido
+
 - Um filtro de relação (`With`/`Without`/`Some`/`Every`/`None`) combinado com igualdade e `IgnoreCase` (ex.: `findByAddressWithCityEqualsIgnoreCase`) agora aninha corretamente como `{ equals, ignoreCase }`
 - Um nome de método dinâmico que coloca `Distinct` **depois** de `OrderBy` (ex.: `findByActiveOrderByCreatedAtDescDistinctName`) agora lança um `VSRepoError` (`RESOLVER`) ao construir o repository, em vez de silenciosamente interpretar o `Distinct` como parte de um campo de ordenação inexistente
 
 ### Documentação
+
 - Ambos os READMEs documentam o query builder: nova seção "Query builder", uma nova linha na tabela de métodos base, `QUERY_BUILDER` nas tabelas de tipos de erro, e uma observação sobre o builder na seção de Logging
 - Ambos os READMEs documentam `Equals`/`NotEquals`, a regra de fronteira de camelCase para colisões de palavra-chave (com o exemplo de desambiguação via `Equals`/`NotEquals`), e os novos erros explícitos para combinações de sufixo/prefixo não suportadas e para `Or` depois de `AND`
 - Nova seção "Resolução lazy dos métodos dinâmicos" no guia de métodos dinâmicos, cobrindo o `lazyDynamicMethods`, o porquê do `declare` deixar de ser necessário quando a resolução é adiada, e o `WARN` registrado numa chamada redundante de `resolveDynamicMethods()`; `lazyDynamicMethods` também foi adicionado à tabela de options do construtor no guia de métodos base
@@ -145,15 +353,18 @@ All notable changes to this project will be documented in this file.
 ## [2.5.0-beta] - 2026-09-19
 
 ### Added
+
 - **`InferMethodReturn<T, Options>`** — new opt-in utility type for stricter return typing, exported from the package entry point. It narrows the type returned by a method (`Entity`, `Entity | null` or `Entity[]`) to the fields and relations actually requested through `select`/`relations`, instead of the whole entity: with no options only the scalar fields are returned; with `relations`, the scalar fields plus the requested relations (nested ones included); with `select`, only the selected fields (a relation set to `true` brings all of its scalar fields, and a nested `select` restricts it further). When both are passed, `select` takes precedence and `relations` is ignored. `null`/array-ness and optional (`?`) modifiers are preserved, and if the options are typed as a plain `MethodOptions<T>` (not narrowed) the whole entity is returned unchanged. The default typing of the methods is **not** changed
 - **`InferMethodType<Args, Return, OrmTypes?>`** — new utility type, exported from the package entry point, to declare dynamic methods whose return type is inferred on each call from the `select`/`relations` passed in `options`: `@DynamicMethod() declare findByName: InferMethodType<[name: string], User[]>`. Calls without `options` return only the scalar fields. Unknown keys in `select`/`relations` (at any depth) are rejected at compile time, and the editor autocompletes them, just like with a plain `MethodOptions<T>` parameter. The third generic (`OrmTypes`) is optional and types the `db` option
 - **`getPkName?(): string`** - new optional method that allows the adapter to declare the entity's primary key field to the repository. When instantiating a `VSRepository`, you can omit `pkName` from the constructor options, and it will be read from `adapter.getPkName()`. If you omit it and the adapter does not implement `getPkName()`, the constructor throws a `VSRepoError`
 
 ### Documentation
+
 - Both READMEs document the new types: new "Strict return typing with `InferMethodReturn`" and "Strict return typing with `InferMethodType`" sections, a pointer in the dynamic-methods intro, and two new rows in the utility types table
 - Documents the new optional `getPkName?(): string` method of `VSRepoAdapter`
 
 ### Fixed
+
 - Fixed the `OrderByField` typing so it doesn't claim to accept nested ordering
 
 ---
@@ -161,15 +372,18 @@ All notable changes to this project will be documented in this file.
 ## [2.5.0-beta] - 2026-09-19 (Português)
 
 ### Adicionado
+
 - **`InferMethodReturn<T, Options>`** — novo tipo utilitário opt-in para uma tipagem de retorno mais restrita, exportado pelo entry point do pacote. Ele estreita o tipo retornado por um método (`Entity`, `Entity | null` ou `Entity[]`) para os campos e relações realmente pedidos via `select`/`relations`, em vez da entidade inteira: sem options, apenas os campos escalares; com `relations`, os campos escalares mais as relações pedidas (inclusive as aninhadas); com `select`, apenas os campos selecionados (uma relação com `true` traz todos os seus campos escalares, e um `select` aninhado a restringe ainda mais). Quando os dois são passados, `select` tem precedência e `relations` é ignorado. `null`/array e os modificadores opcionais (`?`) são preservados, e se as options estiverem tipadas como um `MethodOptions<T>` genérico (sem estreitamento) a entidade inteira é retornada sem alterações. A tipagem padrão dos métodos **não** foi alterada
 - **`InferMethodType<Args, Return, OrmTypes?>`** — novo tipo utilitário, exportado pelo entry point do pacote, para declarar métodos dinâmicos cujo tipo de retorno é inferido a cada chamada a partir do `select`/`relations` passados em `options`: `@DynamicMethod() declare findByName: InferMethodType<[name: string], User[]>`. Chamadas sem `options` retornam apenas os campos escalares. Chaves inexistentes em `select`/`relations` (em qualquer profundidade) são rejeitadas em tempo de compilação, e o editor as sugere via autocomplete, igual a um parâmetro `MethodOptions<T>` comum. A terceira generic (`OrmTypes`) é opcional e tipa a option `db`
 - **`getPkName?(): string`** - novo método opcional permite que o adapter declare ao repository qual campo é a primary key da entidade. Ao instanciar um `VSRepository`, você pode omitir o `pkName` das options do construtor e ele será lido do `adapter.getPkName()`. Se você omitir e o adapter não implementar o `getPkName()`, o construtor lança um `VSRepoError`
 
 ### Documentação
+
 - Ambos os READMEs documentam os novos tipos: novas seções "Tipagem de retorno restrita com `InferMethodReturn`" e "Tipagem de retorno restrita com `InferMethodType`", uma indicação na introdução de métodos dinâmicos, e duas novas linhas na tabela de tipos utilitários
 - Documenta o novo método opcional `getPkName?(): string` do `VSRepoAdapter`
 
 ### Corrigido
+
 - Corrigida a tipagem do `OrderByField` para não dizer que aceita nested ordering
 
 ---
@@ -177,12 +391,15 @@ All notable changes to this project will be documented in this file.
 ## [2.4.0] - 2026-09-16
 
 ### Added
+
 - **`logSlowThresholdMs: false`** — passing `false` to `logSlowThresholdMs` (on `VSRepoOptions` or on the `VSLogger` constructor) now disables slow-operation warnings entirely, without having to set an arbitrarily large threshold. Passing `true` or omitting the option keeps the existing 300 ms default. The accepted type is now `number | boolean` instead of `number`
 
 ### Changed
+
 - `@vsrepo/drizzle-adapter` is now available as an **alpha** release on npm — install it with `npm i @vsrepo/drizzle-adapter@alpha`. The API may still change before the stable release; check the [`DrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) repository for the current status and known limitations
 
 ### Documentation
+
 - `proxyTo` decorator option now has a dedicated code example in both READMEs, showing the main use case: giving a method a custom name (e.g. a non-English name) while internally resolving it to a valid dynamic-method pattern
 - `groupBy` is documented as **not planned** for v2; `aggregate` as a dynamic-method prefix is also unlikely to be added since the most common aggregate operations are already available as dedicated base methods (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) — `@QueryMethod` with raw SQL is the recommended escape hatch for anything more complex
 - Multiple README improvements: fixed and expanded the constructor-options table, corrected examples in the dynamic-methods section, improved descriptions across several utility-type entries, and removed the outdated TypeORM `relations` note from the `select`/`relations` section
@@ -192,12 +409,15 @@ All notable changes to this project will be documented in this file.
 ## [2.4.0] - 2026-09-16 (Português)
 
 ### Adicionado
+
 - **`logSlowThresholdMs: false`** — passar `false` em `logSlowThresholdMs` (no `VSRepoOptions` ou no construtor do `VSLogger`) agora desabilita completamente os avisos de operação lenta, sem precisar definir um threshold arbitrariamente grande. Passar `true` ou omitir a option mantém o padrão existente de 300 ms. O tipo aceito agora é `number | boolean` em vez de `number`
 
 ### Alterado
+
 - `@vsrepo/drizzle-adapter` agora está disponível como versão **alpha** no npm — instale com `npm i @vsrepo/drizzle-adapter@alpha`. A API ainda pode mudar antes do release estável; veja o repositório do [`DrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) para o estado atual e limitações conhecidas
 
 ### Documentação
+
 - A option `proxyTo` do decorador agora tem um exemplo de código dedicado em ambos os READMEs, mostrando o principal caso de uso: dar um nome customizado a um método (ex.: um nome em outro idioma) enquanto ele resolve internamente para um padrão de método dinâmico válido
 - `groupBy` está documentado como **não planejado** para a v2; `aggregate` como prefixo de método dinâmico também dificilmente será adicionado, já que as operações de agregação mais comuns já estão disponíveis como métodos base dedicados (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) — `@QueryMethod` com SQL raw é o escape hatch recomendado para qualquer coisa mais complexa
 - Diversas melhorias nos READMEs: tabela de constructor options corrigida e expandida, exemplos na seção de métodos dinâmicos corrigidos, descrições melhoradas em várias entradas de tipos utilitários, e remoção da nota desatualizada sobre TypeORM e `relations` na seção `select`/`relations`
@@ -207,12 +427,15 @@ All notable changes to this project will be documented in this file.
 ## [2.3.0] - 2026-09-14
 
 ### Added
+
 - **`AdapterErrorCode.TRANSACTION_ROLLED_BACK`** — new adapter error code to signal that a database transaction was rolled back. Adapters can now throw `VSRepoAdapterError` with this code to give callers a clear, typed signal that the transaction did not commit
 
 ### Fixed
+
 - Documentation and JSDoc across READMEs and JavaDocs now correctly state that SQL placeholders are **database-specific** (e.g. `?` for MySQL, `$1`/`$2` for PostgreSQL) instead of implying a single universal syntax
 
 ### Documentation
+
 - Documented the current state of `VSRepoDrizzleAdapter` — available features, limitations, and planned work
 - Documented the new `AdapterErrorCode.TRANSACTION_ROLLED_BACK` in all relevant READMEs and JSDoc
 
@@ -221,12 +444,15 @@ All notable changes to this project will be documented in this file.
 ## [2.3.0] - 2026-09-14 (Português)
 
 ### Adicionado
-- **`AdapterErrorCode.TRANSACTION_ROLLED_BACK`** — novo código de erro de adapter para sinalizar que uma transação no banco de dados foi revertida (*rolled back*). Adapters agora podem lançar `VSRepoAdapterError` com esse código para dar ao chamador um sinal claro e tipado de que a transação não foi commitada
+
+- **`AdapterErrorCode.TRANSACTION_ROLLED_BACK`** — novo código de erro de adapter para sinalizar que uma transação no banco de dados foi revertida (_rolled back_). Adapters agora podem lançar `VSRepoAdapterError` com esse código para dar ao chamador um sinal claro e tipado de que a transação não foi commitada
 
 ### Corrigido
+
 - A documentação e o JSDoc nos READMEs e JavaDocs agora informam corretamente que os placeholders de SQL são **específicos do banco de dados** (ex.: `?` para MySQL, `$1`/`$2` para PostgreSQL) em vez de implicar uma sintaxe universal única
 
 ### Documentação
+
 - Documentado o estado atual do `VSRepoDrizzleAdapter` — funcionalidades disponíveis, limitações e trabalho planejado
 - Documentado o novo `AdapterErrorCode.TRANSACTION_ROLLED_BACK` em todos os READMEs e JSDoc relevantes
 
@@ -235,11 +461,13 @@ All notable changes to this project will be documented in this file.
 ## [2.2.1] - 2026-09-09
 
 ### Changed
+
 - Build now generates **sourcemap files** (`sourceMap: true`) for easier debugging of the published package
 - Added `stripInternal: true` to the build config — declarations for members marked `@internal` are now stripped from the published `.d.ts` files, keeping the public API surface clean
 - Added `noImplicitOverride: true` to the TypeScript config, enforcing the `override` keyword on subclass members that override a parent
 
 ### Fixed
+
 - Documentation and JSDoc for `VSRepoErrorType.DYNAMIC` now correctly state that the error can be thrown by both **dynamic** and **query** methods (previously only mentioned dynamic methods)
 
 ---
@@ -247,11 +475,13 @@ All notable changes to this project will be documented in this file.
 ## [2.2.1] - 2026-09-09 (Português)
 
 ### Alterado
+
 - A build agora gera **arquivos sourcemap** (`sourceMap: true`) para facilitar a depuração do pacote publicado
 - Adicionado `stripInternal: true` na config de build — declarações de membros marcados com `@internal` agora são removidas dos arquivos `.d.ts` publicados, mantendo a superfície da API pública limpa
 - Adicionado `noImplicitOverride: true` no config do TypeScript, forçando a palavra-chave `override` em membros de subclasses que sobrescrevem um pai
 
 ### Corrigido
+
 - A documentação e o JSDoc do `VSRepoErrorType.DYNAMIC` agora informam corretamente que o erro pode ser lançado tanto por métodos **dynamic** quanto por **query methods** (antes mencionava apenas métodos dinâmicos)
 
 ---
@@ -259,6 +489,7 @@ All notable changes to this project will be documented in this file.
 ## [2.2.0] - 2026-09-06
 
 ### Added
+
 - **`singleResult` option** on `@QueryMethod` and `query()` — collapses an array result into its first element (`null` if the array is empty) instead of leaving it as an array. Has no effect on non-array results (e.g. a `modifying` query's affected-row count). Useful for queries known to return at most one row (a `SELECT ... LIMIT 1` or a lookup by a unique column)
 - **`spreadArgs` option** on `@QueryMethod` — receive SQL placeholder values as separate positional arguments (`method(a, b, c)`), JpaRepository style, instead of a single `QueryMethodArg` object (`method({ args: [a, b, c] })`). Calling a method declared without `spreadArgs` using more than one argument now throws a `VSRepoError` (`type: VALIDATOR`), since the single-object call style is expected instead
 - **`DbArg<T>` / `withDb()`** — wrap a database client or transaction (`withDb(tx)`) to pass it as the trailing argument of a `spreadArgs` call, running that query against `tx` instead of the repository's default client. Recognized via `instanceof`, so it never collides with a regular positional argument, even one that happens to be an object
@@ -266,6 +497,7 @@ All notable changes to this project will be documented in this file.
 - Implementation tests covering `singleResult` and `spreadArgs` (including the `DbArg`/`withDb` extraction and the call-arity guard), plus README docs and JSDoc for every new option, type and function
 
 ### Changed
+
 - `QueryMethodOptions.modifying` is now optional (defaults to `false` at runtime, matching the decorator's existing behavior when `options` is omitted entirely) — previously required at the type level even though omitting it worked fine
 
 ---
@@ -273,6 +505,7 @@ All notable changes to this project will be documented in this file.
 ## [2.2.0] - 2026-09-06 (Português)
 
 ### Adicionado
+
 - **Option `singleResult`** no `@QueryMethod` e no `query()` — transforma um resultado em array no seu primeiro elemento (`null` se o array estiver vazio) em vez de deixá-lo como array. Não tem efeito em resultados que não são array (ex.: o número de linhas afetadas de uma query `modifying`). Útil para queries que já se sabe que retornam no máximo uma linha (um `SELECT ... LIMIT 1` ou uma busca por uma coluna única)
 - **Option `spreadArgs`** no `@QueryMethod` — recebe os valores dos placeholders SQL como argumentos posicionais separados (`method(a, b, c)`), no estilo do JpaRepository, em vez de um único objeto `QueryMethodArg` (`method({ args: [a, b, c] })`). Chamar um método declarado sem `spreadArgs` usando mais de um argumento agora lança um `VSRepoError` (`type: VALIDATOR`), já que o estilo de chamada com objeto único é o esperado
 - **`DbArg<T>` / `withDb()`** — embrulha um client ou transação do banco (`withDb(tx)`) para passá-lo como argumento final de uma chamada com `spreadArgs`, rodando aquela query contra `tx` em vez do client padrão do repository. Reconhecido via `instanceof`, então nunca é confundido com um argumento posicional comum, mesmo que esse argumento seja um objeto
@@ -280,6 +513,7 @@ All notable changes to this project will be documented in this file.
 - Testes de implementação cobrindo `singleResult` e `spreadArgs` (incluindo a extração de `DbArg`/`withDb` e o guard de arity da chamada), além de documentação nos READMEs e JSDoc para cada nova option, tipo e função
 
 ### Alterado
+
 - `QueryMethodOptions.modifying` agora é opcional (default `false` em runtime, alinhado ao comportamento já existente do decorator quando `options` é omitido por completo) — antes era obrigatório no nível de tipos, mesmo que omiti-lo já funcionasse normalmente
 
 ---
@@ -287,7 +521,8 @@ All notable changes to this project will be documented in this file.
 ## [2.1.0] - 2026-09-04
 
 ### Added
-- **Atomic operations** — new `increment(pk, field, value)`, `decrement`, `multiply` and `divide` methods on `VSRepository`. They are evaluated **server-side** against the row's *current* value (`UPDATE ... SET field = field + value`), not as a client-side read-modify-write, and each returns the record reflecting the state *after* the write. The `value` argument accepts `number`, `bigint` or `DecimalLike` and is validated at runtime
+
+- **Atomic operations** — new `increment(pk, field, value)`, `decrement`, `multiply` and `divide` methods on `VSRepository`. They are evaluated **server-side** against the row's _current_ value (`UPDATE ... SET field = field + value`), not as a client-side read-modify-write, and each returns the record reflecting the state _after_ the write. The `value` argument accepts `number`, `bigint` or `DecimalLike` and is validated at runtime
 - **Aggregation methods** — new `sum`, `average`, `min` and `max` methods that compute the value across every record matching an optional `where` (all records if omitted). All four return `number | null` — `null` when no record matches, mirroring SQL's `SUM()`/`AVG()`/`MIN()`/`MAX()`, which return `NULL` (not `0`) over an empty set
 - **`VSRepoAdapter` contract extended** with the 8 corresponding abstract methods: `incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max`
 - New public types: `NumericKeys<T>` (extracts the numeric fields eligible as `field`), `NumericLike` (`number | bigint | DecimalLike`), `DecimalLike` (structural shape of arbitrary-precision decimals such as Prisma's `Prisma.Decimal`), and `RestrictMethodOptions`
@@ -297,6 +532,7 @@ All notable changes to this project will be documented in this file.
 > **Note for adapter authors:** the new abstract methods are **breaking** for anyone implementing a custom `VSRepoAdapter` — existing adapters must implement all 8 before they compile against 2.1.0. Published adapters (e.g. `@vsrepo/prisma7-adapter`) may not implement them yet; confirm the adapter version supports them before relying on `increment`/`sum`/etc.
 
 ### Changed
+
 - `total`, `has`, `removeList`, `softRemoveList` and `restoreList` now accept the narrowed `RestrictMethodOptions` (`db`/`see` only) instead of the full `MethodOptions` — these methods don't shape/return an `Entity`, so `select`/`relations` no longer apply at the type level
 - The `v1` folder was removed from the `main` branch — the v1 source and docs now live exclusively on the dedicated `v1` branch (READMEs updated to point there)
 
@@ -305,7 +541,8 @@ All notable changes to this project will be documented in this file.
 ## [2.1.0] - 2026-09-04 (Português)
 
 ### Adicionado
-- **Operações atômicas** — novos métodos `increment(pk, field, value)`, `decrement`, `multiply` e `divide` no `VSRepository`. Elas são avaliadas **server-side** contra o valor *atual* do registro (`UPDATE ... SET field = field + value`), e não como um read-modify-write no cliente, e cada uma retorna o registro refletindo o estado *após* a escrita. O argumento `value` aceita `number`, `bigint` ou `DecimalLike` e é validado em tempo de execução
+
+- **Operações atômicas** — novos métodos `increment(pk, field, value)`, `decrement`, `multiply` e `divide` no `VSRepository`. Elas são avaliadas **server-side** contra o valor _atual_ do registro (`UPDATE ... SET field = field + value`), e não como um read-modify-write no cliente, e cada uma retorna o registro refletindo o estado _após_ a escrita. O argumento `value` aceita `number`, `bigint` ou `DecimalLike` e é validado em tempo de execução
 - **Métodos de agregação** — novos métodos `sum`, `average`, `min` e `max` que calculam o valor entre todos os registros que correspondem a um `where` opcional (todos os registros se omitido). Os quatro retornam `number | null` — `null` quando nenhum registro corresponde, espelhando o `SUM()`/`AVG()`/`MIN()`/`MAX()` do SQL, que retornam `NULL` (não `0`) sobre um conjunto vazio
 - **Contrato do `VSRepoAdapter` estendido** com os 8 métodos abstratos correspondentes: `incrementOne`, `decrementOne`, `multiplyOne`, `divideOne`, `sum`, `average`, `min`, `max`
 - Novos tipos públicos: `NumericKeys<T>` (extrai os campos numéricos elegíveis como `field`), `NumericLike` (`number | bigint | DecimalLike`), `DecimalLike` (formato estrutural de decimais de alta precisão, como o `Prisma.Decimal` do Prisma) e `RestrictMethodOptions`
@@ -315,16 +552,18 @@ All notable changes to this project will be documented in this file.
 > **Nota para autores de adapters:** os novos métodos abstratos são uma mudança **breaking** para quem implementa um `VSRepoAdapter` customizado — adapters existentes precisam implementar os 8 antes de compilarem contra a 2.1.0. Adapters publicados (ex.: `@vsrepo/prisma7-adapter`) podem ainda não os implementar; confirme que a versão do adapter suporta antes de usar `increment`/`sum`/etc.
 
 ### Alterado
+
 - `total`, `has`, `removeList`, `softRemoveList` e `restoreList` agora aceitam o `RestrictMethodOptions` restrito (somente `db`/`see`) em vez do `MethodOptions` completo — esses métodos não moldam/retornam uma `Entity`, então `select`/`relations` não se aplicam mais no nível de tipos
 - A pasta `v1` foi removida da branch `main` — o código-fonte e a documentação da v1 agora vivem exclusivamente na branch `v1` dedicada (READMEs atualizados para apontar para lá)
 
 ---
 
 ## [2.0.0] - 2026-09-01
- 
-> Major rewrite. If you're upgrading from v1, see the [Migrating from v1](./docs/migrating-from-v1.md) guide for the full breakdown before migrating.
- 
+
+> Major rewrite. If you're upgrading from v1, see the [Migrating from v1](./docs/migrating-from-v1-to-v2.md) guide for the full breakdown before migrating.
+
 ### Changed
+
 - **BREAKING:** VSRepository is now **ORM-agnostic** — the core no longer talks to Prisma directly, it delegates every operation to a pluggable `VSRepoAdapter`. ORM support now ships as separate packages (e.g. `@vsrepo/prisma7-adapter`) instead of being bundled in the core `vsrepo` package
 - **BREAKING:** Repositories are now defined with a single **class-based** API — `extends VSRepository<Entity, PKType, OrmTypes>` — replacing the v1 functional `setupVSRepo<T, M>()({...}).build(prisma)` and the `DynamicRepository` class
 - **BREAKING:** Dynamic methods are now declared only with the `@DynamicMethod()` decorator on a `declare` field, replacing the `methods: { findByEmail: { map: true } }` config object
@@ -341,27 +580,31 @@ All notable changes to this project will be documented in this file.
 - v1 source and docs moved to a dedicated `v1` branch for anyone who still needs the previous Prisma-only release
 
 ### Added
+
 - An ad-hoc `query()` method for raw SQL queries, with transaction support via `db: tx`
 - `VSRepoAdapterError` with a dedicated `AdapterErrorCode`, including a new `INVALID_ADAPTER_CONFIG` code, for surfacing adapter-level failures
 - `VSLogger` exported for use inside custom adapters
 - JSDoc added to every public API surface (everything marked `@publicApi`)
-- First official adapter published: [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) (Prisma 7); other ORMs (Prisma 8, TypeORM, Drizzle) are planned but not yet published
+- First official adapter published: [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) (Prisma 7); other ORMs (Prisma 8, TypeORM, Drizzle) are planned but not yet published
 
 ### Fixed
+
 - The case-insensitive mode was being injected in the wrong place when combined with relation filters, producing an incorrect `where`
 - Corrected the argument-index preview shown when an argument is a `where` object
 
 ### Removed
+
 - `patchList` — for a batch partial update, use an `updateManyBy`/`updateManyWhere` dynamic method instead
 - `aggregate`/`groupBy` passthrough support — not implemented yet in v2
 
 ---
- 
+
 ## [2.0.0] - 2026-09-01 (Português)
- 
-> Reescrita major. Se você está migrando da v1, veja o guia [Migrando da v1](./docs/migrating-from-v1.pt-BR.md) para o detalhamento completo antes de migrar.
- 
+
+> Reescrita major. Se você está migrando da v1, veja o guia [Migrando da v1](./docs/migrating-from-v1-to-v2.pt-BR.md) para o detalhamento completo antes de migrar.
+
 ### Alterado
+
 - **BREAKING:** O VSRepository agora é **agnóstico de ORM** — o core não conversa mais diretamente com o Prisma, delegando toda operação a um `VSRepoAdapter` plugável. O suporte a ORMs agora é publicado em pacotes separados (ex.: `@vsrepo/prisma7-adapter`) em vez de vir embutido no pacote core `vsrepo`
 - **BREAKING:** Repositories agora são definidos com uma única API **baseada em classes** — `extends VSRepository<Entity, PKType, OrmTypes>` — substituindo o `setupVSRepo<T, M>()({...}).build(prisma)` funcional da v1 e a classe `DynamicRepository`
 - **BREAKING:** Métodos dinâmicos agora são declarados somente com o decorator `@DynamicMethod()` em um campo `declare`, substituindo o objeto de config `methods: { findByEmail: { map: true } }`
@@ -378,17 +621,20 @@ All notable changes to this project will be documented in this file.
 - O código-fonte e a documentação da v1 foram movidos para uma branch `v1` dedicada, para quem ainda precisar da release anterior baseada apenas em Prisma
 
 ### Adicionado
+
 - Um método `query()` ad-hoc para queries SQL raw, com suporte a transações via `db: tx`
 - `VSRepoAdapterError` com um `AdapterErrorCode` dedicado, incluindo um novo código `INVALID_ADAPTER_CONFIG`, para expor falhas em nível de adapter
 - `VSLogger` agora é exportado para uso dentro de adapters customizados
 - JSDoc adicionado a toda a API pública (tudo marcado com `@publicApi`)
-- Primeiro adapter oficial publicado: [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) (Prisma 7); outros ORMs (Prisma 8, TypeORM, Drizzle) estão planejados mas ainda não publicados
+- Primeiro adapter oficial publicado: [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) (Prisma 7); outros ORMs (Prisma 8, TypeORM, Drizzle) estão planejados mas ainda não publicados
 
 ### Corrigido
+
 - O modo case-insensitive estava sendo injetado no lugar errado quando combinado com filtros de relação, gerando um `where` incorreto
 - Corrigida a preview do índice do argumento exibida quando um argumento é um objeto `where`
 
 ### Removido
+
 - `patchList` — para uma atualização parcial em lote, use um método dinâmico `updateManyBy`/`updateManyWhere`
 - Suporte de passthrough para `aggregate`/`groupBy` — ainda não implementado na v2
 
@@ -397,6 +643,7 @@ All notable changes to this project will be documented in this file.
 ## [1.4.2] - 2026-09-02
 
 ### Fixed
+
 - `merge` method now strips `undefined` fields from the source object before merging — previously, when merging objects without relations, `undefined` values from the source were carried into the result, which could overwrite existing fields with `undefined`
 
 ---
@@ -404,6 +651,7 @@ All notable changes to this project will be documented in this file.
 ## [1.4.2] - 2026-09-02 (Português)
 
 ### Corrigido
+
 - O método `merge` agora remove campos com valor `undefined` do objeto de origem antes de mesclar — antes, ao mesclar objetos sem relations, valores `undefined` do objeto de origem eram propagados para o resultado, o que poderia sobrescrever campos existentes com `undefined`
 
 ---
@@ -411,6 +659,7 @@ All notable changes to this project will be documented in this file.
 ## [1.4.1] - 2026-09-01
 
 ### Fixed
+
 - `mode: "insensitive"` was being injected at the wrong level in relation filters — previously, `otherProps` (which includes `mode`) was being assigned to `path[argName]` (the nested relation object) instead of the current filter level, causing the insensitive mode to be placed incorrectly in the generated `where`
 
 ---
@@ -418,6 +667,7 @@ All notable changes to this project will be documented in this file.
 ## [1.4.1] - 2026-09-01 (Português)
 
 ### Corrigido
+
 - `mode: "insensive"` estava sendo injetado no nível errado em filtros de relations — antes, `otherProps` (que inclui `mode`) era atribuído a `path[argName]` (o objeto da relation aninhada) em vez do nível atual do filtro, causando colocação incorreta do modo insensitive no `where` gerado
 
 ---
@@ -425,9 +675,11 @@ All notable changes to this project will be documented in this file.
 ## [1.4.0] - 2026-08-11
 
 ### Fixed
+
 - Dynamic methods combining multiple filters on the **same relation** no longer lose all but the last filter — previously, filters like `findBy...AndEnderecoWithEstadoAndEnderecoWithCidadeNormalizadaStartsWith...` produced a `where` with only the last relation filter (`estado` was lost), because `resolveSpecificWhere` merged the generated paths with `Object.assign` (shallow merge). It now uses `deepmerge` (deep merge), so relation filters coexist correctly (e.g. `endereco: { is: { estado, cidadeNormalizada } }`)
 
 ### Added
+
 - Regression tests (`test/implementation/specific-where.test.ts`) covering multiple filters on the same relation in `resolveSpecificWhere`, including plain fields, relation filters, OR/AND groups, pure `With` combined with `WithField`, and `betweenMode` combined with another operator on the same field
 
 ---
@@ -435,9 +687,11 @@ All notable changes to this project will be documented in this file.
 ## [1.4.0] - 2026-08-11 (Português)
 
 ### Corrigido
+
 - Métodos dinâmicos que combinam múltiplos filtros na **mesma relation** não perdem mais todos os filtros exceto o último — antes, filtros como `findBy...AndEnderecoWithEstadoAndEnderecoWithCidadeNormalizadaStartsWith...` geravam um `where` apenas com o último filtro da relation (`estado` era perdido), porque o `resolveSpecificWhere` mesclava os caminhos gerados com `Object.assign` (merge raso). Agora ele usa `deepmerge` (merge profundo), fazendo os filtros de relation coexistirem corretamente (ex.: `endereco: { is: { estado, cidadeNormalizada } }`)
 
 ### Adicionado
+
 - Testes de regressão (`test/implementation/specific-where.test.ts`) cobrindo múltiplos filtros na mesma relation em `resolveSpecificWhere`, incluindo campos simples, filtros de relation, grupos OR/AND, `With` puro combinado com `WithCampo`, e `betweenMode` combinado com outro operador no mesmo campo
 
 ---
@@ -445,6 +699,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.9] - 2026-08-10
 
 ### Added
+
 - Now `README.md` and `README.pt-BR.md` include the `VSRepository` logo for visual identity.
 
 ---
@@ -452,6 +707,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.9] - 2026-08-10 (Português)
 
 ### Adicionado
+
 - Agora `README.md` e `README.pt-BR.md` contém a logo do `VSRepository` para identidade visual.
 
 ---
@@ -459,9 +715,11 @@ All notable changes to this project will be documented in this file.
 ## [1.3.8] - 2026-08-03
 
 ### Fixed
+
 - `vsrepo generate` now copies the README files from the `vsrepo` package root (`node_modules/vsrepo` or the repository itself) instead of the consumer project's root — previously it copied the consumer's own `README.md` and failed to find the other READMEs (`README.pt-BR.md`, `README-DynamicRepo.md`, `README-DynamicRepo.pt-BR.md`) when they didn't exist in the consumer project
 
 ### Changed
+
 - The `files` field in `package.json` now explicitly includes the README files (`README.md`, `README.pt-BR.md`, `README-DynamicRepo.md`, `README-DynamicRepo.pt-BR.md`) so they are shipped inside the published npm package — previously only `README.md` and `README.pt-BR.md` were included automatically by npm, leaving the `README-DynamicRepo*` files missing from the installed package
 
 ---
@@ -469,9 +727,11 @@ All notable changes to this project will be documented in this file.
 ## [1.3.8] - 2026-08-03 (Português)
 
 ### Corrigido
+
 - `vsrepo generate` agora copia os READMEs da raiz do pacote `vsrepo` (`node_modules/vsrepo` ou o próprio repositório) em vez da raiz do projeto do consumidor — antes ele copiava o `README.md` do próprio consumidor e falhava ao não encontrar os demais READMEs (`README.pt-BR.md`, `README-DynamicRepo.md`, `README-DynamicRepo.pt-BR.md`) quando eles não existiam no projeto do consumidor
 
 ### Alterado
+
 - O campo `files` no `package.json` agora inclui explicitamente os arquivos README (`README.md`, `README.pt-BR.md`, `README-DynamicRepo.md`, `README-DynamicRepo.pt-BR.md`) para que sejam empacotados no pacote npm publicado — antes apenas `README.md` e `README.pt-BR.md` eram incluídos automaticamente pelo npm, deixando os arquivos `README-DynamicRepo*` ausentes do pacote instalado
 
 ---
@@ -479,9 +739,11 @@ All notable changes to this project will be documented in this file.
 ## [1.3.7] - 2026-08-03
 
 ### Added
+
 - `vsrepo generate` now copies the project READMEs (`README.md`, `README.pt-BR.md`, `README-DynamicRepo.md`, `README-DynamicRepo.pt-BR.md`) to a `docs/` folder inside the generated output directory
 
 ### Changed
+
 - The generated output now includes a `docs/` directory containing the project documentation
 
 ---
@@ -489,9 +751,11 @@ All notable changes to this project will be documented in this file.
 ## [1.3.7] - 2026-08-03 (Português)
 
 ### Adicionado
+
 - `vsrepo generate` agora copia os READMEs do projeto (`README.md`, `README.pt-BR.md`, `README-DynamicRepo.md`, `README-DynamicRepo.pt-BR.md`) para uma pasta `docs/` dentro do diretório de saída gerado
 
 ### Alterado
+
 - A saída gerada agora inclui um diretório `docs/` contendo a documentação do projeto
 
 ---
@@ -499,16 +763,19 @@ All notable changes to this project will be documented in this file.
 ## [1.3.6] - 2026-08-01
 
 ### Added
+
 - `ordering` support in method options, replacing `ordenation` as the preferred name while keeping full backward compatibility — `ordenation` is now marked as deprecated
 - GitHub Actions CI workflow (`.github/workflows/ci.yml`) to lint, typecheck and test the project on every push and pull request
 - Error handling tests (`test/implementation/error-handling.test.ts`) covering the `VSRepoRuntimeError` error codes
 - Documentation of all `VSRepoRuntimeError` error codes in README.md and README.pt-BR.md
 
 ### Fixed
+
 - Generated `index.ts` now exports the `VSRepoDecoratorError` class (previously missing from the generated output, preventing consumers from importing it)
 - Fixed internal typo `dinamic` → `dynamic` in file names, constants and types (e.g. `dynamic-method-info`, `dynamic-method-customization`, `dynamic-methods-key`)
 
 ### Changed
+
 - Tests, examples and documentation updated to use `ordering` instead of `ordenation`
 - `ordenation` marked as deprecated in favor of `ordering` (still fully supported)
 - Reformatted Markdown documentation files for better consistency and readability
@@ -518,16 +785,19 @@ All notable changes to this project will be documented in this file.
 ## [1.3.6] - 2026-08-01 (Português)
 
 ### Adicionado
+
 - Suporte a `ordering` nas options dos métodos, substituindo `ordenation` como nome preferido mantendo compatibilidade total com versões anteriores — `ordenation` agora está marcado como deprecated
 - Workflow de CI do GitHub Actions (`.github/workflows/ci.yml`) para executar lint, typecheck e testes a cada push e pull request
 - Testes de error handling (`test/implementation/error-handling.test.ts`) cobrindo os códigos de erro do `VSRepoRuntimeError`
 - Documentação de todos os códigos de erro do `VSRepoRuntimeError` no README.md e README.pt-BR.md
 
 ### Corrigido
+
 - O `index.ts` gerado agora exporta a classe `VSRepoDecoratorError` (antes ausente na saída gerada, impedindo que consumidores conseguissem importá-la)
 - Corrigido typo interno `dinamic` → `dynamic` em nomes de arquivos, constantes e tipos (ex.: `dynamic-method-info`, `dynamic-method-customization`, `dynamic-methods-key`)
 
 ### Alterado
+
 - Testes, exemplos e documentação atualizados para usar `ordering` no lugar de `ordenation`
 - `ordenation` marcado como deprecated em favor de `ordering` (ainda totalmente suportado)
 - Reformatados os arquivos de documentação Markdown para melhor consistência e legibilidade
@@ -537,6 +807,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.5] - 2026-07-27
 
 ### Added
+
 - Raw `select` support in method options (`options.select`): pass a raw Prisma `select` directly in a method call, without registering it beforehand in `selectModels` — mirrors the existing raw `include` (`options.include`)
 - Full typing for `options.select`: works across all base methods (`get`, `getOrThrow`, `getList`, `remove`, `save`, `saveList`, `patch`, `patchList`, `merge`, `getAll`, `softRemove`, `restore`) and dynamics, narrows the return type to exactly the selected fields, and is mutually exclusive with `selectModel`, `includeModel` and `include`
 - `select` field added to `DynamicMethodOptions` (class-based `DynamicRepository` API)
@@ -547,9 +818,11 @@ All notable changes to this project will be documented in this file.
 - Implementation and typing tests for raw `select`, covering both the functional (`setupVSRepo`) and class-based (`DynamicRepository`) APIs
 
 ### Fixed
+
 - Generated `VSRepoError.ts` now also exports `VSRepoDecoratorError` (previously missing from the generated output, causing consumers to be unable to import it)
 
 ### Changed
+
 - Updated the generated file tree diagram in the README to include the `DynamicRepository.ts`/`DynamicRepository.types.d.ts` files
 
 ---
@@ -557,6 +830,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.5] - 2026-07-27 (Português)
 
 ### Adicionado
+
 - Suporte a `select` cru nas options dos métodos (`options.select`): permite passar um `select` bruto do Prisma diretamente na chamada, sem precisar registrá-lo antecipadamente em `selectModels` — espelha o `include` cru (`options.include`) já existente
 - Tipagem completa para `options.select`: funciona em todos os métodos base (`get`, `getOrThrow`, `getList`, `remove`, `save`, `saveList`, `patch`, `patchList`, `merge`, `getAll`, `softRemove`, `restore`) e dinâmicos, restringe o tipo de retorno exatamente aos campos selecionados, e é mutuamente exclusivo com `selectModel`, `includeModel` e `include`
 - Campo `select` adicionado ao `DynamicMethodOptions` (API baseada em classes `DynamicRepository`)
@@ -567,9 +841,11 @@ All notable changes to this project will be documented in this file.
 - Testes de implementação e de tipagem para o `select` cru, cobrindo tanto a API funcional (`setupVSRepo`) quanto a baseada em classes (`DynamicRepository`)
 
 ### Corrigido
+
 - O `VSRepoError.ts` gerado agora também exporta `VSRepoDecoratorError` (antes ausente na saída gerada, impedindo que consumidores conseguissem importá-lo)
 
 ### Alterado
+
 - Atualizado o diagrama da árvore de arquivos gerados no README para incluir os arquivos `DynamicRepository.ts`/`DynamicRepository.types.d.ts`
 
 ---
@@ -577,6 +853,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.4] - 2026-07-25
 
 ### Added
+
 - Query Methods: new `@QueryMethod` decorator (class-based) and `query` config (functional) for defining raw SQL query methods that bypass the name-parsing engine
 - Support for non-modifying queries (`$queryRawUnsafe`) and modifying queries (`$executeRawUnsafe`, `modifying: true`)
 - `QueryMethodArg` type for typing the `{ args, db? }` parameter
@@ -586,6 +863,7 @@ All notable changes to this project will be documented in this file.
 - Tests for query methods in both functional and class-based approaches
 
 ### Changed
+
 - Clarified in documentation that the `WRelations` generic in `DynamicRepository` is optional and explained when to use it
 - Translated documentation to Portuguese
 
@@ -594,6 +872,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.4] - 2026-07-25 (Português)
 
 ### Adicionado
+
 - Query Methods: novo decorador `@QueryMethod` (abordagem class-based) e config `query` (abordagem funcional) para definir métodos de query SQL raw que ignoram o engine de parsing por nome
 - Suporte para queries não-modificantes (`$queryRawUnsafe`) e modificantes (`$executeRawUnsafe`, `modifying: true`)
 - Tipo `QueryMethodArg` para tipar o parâmetro `{ args, db? }`
@@ -603,6 +882,7 @@ All notable changes to this project will be documented in this file.
 - Testes para query methods nas abordagens funcional e class-based
 
 ### Alterado
+
 - Esclarecido na documentação que a generic `WRelations` no `DynamicRepository` é opcional e explicado quando utilizá-la
 - Documentação traduzida para português
 
@@ -611,6 +891,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.3] - 2026-07-22
 
 ### Added
+
 - DynamicRepository: base structure for dynamic repository functionality
 - Complete typing for DynamicRepository and DynamicMethod
 - Native Prisma `include` support in method options typing
@@ -621,12 +902,14 @@ All notable changes to this project will be documented in this file.
 - Tests for DynamicRepository and include parameter
 
 ### Fixed
+
 - Fixed typing for objects with relations
 - Fixed DynamicRepository typing
 - Fixed DynamicMethod typing
 - Fixed pushWhere error in some dynamic methods
 
 ### Changed
+
 - Translated package.json description to English
 
 ---
@@ -634,6 +917,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.3] - 2026-07-22 (Português)
 
 ### Adicionado
+
 - DynamicRepository: estrutura base da funcionalidade de repositório dinâmico
 - Tipagem completa para DynamicRepository e DynamicMethod
 - Suporte nativo ao `include` do Prisma na tipagem das opções de método
@@ -644,12 +928,14 @@ All notable changes to this project will be documented in this file.
 - Testes para DynamicRepository e parâmetro include
 
 ### Corrigido
+
 - Correção da tipagem dos objetos com relations
 - Correção da tipagem do DynamicRepository
 - Correção da tipagem do DynamicMethod
 - Correção do erro do pushWhere em alguns métodos dinâmicos
 
 ### Alterado
+
 - Descrição do package.json traduzida para inglês
 
 ---

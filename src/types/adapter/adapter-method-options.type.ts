@@ -1,7 +1,7 @@
-import { Ordering } from "../utils/ordering.type";
-import { Pagination } from "../utils/pagination.type";
-import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type";
-import { VSRepoSelect } from "../vsrepo/vsrepo-select.type";
+import { Ordering } from "../utils/ordering.type.js";
+import { Pagination } from "../utils/pagination.type.js";
+import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
+import { VSRepoSelect } from "../vsrepo/vsrepo-select.type.js";
 
 /**
  * Options passed down to a `VSRepoAdapter` method call, after `VSRepository`

@@ -1,14 +1,18 @@
-import { VSRepoError } from "../../errors/VSRepoError";
-import { VSRawQueryBuilderCteQuery } from "../../types/vsrepo/vs-raw-query-builder-cte-query.type";
-import { VSRawQueryBuilderTarget } from "../../types/vsrepo/vs-raw-query-builder-target.type";
-import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type";
-import { VSRepoAdapter } from "../../VSRepoAdapter";
-import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum";
-import { VSLogger } from "./vs-logger.util";
-import { VSSql } from "./vs-sql.util";
+import { VSRepoError } from "../../errors/VSRepoError.js";
+import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
+import { CompiledQuery } from "../../types/utils/compiled-query.type.js";
+import { OrderTuple } from "../../types/utils/order-tuple.type.js";
+import { SortDirection } from "../../types/utils/ordering.type.js";
+import { VSRawQueryBuilderCteQuery } from "../../types/vsrepo/vs-raw-query-builder-cte-query.type.js";
+import { VSRawQueryBuilderTarget } from "../../types/vsrepo/vs-raw-query-builder-target.type.js";
+import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
+import { VSRepoAdapter } from "../../VSRepoAdapter.js";
+import { VSRepoErrorType } from "../enums/vsrepo-error-type.enum.js";
+import { VSLogger } from "./vs-logger.util.js";
+import { VSSql } from "./vs-sql.util.js";
 
-type JoinType = "INNER" | "LEFT" | "RIGHT" | "FULL";
-type Connector = "AND" | "OR";
+type JoinType = "inner" | "left" | "right" | "full";
+type Connector = "and" | "or";
 
 interface JoinClause {
     type: JoinType;
@@ -28,34 +32,23 @@ interface CteClause {
 }
 
 /**
- * Fluent, SQL-agnostic builder for hand-written **`SELECT`** queries whose shape is only known
- * at runtime, but whose SQL is too specific (window functions, CTEs referenced elsewhere,
- * vendor-specific syntax, ...) to express through {@link VSQueryBuilder}'s `where`/`relations`
- * model. Compiles down to a single {@link VSSql} fragment — get one from
- * `VSRepository.createRawQueryBuilder()`.
+ * Fluent, SQL-agnostic builder for hand-written `select` queries that are too specific (window functions,
+ * CTEs, vendor-specific syntax, ...) for `VSQueryBuilder`.
  *
- * Nothing reaches the database until {@link VSRawQueryBuilder.execute} is called. The builder is
- * **mutable**: every chained call changes the same instance and returns it. Use
- * {@link VSRawQueryBuilder.clone} to derive variations from a common base.
+ * Nothing reaches the database until `execute()` is called. The builder is mutable: use `clone()` to
+ * derive variations. Plain strings are inserted into the SQL as-is (like `VSSql.raw`), so never pass
+ * user-controlled input in them; use a `VSSql.sql` fragment for values.
  *
  * @example
  * ```typescript
- * import { VSSql } from "vsrepo";
- *
  * const rows = await orderRepository
  *     .createRawQueryBuilder()
- *     .select("o.id", "o.total", "u.name")
- *     .from("order", "o")
- *     .innerJoin("user", "u", "u.id = o.user_id")
+ *     .select("u.id", "u.name")
+ *     .from("user", "u")
  *     .where(VSSql.sql`u.active = ${true}`)
- *     .andWhere(VSSql.sql`o.total > ${100}`)
- *     .andWhere("o.deleted_at is null")
- *     .groupBy("o.id", "u.name")
- *     .having(VSSql.sql`count(*) > ${1}`)
- *     .orderBy("o.total", "desc")
+ *     .orderBy("u.created_at", "desc")
  *     .limit(20)
- *     .offset(0)
- *     .execute<{ id: string; total: number; name: string }[]>();
+ *     .execute<{ id: string; name: string }[]>();
  * ```
  *
  * @publicApi
@@ -64,6 +57,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     private cteClauses: CteClause[] = [];
     private recursiveWith = false;
     private selectColumns: VSSql[] = [];
+    private distinctSelectMode = false;
     private fromTarget?: VSSql;
     private joinClauses: JoinClause[] = [];
     private whereConditions: Condition[] = [];
@@ -77,13 +71,13 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
      * @internal
      */
     constructor(
-        private db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"],
+        private db: ClientOrTransaction<OrmTypes>,
         private readonly adapter: VSRepoAdapter<any>,
-        private readonly logger?: VSLogger,
+        private readonly logger: VSLogger,
     ) {}
 
     private trace(message: string, obj?: unknown): void {
-        this.logger?.logDebug(`VSRawQueryBuilder: ${message}`, obj);
+        this.logger.logDebug(`VSRawQueryBuilder: ${message}`, obj);
     }
 
     private static validateNonEmptyString(value: string, context: string): void {
@@ -97,7 +91,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
     /** Converts a raw string into a `VSSql.raw` fragment (validating it isn't empty/blank first,
      * since that would silently compile into broken SQL — e.g. a trailing comma or an empty
-     * `WHERE ()`) or passes an already-built `VSSql` fragment through untouched.
+     * `where ()`) or passes an already-built `VSSql` fragment through untouched.
      *
      * @param context Name of the calling method/argument, used in the `VSRepoError` message. */
     private static toFragment(value: string | VSSql, context: string): VSSql {
@@ -132,7 +126,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
         VSRawQueryBuilder.validateNonEmptyString(alias, "alias");
 
-        return VSSql.sql`${base} AS ${VSSql.raw(alias)}`;
+        return VSSql.sql`${base} ${VSSql.raw(alias)}`;
     }
 
     private resolveCteQuery(query: VSRawQueryBuilderCteQuery): VSSql {
@@ -144,7 +138,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
 
         for (let i = 1; i < conditions.length; i++) {
             const { connector, sql } = conditions[i]!;
-            result = connector === "AND" ? VSSql.sql`${result} AND (${sql})` : VSSql.sql`${result} OR (${sql})`;
+            result = connector === "and" ? VSSql.sql`${result} and (${sql})` : VSSql.sql`${result} or (${sql})`;
         }
 
         return result;
@@ -160,28 +154,44 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Sets the columns to select, replacing any previous `select`. Each column is either a raw,
-     * trusted string (an identifier, passed through as-is — like `VSSql.raw`, never pass
-     * user-controlled input) or a `VSSql` fragment for anything parameterized or aliased
-     * (**VSSql.sql\`count(*) AS total\`**).
+     * Sets the columns to select, replacing any previous `select`.
      *
-     * @param columns One or more columns/expressions. `select()` with no arguments is equivalent
-     * to `SELECT *`.
+     * @param columns Raw column strings or `VSSql` fragments. With no arguments, selects `*`.
      */
     select(...columns: (string | VSSql)[]): this {
         this.selectColumns = columns.length
             ? columns.map(column => VSRawQueryBuilder.toFragment(column, "select"))
             : [VSSql.raw("*")];
 
+        this.distinctSelectMode = false;
+
         return this;
     }
 
     /**
-     * Sets the `FROM` target, replacing any previous one.
+     * Sets the columns for a distinct select, replacing any previous `select`.
+     */
+    selectDistinct(...columns: (string | VSSql)[]): this {
+        if (!columns.length) {
+            throw new VSRepoError(
+                `At least one column must be provided to selectDistinct`,
+                VSRepoErrorType.QUERY_BUILDER,
+            );
+        }
+
+        this.selectColumns = columns.map(column => VSRawQueryBuilder.toFragment(column, "select"));
+
+        this.distinctSelectMode = true;
+
+        return this;
+    }
+
+    /**
+     * Sets the `from` target, replacing any previous one.
      *
-     * @param target A raw table name, a `VSSql` fragment, or another `VSRawQueryBuilder`
-     * (compiled inline as a subquery, wrapped in parentheses).
-     * @param alias Optional alias, appended as `AS alias` (raw, trusted text).
+     * @param target Table name, `VSSql` fragment, or another builder (or a function receiving one),
+     * which is compiled as a parenthesized subquery.
+     * @param alias Optional alias, written right after the target (raw, trusted text).
      */
     from(target: VSRawQueryBuilderTarget, alias?: string): this {
         this.fromTarget = this.resolveTarget(target, "from", alias);
@@ -205,23 +215,18 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Adds a `WITH` (common table expression). Each call adds one CTE; call it
-     * again to add more — they're all listed under a single `WITH`, in the order added.
+     * Adds a CTE (`with`). Each call adds one, in the order added.
      *
-     * @param name Name the CTE is referenced by elsewhere in the query (raw, trusted text).
-     * @param query The CTE's body: a `VSRawQueryBuilder`, a subquery function, or a `VSSql` fragment — needed for
-     * anything a single `SELECT` builder can't express (e.g. a `UNION`).
-     * @param columns Optional explicit column list, rendered as `name(col1, col2) AS (...)`.
+     * @param name Name the CTE is referenced by (raw, trusted text).
+     * @param query The CTE body: a builder, a function receiving a sub-builder, or a `VSSql` fragment.
+     * @param columns Optional column list, rendered as `name(col1, col2) as (...)`.
      *
      * @example
      * ```typescript
-     * const rows = await orderRepository
-     *     .createRawQueryBuilder()
-     *     .with("big_spenders", qb => qb.select("user_id").from("order").groupBy("user_id").having("sum(total) > 1000"))
+     * qb.with("big_spenders", sub => sub.select("user_id").from("order").groupBy("user_id").having("sum(total) > 1000"))
      *     .select("u.*")
      *     .from("user", "u")
-     *     .innerJoin("big_spenders", "bs", "bs.user_id = u.id")
-     *     .execute();
+     *     .innerJoin("big_spenders", "bs", "bs.user_id = u.id");
      * ```
      */
     with(name: string, query: VSRawQueryBuilderCteQuery, columns?: string[]): this {
@@ -229,30 +234,19 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Same as {@link VSRawQueryBuilder.with}, but marks the whole `WITH` clause as `RECURSIVE`
-     * (required by the SQL standard for a CTE that references itself in its own body — usually
-     * a `VSSql` fragment with a `... UNION ALL SELECT ... FROM name ...` shape). One recursive
-     * CTE is enough to make the whole clause `WITH RECURSIVE`, even when combined with other,
-     * non-recursive ones added via {@link VSRawQueryBuilder.with}.
+     * Same as `with`, but makes the whole `with` clause `recursive`, as required by a CTE that references itself
+     * (usually a `VSSql` fragment with a `union all`).
      *
      * @example
      * ```typescript
-     * const orgChart = await employeeRepository
-     *     .createRawQueryBuilder()
-     *     .withRecursive(
-     *         "subordinates",
-     *         VSSql.sql`
-     *             SELECT id, manager_id, 1 AS depth FROM employee WHERE id = ${managerId}
-     *             UNION ALL
-     *             SELECT e.id, e.manager_id, s.depth + 1 FROM employee e
-     *             INNER JOIN subordinates s ON e.manager_id = s.id
-     *         `,
-     *         ["id", "manager_id", "depth"],
-     *     )
-     *     .select("*")
-     *     .from("subordinates")
-     *     .orderBy("depth")
-     *     .execute();
+     * qb.withRecursive(
+     *     "subordinates",
+     *     VSSql.sql`
+     *         select id, manager_id from employee where id = ${managerId}
+     *         union all
+     *         select e.id, e.manager_id from employee e join subordinates s on e.manager_id = s.id
+     *     `,
+     * ).from("subordinates");
      * ```
      */
     withRecursive(name: string, query: VSRawQueryBuilderCteQuery, columns?: string[]): this {
@@ -271,63 +265,51 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         return this;
     }
 
-    /**
-     * Adds an `INNER JOIN`.
-     */
+    /** Adds an `inner join` on `target`, aliased as `alias`, using the `on` condition. */
     innerJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("INNER", target, alias, on);
+        return this.addJoin("inner", target, alias, on);
     }
 
-    /**
-     * Adds a `LEFT JOIN`.
-     */
+    /** Adds a `left join` on `target`, aliased as `alias`, using the `on` condition. */
     leftJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("LEFT", target, alias, on);
+        return this.addJoin("left", target, alias, on);
     }
 
-    /**
-     * Adds a `RIGHT JOIN`.
-     */
+    /** Adds a `right join` on `target`, aliased as `alias`, using the `on` condition. */
     rightJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("RIGHT", target, alias, on);
+        return this.addJoin("right", target, alias, on);
     }
 
-    /**
-     * Adds a `FULL JOIN`.
-     */
+    /** Adds a `full join` on `target`, aliased as `alias`, using the `on` condition. */
     fullJoin(target: VSRawQueryBuilderTarget, alias: string, on: string | VSSql): this {
-        return this.addJoin("FULL", target, alias, on);
+        return this.addJoin("full", target, alias, on);
     }
 
     /**
-     * Adds a `WHERE` condition. The first call sets the filter; every later call (`where` or
-     * {@link VSRawQueryBuilder.andWhere}) is `AND`-combined with it, each wrapped in parentheses.
-     * Use {@link VSRawQueryBuilder.orWhere} to `OR`-combine instead.
+     * Adds a `where` condition. Conditions are `and`-combined, each wrapped in parentheses;
+     * use `orWhere` to `or`-combine instead.
      */
     where(condition: string | VSSql): this {
-        this.whereConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "where") });
+        this.whereConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "where") });
 
         return this;
     }
 
-    /** Alias for {@link VSRawQueryBuilder.where} — `AND`-combines `condition` with the existing filter. */
+    /** Alias for `where`. */
     andWhere(condition: string | VSSql): this {
-        this.whereConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "andWhere") });
+        this.whereConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "andWhere") });
 
         return this;
     }
 
-    /** `OR`-combines `condition` with the existing `WHERE` filter. */
+    /** Adds a `where` condition `or`-combined with the previous ones. */
     orWhere(condition: string | VSSql): this {
-        this.whereConditions.push({ connector: "OR", sql: VSRawQueryBuilder.toFragment(condition, "orWhere") });
+        this.whereConditions.push({ connector: "or", sql: VSRawQueryBuilder.toFragment(condition, "orWhere") });
 
         return this;
     }
 
-    /**
-     * Adds columns to `GROUP BY`. Each call appends; call {@link VSRawQueryBuilder.clone} from a
-     * common base if you need independent variations.
-     */
+    /** Adds columns to `group by`. Each call appends. */
     groupBy(...columns: (string | VSSql)[]): this {
         this.groupByColumns.push(...columns.map(column => VSRawQueryBuilder.toFragment(column, "groupBy")));
 
@@ -335,37 +317,46 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Adds a `HAVING` condition, `AND`-combined with any previous one (same semantics as
-     * {@link VSRawQueryBuilder.where}). Use {@link VSRawQueryBuilder.orHaving} to `OR`-combine.
+     * Adds a `having` condition. Same semantics as `where`: `and`-combined by default,
+     * use `orHaving` to `or`-combine.
      */
     having(condition: string | VSSql): this {
-        this.havingConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "having") });
+        this.havingConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "having") });
 
         return this;
     }
 
-    /** Alias for {@link VSRawQueryBuilder.having} — `AND`-combines `condition` with the existing `HAVING` filter. */
+    /** Alias for `having`. */
     andHaving(condition: string | VSSql): this {
-        this.havingConditions.push({ connector: "AND", sql: VSRawQueryBuilder.toFragment(condition, "andHaving") });
+        this.havingConditions.push({ connector: "and", sql: VSRawQueryBuilder.toFragment(condition, "andHaving") });
 
         return this;
     }
 
-    /** `OR`-combines `condition` with the existing `HAVING` filter. */
+    /** Adds a `having` condition `or`-combined with the previous ones. */
     orHaving(condition: string | VSSql): this {
-        this.havingConditions.push({ connector: "OR", sql: VSRawQueryBuilder.toFragment(condition, "orHaving") });
+        this.havingConditions.push({ connector: "or", sql: VSRawQueryBuilder.toFragment(condition, "orHaving") });
 
         return this;
     }
 
     /**
-     * Adds a column to `ORDER BY`. Each call appends, in order, so call it once per column for a
-     * multi-column ordering.
+     * Adds columns to `order by`, either one column with an optional direction or a list of
+     * `[column, direction]` tuples. Each call appends.
      */
-    orderBy(column: string | VSSql, direction?: "asc" | "desc" | "ASC" | "DESC"): this {
-        const base = VSRawQueryBuilder.toFragment(column, "orderBy");
+    orderBy(column: string | VSSql, direction?: SortDirection): this;
+    /** Adds a list of `[column, direction]` tuples to `order by`. */
+    orderBy(orders: OrderTuple[]): this;
+    orderBy(columnOrOrders: string | VSSql | OrderTuple[], direction?: SortDirection): this {
+        const orders: OrderTuple[] = Array.isArray(columnOrOrders) ? columnOrOrders : [[columnOrOrders, direction]];
 
-        this.orderByClauses.push(direction ? VSSql.sql`${base} ${VSSql.raw(direction.toUpperCase())}` : base);
+        for (let i = 0; i < orders.length; i++) {
+            const order = orders[i]!;
+
+            const base = VSRawQueryBuilder.toFragment(order[0], "orderBy");
+
+            this.orderByClauses.push(order[1] ? VSSql.sql`${base} ${VSSql.raw(order[1].toUpperCase())}` : base);
+        }
 
         return this;
     }
@@ -391,35 +382,25 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     }
 
     /**
-     * Sets the client or transaction the query runs on, replacing the one given to
-     * `createRawQueryBuilder()`.
-     *
-     * It's lazy — it only matters when {@link VSRawQueryBuilder.execute} runs — so a builder can
-     * be created before a transaction and pointed at it from inside, or a
-     * {@link VSRawQueryBuilder.clone} can be pointed at another client without touching the
-     * original builder.
+     * Sets the client or transaction the query runs on, replacing the one given to `createRawQueryBuilder()`.
+     * It only matters when `execute()` runs, so a builder can be created first and pointed at a transaction later.
      *
      * @example
      * ```typescript
      * const qb = orderRepository.createRawQueryBuilder().select("*").from("order");
      *
-     * await orderRepository.transaction(async tx => {
-     *     qb.setDb(tx);
-     *     return qb.execute();
-     * });
+     * await orderRepository.transaction(async tx => qb.setDb(tx).execute());
      * ```
      */
-    setDb(db: OrmTypes["dbClient"] | OrmTypes["dbTransaction"]): void {
+    setDb(db: ClientOrTransaction<OrmTypes>): this {
         this.db = db;
 
         this.trace("db replaced");
+
+        return this;
     }
 
-    /**
-     * Returns an independent builder with the same clauses and `db`. Changes made to either one
-     * afterwards don't affect the other (the underlying `VSSql`/`VSRawQueryBuilder` values
-     * themselves are immutable, so a shallow copy of every clause array is enough).
-     */
+    /** Returns an independent builder with the same clauses and `db`. */
     clone(): VSRawQueryBuilder<OrmTypes> {
         const copy = new VSRawQueryBuilder<OrmTypes>(this.db, this.adapter, this.logger);
 
@@ -434,6 +415,7 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         copy.orderByClauses = [...this.orderByClauses];
         copy.limitValue = this.limitValue;
         copy.offsetValue = this.offsetValue;
+        copy.distinctSelectMode = this.distinctSelectMode;
 
         this.trace("clone");
 
@@ -444,17 +426,15 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         const ctes = this.cteClauses.map(({ name, columns, query }) => {
             const columnList = columns?.length ? VSSql.sql`(${VSSql.raw(columns.join(", "))}) ` : VSSql.empty;
 
-            return VSSql.sql`${VSSql.raw(name)} ${columnList}AS (${query})`;
+            return VSSql.sql`${VSSql.raw(name)} ${columnList}as (${query})`;
         });
 
-        return VSSql.sql`WITH ${this.recursiveWith ? VSSql.raw("RECURSIVE ") : VSSql.empty}${VSSql.join(ctes, ", ")}`;
+        return VSSql.sql`with ${this.recursiveWith ? VSSql.raw("recursive ") : VSSql.empty}${VSSql.join(ctes, ", ")}`;
     }
 
     /**
-     * Compiles every configured clause into a single {@link VSSql} fragment, in the order
-     * `WITH` (CTEs) -> `SELECT` -> `FROM` -> `JOIN`s -> `WHERE` -> `GROUP BY` -> `HAVING` -> `ORDER BY`
-     * -> `LIMIT` -> `OFFSET`. Nothing runs by itself — splice the result into another `VSSql`
-     * fragment as a subquery, or pass it to `VSRepository.query()`.
+     * Compiles the builder into a `VSSql` fragment, to use as a subquery or pass to `VSRepository.query()`.
+     * Clauses are emitted as: `with`, `select`, `from`, joins, `where`, `group by`, `having`, `order by`, `limit`, `offset`.
      */
     toVSSql(): VSSql {
         if (!this.fromTarget) {
@@ -462,35 +442,36 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         }
 
         const select = this.selectColumns.length ? VSSql.join(this.selectColumns, ", ") : VSSql.raw("*");
+        const distinctFragment = this.distinctSelectMode ? VSSql.raw("distinct ") : VSSql.empty;
 
-        let query = VSSql.sql`SELECT ${select} FROM ${this.fromTarget}`;
+        let query = VSSql.sql`select ${distinctFragment}${select} from ${this.fromTarget}`;
 
         for (const { type, target, on } of this.joinClauses) {
-            query = VSSql.sql`${query} ${VSSql.raw(`${type} JOIN`)} ${target} ON ${on}`;
+            query = VSSql.sql`${query} ${VSSql.raw(`${type} join`)} ${target} on ${on}`;
         }
 
         if (this.whereConditions.length) {
-            query = VSSql.sql`${query} WHERE ${VSRawQueryBuilder.combine(this.whereConditions)}`;
+            query = VSSql.sql`${query} where ${VSRawQueryBuilder.combine(this.whereConditions)}`;
         }
 
         if (this.groupByColumns.length) {
-            query = VSSql.sql`${query} GROUP BY ${VSSql.join(this.groupByColumns, ", ")}`;
+            query = VSSql.sql`${query} group by ${VSSql.join(this.groupByColumns, ", ")}`;
         }
 
         if (this.havingConditions.length) {
-            query = VSSql.sql`${query} HAVING ${VSRawQueryBuilder.combine(this.havingConditions)}`;
+            query = VSSql.sql`${query} having ${VSRawQueryBuilder.combine(this.havingConditions)}`;
         }
 
         if (this.orderByClauses.length) {
-            query = VSSql.sql`${query} ORDER BY ${VSSql.join(this.orderByClauses, ", ")}`;
+            query = VSSql.sql`${query} order by ${VSSql.join(this.orderByClauses, ", ")}`;
         }
 
         if (this.limitValue !== undefined) {
-            query = VSSql.sql`${query} LIMIT ${this.limitValue}`;
+            query = VSSql.sql`${query} limit ${this.limitValue}`;
         }
 
         if (this.offsetValue !== undefined) {
-            query = VSSql.sql`${query} OFFSET ${this.offsetValue}`;
+            query = VSSql.sql`${query} offset ${this.offsetValue}`;
         }
 
         if (this.cteClauses.length) {
@@ -500,45 +481,39 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         return query;
     }
 
-    private compileForAdapter(): { text: string; args: unknown[] } {
-        if (!this.adapter.getPlaceholder) {
-            throw new VSRepoError(
-                "Your adapter did not implement the 'getPlaceholder' method, required to compile a " +
-                    "'VSRawQueryBuilder'; try updating your adapter to a newer version.",
-                VSRepoErrorType.QUERY_BUILDER,
-            );
-        }
-
-        return this.toVSSql().compile(index => this.adapter.getPlaceholder!(index));
+    private compileForAdapter(): CompiledQuery {
+        return this.toVSSql().compile(index => this.adapter.getPlaceholder(index));
     }
 
     /**
-     * Compiles the builder down to a plain SQL string, rendered with the adapter's own
-     * placeholder syntax (e.g. `$1`, `$2`, ...). Values themselves are **not** interpolated into
-     * the string — use {@link VSRawQueryBuilder.toVSSql} (`.compile()`) or
-     * {@link VSRawQueryBuilder.execute} if you also need the parameter values/to run the query.
+     * Compiles the builder into a SQL string using the adapter's placeholders (e.g. `$1`).
+     * Parameter values aren't included: use `toVSSql().compile()` to get them too.
      */
     toSql(): string {
-        return this.compileForAdapter().text;
+        return this.compileForAdapter().query;
     }
 
     /**
-     * Compiles and runs the query against the underlying database, through the same adapter as
-     * every other `VSRepository` method.
+     * Compiles and runs the query through the adapter.
      *
-     * @template T Shape of the returned rows. Defaults to `any`.
+     * @template T Shape of the returned rows.
      */
     async execute<T = any>(): Promise<T> {
-        const { text, args } = this.compileForAdapter();
+        const { query: text, args } = this.compileForAdapter();
 
         this.trace("execute", { query: text, args });
 
-        const start = this.logger?.startPerformLog("run raw query builder execute");
+        const start = this.logger.startPerformLog("run raw query builder execute");
 
         try {
-            return await this.adapter.query<T>(text, { args, db: this.db, modifying: false });
-        } finally {
-            this.logger?.endPerformLog(start);
+            const result = await this.adapter.query<T>(text, { args, db: this.db, modifying: false });
+            this.logger.endPerformLog(start);
+
+            return result;
+        } catch (err) {
+            this.logger.endPerformLog(start);
+
+            throw err;
         }
     }
 }

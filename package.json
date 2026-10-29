@@ -1,15 +1,15 @@
 {
   "name": "vsrepo",
-  "version": "2.7.3",
+  "version": "3.0.0-dev.2",
   "description": "ORM-agnostic repository pattern library",
-  "homepage": "https://github.com/jaobrabo123/VSRepository#readme",
+  "homepage": "https://github.com/VSRepository/VSRepository#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jaobrabo123/VSRepository.git"
+    "url": "git+https://github.com/VSRepository/VSRepository.git"
   },
   "bugs": {
     "email": "joaodev.azevedo@outlook.com",
-    "url": "https://github.com/jaobrabo123/VSRepository/issues"
+    "url": "https://github.com/VSRepository/VSRepository/issues"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,7 +20,7 @@
       "require": "./dist/index.js"
     }
   },
-  "type": "commonjs",
+  "type": "module",
   "files": [
     "dist",
     "README.md",
@@ -28,20 +28,22 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
     "build": "bun run clean && tsc -p tsconfig.build.json",
     "prepack": "bun run build",
-    "typecheck": "tsc --noEmit -p tsconfig.build.json",
-    "test:typing": "tsc --noEmit -p test/tsconfig.json",
-    "test:implementation": "jest",
-    "test:implementation:watch": "jest --watch",
-    "test": "bun run test:typing && bun run test:implementation",
+    "typecheck": "tsc --noEmit",
     "lint": "oxlint --type-aware src/ test/",
+    "lint:fix": "oxlint --fix src/ test/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:docs": "prettier --write \"docs/**/*.md\" \"./*.md\"",
+    "format:docs:check": "prettier --check \"docs/**/*.md\" \"./*.md\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
     "full-validation": "bun run typecheck && bun run lint && bun run format:check && bun run test"
   },
   "keywords": [
@@ -62,24 +64,18 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@jest/globals": "^30.4.1",
-    "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
-    "cross-env": "^10.1.0",
-    "dotenv": "^17.4.2",
-    "jest": "^30.4.2",
+    "@vitest/coverage-v8": "^5.0.2",
     "oxlint": "^1.83.0",
     "oxlint-tsgolint": "^7.0.2002",
     "prettier": "^3.9.8",
-    "ts-jest": "^29.4.12",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "zod": "^4.5.1"
+    "vitest": "^5.0.2"
   },
   "dependencies": {
     "deepmerge": "^4.3.1",
-    "reflect-metadata": "^0.2.2",
-    "valibot": "^1.4.2"
+    "reflect-metadata": "^0.2.2"
   },
   "trustedDependencies": [
     "@parcel/watcher",

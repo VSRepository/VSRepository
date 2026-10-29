@@ -5,7 +5,7 @@
     <img src="https://img.shields.io/npm/v/vsrepo?style=flat-square" alt="npm version"/>
     <img src="https://img.shields.io/npm/l/vsrepo?style=flat-square" alt="npm license"/>
     <img src="https://img.shields.io/npm/dt/vsrepo?style=flat-square" alt="npm downloads"/>
-    <img src="https://img.shields.io/badge/inspired%20by-JpaRepository-E73121?style=flat-square" alt="inspired by JpaRepository"/>
+    <img src="https://img.shields.io/badge/inspired%20by-Spring%20Data%20JPA-E6DB33F?style=flat-square" alt="inspired by Spring Data JPA"/>
   </p>
 </div>
 
@@ -13,12 +13,12 @@
 
 🇺🇸 You're reading the English version. [🇧🇷 Ler em português](./README.pt-BR.md)
 
-VSRepository is an **ORM-agnostic repository pattern library for TypeScript**. It provides a consistent repository API, derived query methods, query builders, transactions, and other persistence concerns through pluggable **ORM adapters**.
+VSRepository is an **ORM-agnostic repository pattern library for TypeScript**. Inspired by **Spring Data JPA**, it provides a consistent abstraction layer with support for **derived query methods**, **query builders**, **native soft-delete**, and other features. All of this is powered by **adapters**, allowing VSRepository to work with different ORMs.
 
 VSRepository lets you create strongly-typed repositories with:
 
-- Automatic **base methods**: `get`, `getOrThrow`, `getList`, `save`, `saveList`, `remove`, `removeList`, `patch`, `merge`, `getAll`, `total`, `has`
-- **Native soft-delete**: `softRemove`, `softRemoveList`, `restore`, `restoreList`
+- Automatic **base methods**: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow`, `save`, `create`, `createMany`, `update`, `updateMany`, `upsert`, `patch`, `merge`, `delete`, `deleteMany`, `remove`, `count`, `exists`, `has`, plus atomic (`increment`, ...) and aggregate (`sum`, ...) methods
+- **Native soft-delete** with `@EnableSoftDelete`: `softDelete`, `softRemove`, `softDeleteMany`, `restore`, `recover`, `restoreMany`
 - **Dynamic methods** inferred from a `declare` field name via the `@DynamicMethod` decorator: `findOneByEmail`, `findByStatusPaginated`, `updateById`
 - **Raw SQL query methods** via the `@QueryMethod` decorator (bypassing the name-parsing engine entirely), parameterized `VSSql` fragments for ad-hoc `query()` calls, and agnostic `?1`, `?2` placeholders with `vsPlaceholders`
 - Ad-hoc **`select`/`relations`** per call
@@ -32,8 +32,10 @@ VSRepository lets you create strongly-typed repositories with:
 
 VSRepository is installed as the core package plus one adapter package for your ORM, for example:
 
+> Version 3 of `VSRepository` is under development, use the **dev** tag to access it.
+
 ```bash
-npm i vsrepo @vsrepo/prisma7-adapter
+npm i vsrepo@dev @vsrepo/prisma7-adapter
 ```
 
 ---
@@ -44,18 +46,18 @@ npm i vsrepo @vsrepo/prisma7-adapter
 
 ```typescript
 // src/repositories/user.repository.ts
-import { VSRepository, DynamicMethod } from "vsrepo";
+import { VSRepository, DynamicMethod, EnableSoftDelete } from "vsrepo";
 import { Prisma7Adapter } from "@vsrepo/prisma7-adapter";
 import prisma from "../configs/db";
 import type { UserGetPayload } from "../../generated/prisma/models";
 
 type User = UserGetPayload<{ include: { address: true } }>;
 
+@EnableSoftDelete("deletedAt")
 class UserRepository extends VSRepository<User, string> {
     constructor() {
         super({
             adapter: new Prisma7Adapter(prisma, { tableName: "user", pkName: "id" }),
-            softRemoveKey: "deletedAt",
             defaultOrdering: { createdAt: "desc" },
         });
     }
@@ -70,7 +72,7 @@ class UserRepository extends VSRepository<User, string> {
 export default new UserRepository();
 ```
 
-> The core API (`VSRepository`, `VSRepoAdapter`, `DynamicMethod`, `QueryMethod`, `VSRepoError`, enums and types) is imported from the single `vsrepo` entry point. The concrete adapter comes from a **separate** package (`@vsrepo/*-adapter`). On Prisma 7, install the [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter).
+> The core API (`VSRepository`, `VSRepoAdapter`, `DynamicMethod`, `QueryMethod`, `VSRepoError`, enums and types) is imported from the single `vsrepo` entry point. The concrete adapter comes from a **separate** package (`@vsrepo/*-adapter`). On Prisma 7, install the [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter).
 
 ### Using the repository
 
@@ -84,7 +86,7 @@ const user = await userRepository.save({
 });
 
 const found = await userRepository.get(user.id);
-const all = await userRepository.getAll();
+const all = await userRepository.find();
 const byEmail = await userRepository.findByEmail("joao@email.com");
 
 await userRepository.patch(user.id, { name: "Joao Pedro" });
@@ -99,22 +101,23 @@ The sections above (installation, basic usage) are the essentials to get you sta
 
 ### Guides
 
-| Guide                                                               | Covers                                                                                                                                                                |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Adapter status](./docs/adapters.md)                                | Which ORM adapters exist today, what "ORM-agnostic by design" means in practice, and how to install, write or publish your own.                                       |
-| [Base methods, configuration & soft-delete](./docs/base-methods.md) | Constructor options, the 12 automatic CRUD methods, native soft-delete, and the 8 atomic/aggregate methods (`increment`, `sum`, ...).                                 |
-| [`select` and `relations`](./docs/select-and-relations.md)          | Ad-hoc field selection and eager relation loading on any call, and `InferMethodReturn` to narrow the return type accordingly.                                         |
-| [Dynamic methods](./docs/dynamic-methods.md)                        | `findByEmail`-style methods parsed from a `declare`d method name: prefixes, field filters, logical operators, relation filters, ordering/pagination/distinct.         |
-| [Query methods (raw SQL)](./docs/query-methods.md)                  | Raw SQL via `@QueryMethod`, parameterized `VSSql` fragments and the agnostic `?1`/`?2` placeholders (`vsPlaceholders`).                                               |
-| [Query builder](./docs/query-builder.md)                            | The fluent `createQueryBuilder()` API for queries assembled at runtime, including pagination, soft-delete visibility and transactions.                                |
-| [Raw query builder](./docs/raw-query-builder.md)                    | The fluent `createRawQueryBuilder()` API for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs (`with`/`withRecursive`). |
-| [Transactions](./docs/transactions.md)                              | Running several repositories against the same native ORM transaction.                                                                                                 |
-| [Utility types](./docs/utility-types.md)                            | The exported helper types (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) and where each one is used.                                                     |
-| [Writing your own adapter](./docs/writing-an-adapter.md)            | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database.                                                      |
-| [Error handling](./docs/error-handling.md)                          | `VSRepoError`, `VSRepoErrorType`, and `VSRepoAdapterError`/`AdapterErrorCode`.                                                                                        |
-| [Logging](./docs/logging.md)                                        | `logLevel`, `logSlowThresholdMs`, and the log format used by the repository and the query builder.                                                                    |
-| [Contributing](./CONTRIBUTING.md)                                   | Repository layout, the key scripts, conventions and CI — plus the contribution flow itself (issues, pull requests, review).                                           |
-| [Migrating from v1](./docs/migrating-from-v1.md)                    | Everything that changed between v1 and v2 — API, config, renamed suffixes, removed features — in a single reference for migrating existing repositories.              |
+| Guide                                                               | Covers                                                                                                                                                                       |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Adapter status](./docs/adapters.md)                                | Which ORM adapters exist today, what "ORM-agnostic by design" means in practice, and how to install, write or publish your own.                                              |
+| [Base methods, configuration & soft-delete](./docs/base-methods.md) | Constructor options, global configuration, the automatic CRUD methods, native soft-delete (`@EnableSoftDelete`), and the atomic/aggregate methods (`increment`, `sum`, ...). |
+| [`select` and `relations`](./docs/select-and-relations.md)          | Ad-hoc field selection and eager relation loading on any call, and `InferMethodReturn` to narrow the return type accordingly.                                                |
+| [Dynamic methods](./docs/dynamic-methods.md)                        | `findByEmail`-style methods parsed from a `declare`d method name: prefixes, field filters, logical operators, relation filters, ordering/pagination.                         |
+| [Query methods (raw SQL)](./docs/query-methods.md)                  | Raw SQL via `@QueryMethod`, parameterized `VSSql` fragments and the agnostic `?1`/`?2` placeholders (`vsPlaceholders`).                                                      |
+| [Query builder](./docs/query-builder.md)                            | The fluent `createQueryBuilder()` API for queries assembled at runtime, including pagination, soft-delete visibility and transactions.                                       |
+| [Raw query builder](./docs/raw-query-builder.md)                    | The fluent `createRawQueryBuilder()` API for hand-written `SELECT` queries too SQL-specific for the query builder — joins, subqueries, CTEs (`with`/`withRecursive`).        |
+| [Transactions](./docs/transactions.md)                              | Running several repositories against the same native ORM transaction.                                                                                                        |
+| [Utility types](./docs/utility-types.md)                            | The exported helper types (`InferMethodType`, `InferMethodReturn`, `KeysOfType`, ...) and where each one is used.                                                            |
+| [Writing your own adapter](./docs/writing-an-adapter.md)            | What an adapter is responsible for, and how to implement the `VSRepoAdapter` contract for a new ORM or database.                                                             |
+| [Error handling](./docs/error-handling.md)                          | `VSRepoError`, `VSRepoErrorType`, and `VSRepoAdapterError`/`AdapterErrorCode`.                                                                                               |
+| [Logging](./docs/logging.md)                                        | `logLevel`, and the log format used by the repository and the query builder.                                                                                                 |
+| [Contributing](./CONTRIBUTING.md)                                   | Repository layout, the key scripts, conventions and CI — plus the contribution flow itself (issues, pull requests, review).                                                  |
+| [Migrating from v2 to v3](./docs/migrating-from-v2-to-v3.md)        | Everything that changed between v2 and v3 — base methods, soft-delete, dynamic methods, query methods, adapters and requirements — as a step-by-step checklist.              |
+| [Migrating from v1 to v2](./docs/migrating-from-v1-to-v2.md)        | Everything that changed between v1 and v2 — API, config, renamed suffixes, removed features — in a single reference for migrating existing repositories.                     |
 
 ---
 
@@ -124,7 +127,7 @@ VSRepository is **ORM-agnostic by design**: the core package (`vsrepo`) ships on
 
 | Adapter                              | Status                                                                                                                                       |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prisma 7 (`@vsrepo/prisma7-adapter`) | 🟢 **Released** — published to npm, with tests. [Source and docs](https://github.com/jaobrabo123/VSRepoPrisma7Adapter).                      |
+| Prisma 7 (`@vsrepo/prisma7-adapter`) | 🟢 **Released** — published to npm, with tests. [Source and docs](https://github.com/VSRepository/VSRepoPrisma7Adapter).                     |
 | Drizzle (`@vsrepo/drizzle-adapter`)  | 🔵 **Alpha** — `npm i @vsrepo/drizzle-adapter@alpha`. The API may still change. [Repo](https://github.com/jaobrabo123/VSRepoDrizzleAdapter). |
 | Other ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planned, not published yet.** Write your own in the meantime — it's fully supported.                                                    |
 | Custom adapters                      | 🟢 Fully supported — implement `VSRepoAdapter` yourself, in your own project or package.                                                     |
@@ -135,7 +138,7 @@ The full status and how to install each one: [Adapter status](./docs/adapters.md
 
 ## Requirements
 
-- Node.js 18+
+- Node.js 22+
 - TypeScript, with **legacy/experimental decorators** enabled (required by `@DynamicMethod`/`@QueryMethod`):
 
 ```json
@@ -147,7 +150,7 @@ The full status and how to install each one: [Adapter status](./docs/adapters.md
 ```
 
 - `reflect-metadata` (bundled as a dependency, imported internally — you don't need to import it yourself)
-- At least one working `VSRepoAdapter` for your database — on Prisma 7, install the published [`@vsrepo/prisma7-adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) (see [Adapter status](#adapter-status))
+- At least one working `VSRepoAdapter` for your database — on Prisma 7, install the published [`@vsrepo/prisma7-adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) (see [Adapter status](#adapter-status))
 
 ---
 

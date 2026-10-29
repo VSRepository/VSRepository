@@ -14,8 +14,9 @@ dist/
 
 teste.js
 teste.ts
-teste-class.ts
 
 linkedin/
 
 vsrepo-*.tgz
+
+coverage

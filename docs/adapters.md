@@ -17,10 +17,14 @@ Because each adapter is versioned on its own, it can follow its ORM's release cy
 
 | Adapter                              | Status                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prisma 7 (`@vsrepo/prisma7-adapter`) | 🟢 **Released** — published to npm, implements the `VSRepoAdapter` contract (CRUD, relations, transactions, `merge`, logging, etc.) with tests; see [`VSRepoPrisma7Adapter`](https://github.com/jaobrabo123/VSRepoPrisma7Adapter) for source and docs.                                                                                  |
+| Prisma 7 (`@vsrepo/prisma7-adapter`) | 🟢 **Released** — published to npm, implements the `VSRepoAdapter` contract (CRUD, relations, transactions, logging, etc.) with tests; see [`VSRepoPrisma7Adapter`](https://github.com/VSRepository/VSRepoPrisma7Adapter) for source and docs.                                                                                          |
 | Drizzle (`@vsrepo/drizzle-adapter`)  | 🔵 **Alpha** — an early release is available on npm; install it with `npm i @vsrepo/drizzle-adapter@alpha`. The API may still change before the stable release. Check the [`DrizzleAdapter`](https://github.com/jaobrabo123/VSRepoDrizzleAdapter) repository for the current status and known limitations, and feel free to contribute. |
 | Other ORMs (Prisma 8, TypeORM, etc.) | 🟡 **Planned, not published yet.** Write your own adapter for now (see [Writing your own adapter](#writing-your-own-adapter)), and consider publishing/contributing it back.                                                                                                                                                            |
 | Custom adapters                      | 🟢 Fully supported today — implement the [`VSRepoAdapter`](./writing-an-adapter.md#the-vsrepoadapter-contract) abstract class yourself for any ORM/database you need, in your own project or package.                                                                                                                                   |
+
+> [!NOTE]
+>
+> The `VSRepoAdapter` contract changed in v3 (new read/write/atomic methods, a required `getPlaceholder()`, ...). Make sure the adapter version you install declares compatibility with the `vsrepo` version you use — see [Migrating from v2 to v3](./migrating-from-v2-to-v3.md#adapters).
 
 ## Installing an adapter
 
@@ -40,9 +44,9 @@ npm i @vsrepo/drizzle-adapter@alpha
 
 You never have to wait for an official package: `VSRepoAdapter` is a plain abstract class, and implementing it is the officially supported extension point.
 
-- **[Writing your own adapter](./writing-an-adapter.md)** — the full walkthrough: what you're implementing, the `VSRepoAdapter` contract, the optional `getPkName()`/`getPlaceholder()` hooks, and how to log from your adapter in the same format as the core.
-- **[Base methods, configuration & soft-delete](./base-methods.md#writing-an-adapter)** — how the 8 atomic/aggregate operations are expected to behave on your ORM, and what an adapter must return for them.
-- **[Transactions](./transactions.md)** — what `runInTransaction()` has to give back so `transaction()`.
+- **[Writing your own adapter](./writing-an-adapter.md)** — the full walkthrough: what you're implementing, the `VSRepoAdapter` contract, the `getPlaceholder()` method, the optional `getPkName()` hook, and how to log from your adapter in the same format as the core.
+- **[Base methods, configuration & soft-delete](./base-methods.md#atomic-and-aggregate-methods)** — how the atomic/aggregate operations are expected to behave on your ORM, and what an adapter must return for them.
+- **[Transactions](./transactions.md)** — what `runInTransaction()` has to give back so `transaction()` works.
 
 ## Publishing an adapter
 

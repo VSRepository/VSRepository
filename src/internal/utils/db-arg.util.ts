@@ -1,18 +1,18 @@
-import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type";
+import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
+import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 
 /**
- * Wraps a database client or transaction so it can be recognized, at
- * runtime, as the trailing `db` override in a {@link QueryArgs} spread call —
- * as opposed to a regular positional query argument. Build one with
- * {@link withDb} rather than constructing it directly.
+ * Marks the `db` override passed as the last argument of a `@QueryMethod`.
+ * Create it with `withDb` instead of instantiating it directly.
  *
  * @publicApi
  */
 export class DbArg<T extends VSRepoOrmTypes = VSRepoOrmTypes> {
-    constructor(private readonly db: T["dbClient"] | T["dbTransaction"]) {}
+    /** @param db Client or transaction to wrap. */
+    constructor(private readonly db: ClientOrTransaction<T>) {}
 
     /** Returns the wrapped database client or transaction. */
-    getDb(): T["dbClient"] | T["dbTransaction"] {
+    getDb(): ClientOrTransaction<T> {
         return this.db;
     }
 }

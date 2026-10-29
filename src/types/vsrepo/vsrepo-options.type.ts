@@ -1,7 +1,8 @@
-import { VSRepoAdapter } from "../../VSRepoAdapter";
-import { VSLogLevel } from "../../internal/enums/vs-log-level.enum";
-import { KeysOfType } from "../utils/keys-of-type.type";
-import { Ordering } from "../utils/ordering.type";
+import { VSRepoAdapter } from "../../VSRepoAdapter.js";
+import { VSLogLevel } from "../../internal/enums/vs-log-level.enum.js";
+import { KeysOfType } from "../utils/keys-of-type.type.js";
+import { MergeConfig } from "../utils/merge-config.type.js";
+import { Ordering } from "../utils/ordering.type.js";
 
 /**
  * Configuration passed to the `VSRepository` constructor.
@@ -16,50 +17,27 @@ export type VSRepoOptions<T, K> = {
     adapter: VSRepoAdapter<T>;
     /** Name of the field that represents the entity's primary key (PK). */
     pkName?: KeysOfType<T, K>;
-    /**
-     * Name of the field used for soft-delete.
-     *
-     * When configured, enables the `softRemove`, `softRemoveList`, `restore`,
-     * and `restoreList` methods.
-     */
-    softRemoveKey?: keyof T;
     /** Minimum severity of messages printed by the repository's internal logger. Defaults to `VSLogLevel.WARN`. */
     logLevel?: VSLogLevel;
-    /**
-     * Duration (in ms) above which a finished operation is logged as WARN
-     * instead of DEBUG, flagging potentially slow queries. Defaults to 300ms.
-     *
-     * Pass `false` to disable slow-operation warnings entirely.
-     * Pass `true` to use the default 300ms threshold explicitly.
-     */
-    logSlowThresholdMs?: number | boolean;
     /** Default ordering automatically applied to queries that accept `order`, unless the call overrides it. */
     defaultOrdering?: Ordering<T>;
     /**
-     * When `true`, postpones resolving every `@DynamicMethod`/`@QueryMethod`
-     * field of the subclass: the constructor skips that step, and the
-     * subclass itself must call the inherited `resolveDynamicMethods()` to
-     * make those methods available.
+     * When `true`, the constructor skips resolving `@DynamicMethod`/`@QueryMethod` fields and the
+     * subclass must call `resolveDynamicMethods()` itself.
      *
      * @default false
      */
     lazyDynamicMethods?: boolean;
     /**
-     * When `true`, raw SQL strings passed to `VSRepository.query()` and
-     * `@QueryMethod` stop using your database's native placeholder syntax
-     * and instead use VSRepository's own agnostic, positional placeholders —
-     * `?1`, `?2`, ... (1-based, Spring Data JPA style). The same index may be
-     * repeated (`?1 ... ?1`) to reuse the same argument more than once.
+     * When `true` (or omitted), raw SQL strings given to `VSRepository.query()` and `@QueryMethod` use
+     * VSRepository's own positional placeholders (`?1`, `?2`, ...; 1-based, an index can be repeated)
+     * instead of the database's native syntax.
      *
-     * Compiled via `adapter.getPlaceholder()`, so the adapter must implement
-     * it — the constructor throws a `VSRepoError` if it's enabled and the
-     * adapter doesn't.
-     *
-     * This is independent of passing a `VSSql` fragment directly to
-     * `VSRepository.query()`, which always requires `getPlaceholder()`
-     * regardless of this option.
-     *
-     * @default false
+     * @default true
      */
     vsPlaceholders?: boolean;
+    /**
+     * Default configuration used by `merge()` to combine the stored record with the given object.
+     */
+    mergeConfig?: MergeConfig<T>;
 };

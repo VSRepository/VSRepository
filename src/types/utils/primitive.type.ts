@@ -1,4 +1,4 @@
-import { DecimalLike } from "./decimal-like.type";
+import { DecimalLike } from "./decimal-like.type.js";
 
 /**
  * Types treated as scalar (non-relation) values when walking an entity's shape.

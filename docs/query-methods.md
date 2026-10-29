@@ -6,58 +6,50 @@
 
 # Query methods (raw SQL)
 
-`@QueryMethod` bypasses the name-parsing engine entirely and executes a raw SQL statement through the adapter's `query()` method. Use placeholders for the values passed via `args` — never interpolate values directly into the SQL string.
+`@QueryMethod` bypasses the name-parsing engine entirely and executes a raw SQL statement through the adapter's `query()` method. Use placeholders for the values passed as arguments — never interpolate values directly into the SQL string.
 
 There are three ways to write values in a raw query:
 
-- **Your adapter's native placeholder syntax** — the `$1`, `$2`, ... style used in the examples below is the PostgreSQL convention; MySQL, for instance, uses `?`. Check your adapter's documentation for the exact syntax.
-- **VSRepository's own agnostic placeholders** — with `vsPlaceholders: true` in the constructor options, plain strings use `?1`, `?2`, ... (1-based, Spring Data JPA style) regardless of the database behind the adapter. See [Agnostic placeholders with `vsPlaceholders`](#agnostic-placeholders-with-vsplaceholders).
+- **VSRepository's own agnostic placeholders** (the default) — plain strings use `?1`, `?2`, ... (1-based, Spring Data JPA style) regardless of the database behind the adapter. See [Agnostic placeholders with `vsPlaceholders`](#agnostic-placeholders-with-vsplaceholders).
+- **Your adapter's native placeholder syntax** — set `vsPlaceholders: false` and write the database's own style yourself: `$1`, `$2`, ... for PostgreSQL, `?` for MySQL/SQLite. Check your adapter's documentation for the exact syntax.
 - **`VSSql` fragments** — build the query as a composable fragment with the `VSSql.sql` tagged template and pass it straight to `query()`; values are parameterized automatically. See [Parameterized fragments with `VSSql`](#parameterized-fragments-with-vssql).
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {
-    @QueryMethod('SELECT * FROM "user" WHERE email = $1')
-    declare findByEmailRaw: (arg: QueryMethodArg<[email: string]>) => Promise<User[]>;
+    @QueryMethod('SELECT * FROM "user" WHERE email = ?1')
+    declare findByEmailRaw: (email: string, db?: DbArg) => Promise<User[]>;
 
-    @QueryMethod('UPDATE "user" SET active = true WHERE id = $1', { modifying: true })
-    declare activateUser: (arg: QueryMethodArg<[id: string]>) => Promise<number>;
+    @QueryMethod('UPDATE "user" SET active = true WHERE id = ?1', { modifying: true })
+    declare activateUser: (id: string, db?: DbArg) => Promise<number>;
 
     // Only one row is ever expected here, so `singleResult` collapses the
     // array into a single object (or `null` when no row matches).
-    @QueryMethod('SELECT * FROM "user" WHERE id = $1 LIMIT 1', { singleResult: true })
-    declare findByIdRaw: (arg: QueryMethodArg<[id: string]>) => Promise<User | null>;
+    @QueryMethod('SELECT * FROM "user" WHERE id = ?1 LIMIT 1', { singleResult: true })
+    declare findByIdRaw: (id: string, db?: DbArg) => Promise<User | null>;
 }
 ```
 
 | Option         | Type      | Default | Description                                                                                                                                                                                                                                     |
 | -------------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `modifying`    | `boolean` | `false` | When `true`, the method resolves to the number of affected rows. When `false`, runs as a read query and resolves to the declared return type.                                                                                                   |
+| `modifying`    | `boolean` | `false` | When `true`, the SQL is run as a modifying statement (`INSERT`/`UPDATE`/`DELETE`) and the method resolves to the number of affected rows. When `false`, runs as a read query and resolves to the declared return type.                          |
 | `singleResult` | `boolean` | `false` | When `true`, collapses an array result into its first element (`null` if empty), so you can declare the return type as a single object instead of an array. Has no effect on non-array results (e.g. a `modifying` query's affected-row count). |
-
-Query methods accept `{ args, db? }` at the call site — `db` lets them participate in a `transaction()` block just like base and dynamic methods.
 
 Query methods are inherited by subclasses just like dynamic methods — see [Inheriting from another repository](./dynamic-methods.md#inheriting-from-another-repository).
 
-## Spread arguments with `spreadArgs`
+## Arguments and transactions
 
-By default, a `@QueryMethod` receives its placeholder values through a single `QueryMethodArg` object (`method({ args: [...] })`). Set `spreadArgs: true` to receive them as separate positional arguments instead:
+A `@QueryMethod` receives its placeholder values as plain **positional arguments**, in the order of `?1`, `?2`, ...:
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {
-    @QueryMethod('SELECT * FROM "user" WHERE email = $1 AND "userType" = $2', {
-        spreadArgs: true,
-    })
-    declare findByEmailAndType: (...args: QueryArgs<[email: string, userType: string]>) => Promise<User[]>;
-
-    // Instead of using `QueryArgs`, you can also simply set `DbArg` as the last parameter
-    @QueryMethod('SELECT * FROM "user" WHERE id = $1', { spreadArgs: true })
-    declare findById: (id: string, db?: DbArg) => Promise<User[]>;
+    @QueryMethod('SELECT * FROM "user" WHERE email = ?1 AND "userType" = ?2')
+    declare findByEmailAndType: (email: string, userType: string, db?: DbArg) => Promise<User[]>;
 }
 
 const admins = await userRepository.findByEmailAndType("joao@email.com", "admin");
 ```
 
-To run the query against a specific client or transaction instead of the repository's default one, pass `withDb(tx)` as the trailing argument — it wraps `tx` in a `DbArg`, which the resolver recognizes with `instanceof`, so it's never confused with a regular positional argument even if that argument happens to be an object:
+To run the query against a specific client or transaction instead of the repository's default one, pass `withDb(tx)` as the trailing argument — it wraps `tx` in a `DbArg`, which the resolver recognizes with `instanceof`, so it's never confused with a regular positional argument even if that argument happens to be an object. Declare `db?: DbArg` as the last parameter to type it:
 
 ```typescript
 await userRepository.transaction(async tx => {
@@ -65,25 +57,25 @@ await userRepository.transaction(async tx => {
 });
 ```
 
-`spreadArgs` only affects `@QueryMethod`-declared fields — it's `false` by default, and calling a method declared without it using more than one argument throws, since the single-`QueryMethodArg` call style is expected instead. It has no effect on `query()`, which always accepts `{ args, db? }`.
+This applies only to `@QueryMethod`-declared fields. `query()` keeps its own `{ args, db? }` options object.
 
 ## Ad-hoc raw queries with `query()`
 
 For one-off raw SQL that doesn't warrant declaring a `@QueryMethod` on the repository class, call `query()` directly — it's available on every `VSRepository` instance and uses the adapter's `query()` under the hood:
 
 ```typescript
-const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE email = $1', {
+const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE email = ?1', {
     args: ["maria@email.com"],
 });
 
-const affectedRows = await userRepository.query<number>('UPDATE "user" SET active = true WHERE id = $1', {
+const affectedRows = await userRepository.query<number>('UPDATE "user" SET active = true WHERE id = ?1', {
     args: ["123"],
     modifying: true,
 });
 
 // Only one row is ever expected here, so `singleResult` collapses the
 // array into a single object (or `null` when no row matches).
-const user = await userRepository.query<User | null>('SELECT * FROM "user" WHERE id = $1 LIMIT 1', {
+const user = await userRepository.query<User | null>('SELECT * FROM "user" WHERE id = ?1 LIMIT 1', {
     args: ["123"],
     singleResult: true,
 });
@@ -102,26 +94,22 @@ const affectedRows = await userRepository.query<number>(
 );
 ```
 
-| Option         | Type      | Default                     | Description                                                                                                                                                                                                                                                                                                                                   |
-| -------------- | --------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `args`         | `any[]`   | `undefined`                 | Positional parameters injected into the SQL placeholders — the placeholder syntax depends on the database/driver behind your adapter (or use `vsPlaceholders` for `?1` placeholders, see below). Never interpolate values directly into the SQL string. Not accepted when `sql` is a `VSSql` fragment — its values are already parameterized. |
-| `db`           | `any`     | Repository's default client | Database client or transaction to run this query in.                                                                                                                                                                                                                                                                                          |
-| `modifying`    | `boolean` | `false`                     | When `true`, returns the number of affected rows.                                                                                                                                                                                                                                                                                             |
-| `singleResult` | `boolean` | `false`                     | When `true`, collapses an array result into its first element (`null` if empty). Has no effect on non-array results (e.g. a `modifying` query's affected-row count).                                                                                                                                                                          |
+| Option         | Type      | Default                     | Description                                                                                                                                                                                                                                                                                                        |
+| -------------- | --------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `args`         | `any[]`   | `undefined`                 | Positional parameters injected into the SQL placeholders — `?1`, `?2`, ... by default, or your database's native syntax when `vsPlaceholders` is `false` (see below). Never interpolate values directly into the SQL string. Not accepted when `sql` is a `VSSql` fragment — its values are already parameterized. |
+| `db`           | `any`     | Repository's default client | Database client or transaction to run this query in.                                                                                                                                                                                                                                                               |
+| `modifying`    | `boolean` | `false`                     | When `true`, returns the number of affected rows.                                                                                                                                                                                                                                                                  |
+| `singleResult` | `boolean` | `false`                     | When `true`, collapses an array result into its first element (`null` if empty). Has no effect on non-array results (e.g. a `modifying` query's affected-row count).                                                                                                                                               |
 
 Just like base, dynamic and query methods, `query()` accepts `db` in `options` to participate in a `transaction()` block.
 
 ## Agnostic placeholders with `vsPlaceholders`
 
-To avoid depending on the placeholder dialect of your adapter/database, set `vsPlaceholders: true` in the [constructor options](./base-methods.md#constructor-options) and raw SQL strings passed to `query()` and `@QueryMethod` stop using your database's native syntax — they use VSRepository's own agnostic, positional placeholders instead: `?1`, `?2`, ... (1-based, Spring Data JPA style).
+Raw SQL strings passed to `query()` and `@QueryMethod` don't depend on the placeholder dialect of your adapter/database: they use VSRepository's own agnostic, positional placeholders — `?1`, `?2`, ... (1-based, Spring Data JPA style). This is the default (`vsPlaceholders: true`); set it to `false` in the [constructor options](./base-methods.md#constructor-options) — or globally with `VSRepository.setGlobalConfig()` — to write your database's native syntax instead.
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {
-    constructor() {
-        super({ adapter, pkName: "id", vsPlaceholders: true });
-    }
-
-    @QueryMethod('SELECT * FROM "user" WHERE email = ?1 AND active = ?2', { spreadArgs: true })
+    @QueryMethod('SELECT * FROM "user" WHERE email = ?1 AND active = ?2')
     declare findByEmailAndActive: (email: string, active: boolean) => Promise<User[]>;
 }
 
@@ -134,8 +122,8 @@ const users = await userRepository.query<User[]>('SELECT * FROM "user" WHERE ema
 >
 > - The same index may appear more than once (`?1 ... ?1`) to reuse the same argument — each occurrence becomes its own placeholder/value pair in the compiled output.
 > - A `?N` inside a single-quoted string literal (e.g. `SELECT ... WHERE note = 'use ?1 literally'`) is **not** treated as a placeholder — it is passed through to the SQL untouched and consumes no `args` entry. Standard SQL escapes are respected, so `''` inside a literal does not end it (`'it''s ?1'` is fully skipped). Edge cases: - There is no escape mechanism **outside** a literal: if a query needs literal `?` + digits text in an unquoted context, build that part with a `VSSql` fragment instead. - Matching only triggers on `?` immediately followed by a digit, so operators like PostgreSQL's `?` (JSONB key existence), `?|` and `?&` are unaffected.
-> - Because `?1` is compiled through `adapter.getPlaceholder()`, the adapter must implement it — the constructor throws a `VSRepoError` if `vsPlaceholders` is enabled and the adapter doesn't. `@QueryMethod` also resolves through `getPlaceholder()`, so the same requirement applies.
-> - This is independent of `VSSql` fragments: passing a `VSSql` to `query()` requires `getPlaceholder()` regardless of this option, and always compiles through it.
+> - `?1` is compiled through the adapter's `getPlaceholder()`.
+> - This is independent of `VSSql` fragments: a `VSSql` passed to `query()` always compiles through `getPlaceholder()`, whatever this option says.
 
 ## Parameterized fragments with `VSSql`
 
@@ -213,7 +201,7 @@ const users = await userRepository.query<User[]>(fragment);
 
 > [!NOTE]
 >
-> - Passing a `VSSql` fragment to `query()` requires the adapter to implement `getPlaceholder()` — otherwise `query()` throws a `VSRepoError`. The adapter's other options (`modifying`, `singleResult`, `db`) keep working normally.
+> - A `VSSql` fragment is compiled through the adapter's `getPlaceholder()` (so it uses your database's native syntax, whatever `vsPlaceholders` says). The other options of `query()` (`modifying`, `singleResult`, `db`) keep working normally.
 > - Values interpolated via `${...}` (including `join` elements) always become parameters; only `VSSql.raw` inserts text as-is. If you can't rule out user input for a table/column name, validate it against a static allowlist before hand — `raw` gives you no protection.
 
 [⬆️ Back to top](#top)

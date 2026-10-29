@@ -1,22 +1,20 @@
-import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type";
-import { DbArg } from "./db-arg.util";
+import { ClientOrTransaction } from "../../types/utils/client-or-transaction.type.js";
+import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
+import { DbArg } from "./db-arg.util.js";
 
 /**
- * Wraps a database client or transaction so it can be passed as the
- * trailing argument of a `@QueryMethod` declared with `{ spreadArgs: true }`,
- * running that call against `db` instead of the repository's default
- * client — the same role `{ db }` plays in the single-object
- * `QueryMethodArg` call style.
+ * Wraps a client or transaction so it can be passed as the last argument of a `@QueryMethod`,
+ * running that call on `db` instead of the repository's default client.
  *
  * @example
  * ```typescript
- * await userRepository.transaction(async (tx) => {
- *     await userRepository.findByEmailAndType("joao@email.com", "admin", withDb(tx));
+ * await userRepository.transaction(async tx => {
+ *     await userRepository.findByEmail("joao@email.com", withDb(tx));
  * });
  * ```
  *
  * @publicApi
  */
-export function withDb<T extends VSRepoOrmTypes = VSRepoOrmTypes>(db: T["dbClient"] | T["dbTransaction"]): DbArg<T> {
+export function withDb<T extends VSRepoOrmTypes = VSRepoOrmTypes>(db: ClientOrTransaction<T>): DbArg<T> {
     return new DbArg(db);
 }

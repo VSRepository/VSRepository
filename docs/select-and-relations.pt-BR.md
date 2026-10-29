@@ -71,7 +71,7 @@ const options = {
     select: { id: true, name: true, products: { id: true } },
 } satisfies MethodOptions<User>;
 
-const users: InferMethodReturn<User[], typeof options> = await userRepository.getAll(options);
+const users: InferMethodReturn<User[], typeof options> = await userRepository.find({}, options);
 // { id: string; name: string; products: { id: string }[] }[]
 ```
 

@@ -1,4 +1,4 @@
-import { Primitive } from "../utils/primitive.type";
+import { Primitive } from "../utils/primitive.type.js";
 
 /**
  * Selection shape accepted by the `select` option of repository/adapter methods.
@@ -6,8 +6,6 @@ import { Primitive } from "../utils/primitive.type";
  * Scalar fields accept a `boolean`; relation fields accept either a `boolean`
  * (select the relation with all of its own scalar fields) or a nested
  * `VSRepoSelect` to further restrict which fields of the relation are returned.
- *
- * @template T Entity type being selected from.
  *
  * @publicApi
  */

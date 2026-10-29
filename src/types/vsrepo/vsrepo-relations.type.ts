@@ -1,10 +1,8 @@
-import { Primitive } from "../utils/primitive.type";
+import { Primitive } from "../utils/primitive.type.js";
 
 /**
  * Extracts the keys of `T` that represent relation fields (i.e. objects or
  * arrays of objects, as opposed to scalar/`Primitive` fields).
- *
- * @template T Entity type to inspect.
  *
  * @publicApi
  */
@@ -26,8 +24,6 @@ export type RelationKeys<T> = {
  *
  * Each relation field accepts either a `boolean` (load the relation as-is)
  * or a nested `VSRepoRelations` to further eager-load relations of that relation.
- *
- * @template T Entity type being queried.
  *
  * @publicApi
  */

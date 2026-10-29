@@ -1,5 +1,5 @@
 /**
- * Pagination options accepted by `getAll` and by dynamic methods with `Paginated`.
+ * Pagination settings.
  *
  * @publicApi
  */

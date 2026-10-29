@@ -6,15 +6,17 @@
     "oxc"
   ],
   "options": {
-    "typeAware": true
+    "typeAware": true,
   },
   "categories": {
     "correctness": "error"
   },
   "rules": {
     "typescript/no-explicit-any": "off",
-    "typescript/no-floating-promises": "warn",
-    "typescript/unbound-method": "off"
+    "typescript/no-floating-promises": "error",
+    "eslint/no-unused-vars": "error",
+    "typescript/unbound-method": "off",
+    "typescript/no-misused-spread": "off"
   },
   "env": {
     "builtin": true,

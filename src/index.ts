@@ -17,21 +17,28 @@ export { QueryMethod } from "./decorators/query-method.decorator.js";
 // Public enums
 export { VSRepoErrorType } from "./internal/enums/vsrepo-error-type.enum.js";
 export { VSLogLevel } from "./internal/enums/vs-log-level.enum.js";
-export { TransactionIsolationLevel } from "./internal/enums/transaction-isolation-level.enum.js";
+export { VSRepoIsolationLevel } from "./internal/enums/vsrepo-isolation-level.enum.js";
 export { AdapterErrorCode } from "./internal/enums/adapter-error-code.enum.js";
 
 // Public functions
 export { withDb } from "./internal/utils/with-db.util.js";
+export {
+    getVsPlaceholder,
+    getCockroachPlaceholder,
+    getMySqlPlaceholder,
+    getPostgresPlaceholder,
+    getSqlServerPlaceholder,
+    getSqlitePlaceholder,
+} from "./internal/utils/placeholder-fns.util.js";
 
 // Public types
 export type { VSRepoOptions } from "./types/vsrepo/vsrepo-options.type.js";
 export type { VSRepoOrmTypes } from "./types/vsrepo/vsrepo-orm-types.type.js";
-export type { VSRepoArgs } from "./types/vsrepo/vsrepo-args.type.js";
-export type { VSRepoMethod } from "./types/vsrepo/vsrepo-method.type.js";
 export type {
     VSRepoWhere,
     VSRepoWherePlain,
     VSRepoFieldWhere,
+    VSRepoLogicalOperators,
     VSRepoFieldOperators,
 } from "./types/vsrepo/vsrepo-where.type.js";
 export type { VSRepoRelations, RelationKeys } from "./types/vsrepo/vsrepo-relations.type.js";
@@ -41,9 +48,9 @@ export type { AdapterMethodOptions } from "./types/adapter/adapter-method-option
 export type { AdapterQueryOptions } from "./types/adapter/adapter-query-options.type.js";
 export type { DynamicMethodOptions } from "./types/decorators/dynamic-method-options.type.js";
 export type { QueryMethodOptions } from "./types/decorators/query-method-options.type.js";
-export type { QueryMethodArg } from "./types/utils/query-method-arg.type.js";
 export type { CountResult } from "./types/utils/count-result.type.js";
 export type { DeepPartial } from "./types/utils/deep-partial.type.js";
+export type { MergeConfig, MergeFieldConfig, MergeFields, MergeOptions } from "./types/utils/merge-config.type.js";
 export type { KeysOfType } from "./types/utils/keys-of-type.type.js";
 export type { MethodOptions } from "./types/utils/methods-options.type.js";
 export type { InferMethodReturn } from "./types/utils/infer-method-return.type.js";
@@ -52,14 +59,24 @@ export type { Ordering, OrderByField, SortDirection } from "./types/utils/orderi
 export type { Pagination } from "./types/utils/pagination.type.js";
 export type { Primitive } from "./types/utils/primitive.type.js";
 export type { SeeMode } from "./types/utils/see-mode.type.js";
-export type { VSRepoQueryOptions } from "./types/vsrepo/vsrepo-query-options.type";
+export type { VSRepoQueryOptions } from "./types/vsrepo/vsrepo-query-options.type.js";
 export type { DecimalLike } from "./types/utils/decimal-like.type.js";
 export type { NumericKeys } from "./types/utils/numeric-keys.type.js";
 export type { NumericLike } from "./types/utils/numeric-like.type.js";
 export type { RestrictMethodOptions } from "./types/utils/restrict-method-options.type.js";
-export type { QueryArgs } from "./types/utils/query-args.type.js";
 export type { VSRawQueryBuilderTarget } from "./types/vsrepo/vs-raw-query-builder-target.type.js";
 export type { VSRawQueryBuilderCteQuery } from "./types/vsrepo/vs-raw-query-builder-cte-query.type.js";
+export type { GetPlaceholderFn } from "./types/utils/get-placeholder-fn.type.js";
+export type { OrderTuple } from "./types/utils/order-tuple.type.js";
+export type { PaginatedResult } from "./types/utils/paginated-result.type.js";
+export type { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
+export type { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
+export type { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
+export type { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
+export type { SimpleAdapterMethodOptions } from "./types/adapter/simple-adapter-method-options.type.js";
+export type { RestrictAdapterMethodOptions } from "./types/adapter/restrict-adapter-method-options.type.js";
+export type { CompiledQuery } from "./types/utils/compiled-query.type.js";
+export type { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";
