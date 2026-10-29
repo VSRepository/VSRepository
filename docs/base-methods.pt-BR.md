@@ -18,6 +18,7 @@
 | `logLevel`           | `VSLogLevel`                 | Opcional. Severidade mínima impressa pelo logger interno. O padrão é `VSLogLevel.WARN`; use `VSLogLevel.NONE` para desativar os logs por completo.                                                                                                                                                                                                                       |
 | `lazyDynamicMethods` | `boolean`                    | Opcional. O padrão é `false`. Quando `true`, adia a resolução dos métodos `@DynamicMethod`/`@QueryMethod` — o próprio repository precisa chamar `resolveDynamicMethods()` manualmente depois. Veja [Resolução lazy dos métodos dinâmicos](./dynamic-methods.pt-BR.md#resolução-lazy-dos-métodos-dinâmicos).                                                              |
 | `vsPlaceholders`     | `boolean`                    | Opcional. O padrão é `true`. Strings SQL cruas passadas para `query()` e `@QueryMethod` usam os placeholders próprios do VSRepository (`?1`, `?2`, ...) em vez da sintaxe nativa do seu adapter. Passe `false` para escrever a sintaxe nativa. Veja [Placeholders agnósticos com `vsPlaceholders`](./query-methods.pt-BR.md#placeholders-agnósticos-com-vsplaceholders). |
+| `mergeConfig`        | `MergeConfig<Entity>`        | Opcional. Configuração padrão usada pelo `merge()`; uma chamada pode substituí-la por `options.mergeConfig`. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge).                                                          |
 
 O soft-delete não é mais uma option do construtor — ele é habilitado com o decorator [`@EnableSoftDelete`](#soft-delete).
 
@@ -63,18 +64,18 @@ Disponíveis automaticamente em toda subclasse de `VSRepository`. `where` é um 
 
 **Escrita**
 
-| Método                                      | Descrição                                                                                                                        |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `create(obj, options?)`                     | Cria um registro e o retorna.                                                                                                    |
-| `createMany(objs, options?)`                | Cria vários registros de uma vez, retornando `{ count }`. Passe `ignoreConflicts: true` para pular linhas que violem uma unique. |
-| `createManyReturning(objs, options?)`       | O mesmo que `createMany`, mas retorna os registros criados.                                                                      |
-| `save(obj \| objs, options?)`               | Cria ou atualiza (upsert) um registro — ou, recebendo um array, vários registros em uma única chamada.                           |
-| `upsert(where, create, update, options?)`   | Atualiza o registro que bater em `where` com `update`, ou o cria com `create` se nenhum bater.                                   |
-| `update(where, obj, options?)`              | Atualiza o registro que bater em `where` e o retorna.                                                                            |
-| `updateMany(where, obj, options?)`          | Atualiza todos os registros que baterem em `where`, retornando `{ count }`.                                                      |
-| `updateManyReturning(where, obj, options?)` | O mesmo que `updateMany`, mas retorna os registros atualizados.                                                                  |
-| `patch(id, obj, options?)`                  | O mesmo que `update`, pela chave primária.                                                                                       |
-| `merge(id, obj, options?)`                  | Busca um registro e o retorna com um merge profundo, em memória, com o objeto informado — **não** persiste nada.                 |
+| Método                                      | Descrição                                                                                                                                                                                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create(obj, options?)`                     | Cria um registro e o retorna.                                                                                                                                                                                                       |
+| `createMany(objs, options?)`                | Cria vários registros de uma vez, retornando `{ count }`. Passe `ignoreConflicts: true` para pular linhas que violem uma unique.                                                                                                    |
+| `createManyReturning(objs, options?)`       | O mesmo que `createMany`, mas retorna os registros criados.                                                                                                                                                                         |
+| `save(obj \| objs, options?)`               | Cria ou atualiza (upsert) um registro — ou, recebendo um array, vários registros em uma única chamada.                                                                                                                              |
+| `upsert(where, create, update, options?)`   | Atualiza o registro que bater em `where` com `update`, ou o cria com `create` se nenhum bater.                                                                                                                                      |
+| `update(where, obj, options?)`              | Atualiza o registro que bater em `where` e o retorna.                                                                                                                                                                               |
+| `updateMany(where, obj, options?)`          | Atualiza todos os registros que baterem em `where`, retornando `{ count }`.                                                                                                                                                         |
+| `updateManyReturning(where, obj, options?)` | O mesmo que `updateMany`, mas retorna os registros atualizados.                                                                                                                                                                     |
+| `patch(id, obj, options?)`                  | O mesmo que `update`, pela chave primária.                                                                                                                                                                                          |
+| `merge(where, obj, options?)`               | Busca o registro que bate em `where` e o retorna com um merge profundo, em memória, com o objeto informado — **não** persiste nada; `null` se nenhum bater. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge). |
 
 **Remoção** (permanente — para soft-delete veja [abaixo](#soft-delete))
 
@@ -141,15 +142,61 @@ const totalPages = Math.ceil(count / pageSize);
 
 A mesma operação existe como [método dinâmico](./dynamic-methods.pt-BR.md#prefixos-disponíveis) (`findAndCountBy`, `findAndCountWhere`) e, para queries montadas em tempo de execução, como [`getResultAndCount()`](./query-builder.pt-BR.md#paginação-com-getresultandcount) no query builder.
 
+### Mesclando registros com `merge`
+
+`merge(where, obj, options?)` busca o registro que bate em `where` e o combina, **em memória**, com `obj`. Nada é persistido — passe o resultado para `save` ou `patch` para gravá-lo. O `defaultOrdering` é aplicado, a menos que `options.order` seja informado, o que importa quando mais de um registro bate.
+
+Sem nenhuma configuração, cada campo de `obj` sobrescreve o armazenado: objetos aninhados e arrays são **substituídos**, não mesclados; valores `undefined` são ignorados; e valores `null` são escritos. O registro buscado é o que é alterado e retornado, e o `obj` nunca é modificado.
+
+Para mudar isso, passe um [`MergeConfig`](./utility-types.pt-BR.md) — nas options do construtor do repository (`mergeConfig`, para todas as chamadas) ou nas options do método (`options.mergeConfig`, só para aquela chamada). O das options do método **substitui** o do repository, não é combinado com ele.
+
+| Campo               | Padrão     | Descrição                                                                                                                                                                                      |
+| ------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `undefinedBehavior` | `"ignore"` | `"ignore"` ignora campos da origem com valor `undefined`, mantendo o valor armazenado; `"keep"` escreve o `undefined`.                                                                         |
+| `nullBehavior`      | `"keep"`   | `"keep"` escreve campos da origem com valor `null`; `"ignore"` os ignora, mantendo o valor armazenado.                                                                                         |
+| `fields`            | nenhum     | Estratégias por campo, pelo nome do campo. Campos não listados são sobrescritos pelo valor da origem. `undefinedBehavior` e `nullBehavior` também valem para as entidades aninhadas mescladas. |
+
+Cada entrada de `fields` escolhe uma `strategy`. Só são aceitas as estratégias que combinam com o tipo do campo:
+
+| Estratégia | Tipo do campo      | Comportamento                                                                                                                                                                                                                                                                             | Options extras                                                                          |
+| ---------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `to-one`   | Entidade aninhada  | Mescla o objeto da origem **recursivamente** no armazenado em vez de substituí-lo.                                                                                                                                                                       | `fields` — estratégias da entidade aninhada (padrão: nenhuma).                          |
+| `to-many`  | Array de entidades | Casa os itens das duas listas por `pk`: itens que casam são mesclados recursivamente, itens só na lista armazenada são mantidos e itens só na lista da origem são adicionados. Itens sem valor de `pk` não podem ser casados: os armazenados são mantidos e os da origem são adicionados. | `pk` (**obrigatório**); `fields` — estratégias de cada item (padrão: nenhuma).          |
+| `concat`   | Array de escalares | Concatena a lista armazenada e a da origem, sem remover duplicados.                                                                                                                                                                                                                       | `whosFirst`: `"target"` (itens armazenados primeiro) ou `"source"`. Padrão: `"target"`. |
+| `custom`   | Qualquer campo     | Armazena o que `customFn(target, source)` retornar. Só é chamada quando o valor da origem não é `null` nem `undefined` (esses seguem `nullBehavior`/`undefinedBehavior`), e `target` pode ser `undefined`.                                                                                | `customFn` (**obrigatório**).                                                           |
+
+```typescript
+const user = await userRepository.merge(
+    { id: "1" },
+    { name: "Maria", tags: ["admin"], address: { city: "Recife" }, posts: [{ id: 2, title: "Editado" }] },
+    {
+        relations: { address: true, posts: true },
+        mergeConfig: {
+            nullBehavior: "ignore",
+            fields: {
+                tags: { strategy: "concat", whosFirst: "source" },
+                address: { strategy: "to-one" },
+                posts: { strategy: "to-many", pk: "id" },
+            },
+        },
+    },
+);
+
+if (user) await userRepository.save(user);
+```
+
+O registro é buscado com o `select`/`relations` das options, então carregue as relations nas quais quer mesclar: sem elas não há com o que casar.
+
 ### Options dos métodos
 
 A maioria dos métodos aceita um objeto de options como último argumento, com um formato que depende do método:
 
-| Tipo                                      | Campos                                                    | Usado por                                                                                                                                                                                                                  |
-| ----------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order` | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — os métodos de leitura, que também aplicam o `defaultOrdering` a menos que `order` seja passado.                                                 |
-| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                        | Métodos de um único registro que retornam uma `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `merge`, `delete`, `remove`, `increment`, ..., os métodos `*Returning` e os métodos de soft-delete de um registro. |
-| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                               | Métodos que não retornam uma `Entity` moldada — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, os métodos numéricos `*Many` e os métodos de soft-delete em lote.      |
+| Tipo                                      | Campos                                                                   | Usado por                                                                                                                                                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — os métodos de leitura, que também aplicam o `defaultOrdering` a menos que `order` seja passado.                                            |
+| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                                       | Métodos de um único registro que retornam uma `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., os métodos `*Returning` e os métodos de soft-delete de um registro.     |
+| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — as mesmas options de busca do `MethodOptions`, mais `mergeConfig`.                                                                                                                                          |
+| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                              | Métodos que não retornam uma `Entity` moldada — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, os métodos numéricos `*Many` e os métodos de soft-delete em lote. |
 
 `createMany` e `createManyReturning` também aceitam `ignoreConflicts`. `transaction`, `query` e `getDbClient` aceitam suas próprias options ou nenhuma.
 

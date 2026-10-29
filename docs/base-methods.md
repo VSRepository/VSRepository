@@ -18,6 +18,7 @@
 | `logLevel`           | `VSLogLevel`                 | Optional. Minimum severity printed by the internal logger. Defaults to `VSLogLevel.WARN`; use `VSLogLevel.NONE` to disable logging completely.                                                                                                                                                                                                        |
 | `lazyDynamicMethods` | `boolean`                    | Optional. Defaults to `false`. When `true`, postpones resolving `@DynamicMethod`/`@QueryMethod` methods — the repository itself must call `resolveDynamicMethods()` manually later. See [Lazily resolving dynamic methods](./dynamic-methods.md#lazily-resolving-dynamic-methods).                                                                    |
 | `vsPlaceholders`     | `boolean`                    | Optional. Defaults to `true`. Raw SQL strings passed to `query()` and `@QueryMethod` use VSRepository's own placeholders (`?1`, `?2`, ...) instead of your adapter's native syntax. Pass `false` to write the native syntax instead. See [Agnostic placeholders with `vsPlaceholders`](./query-methods.md#agnostic-placeholders-with-vsplaceholders). |
+| `mergeConfig`        | `MergeConfig<Entity>`        | Optional. Default configuration used by `merge()`; a call can replace it through `options.mergeConfig`. See [Merging records with `merge`](#merging-records-with-merge).                                                           |
 
 Soft-delete is no longer a constructor option — it's enabled with the [`@EnableSoftDelete`](#soft-delete) decorator.
 
@@ -63,18 +64,18 @@ Available automatically on every `VSRepository` subclass. `where` is a [`VSRepoW
 
 **Writing**
 
-| Method                                      | Description                                                                                                                         |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `create(obj, options?)`                     | Creates a record and returns it.                                                                                                    |
-| `createMany(objs, options?)`                | Creates several records at once, returning `{ count }`. Pass `ignoreConflicts: true` to skip rows that violate a unique constraint. |
-| `createManyReturning(objs, options?)`       | Same as `createMany`, but returns the created records.                                                                              |
-| `save(obj \| objs, options?)`               | Creates or updates (upsert) a record — or, given an array, several records in one call.                                             |
-| `upsert(where, create, update, options?)`   | Updates the record matching `where` with `update`, or creates it with `create` if none matches.                                     |
-| `update(where, obj, options?)`              | Updates the record matching `where` and returns it.                                                                                 |
-| `updateMany(where, obj, options?)`          | Updates every record matching `where`, returning `{ count }`.                                                                       |
-| `updateManyReturning(where, obj, options?)` | Same as `updateMany`, but returns the updated records.                                                                              |
-| `patch(id, obj, options?)`                  | Same as `update`, by primary key.                                                                                                   |
-| `merge(id, obj, options?)`                  | Fetches a record and returns it deep-merged, in memory, with the given object — does **not** persist anything.                      |
+| Method                                      | Description                                                                                                                                                                                                                |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create(obj, options?)`                     | Creates a record and returns it.                                                                                                                                                                                           |
+| `createMany(objs, options?)`                | Creates several records at once, returning `{ count }`. Pass `ignoreConflicts: true` to skip rows that violate a unique constraint.                                                                                        |
+| `createManyReturning(objs, options?)`       | Same as `createMany`, but returns the created records.                                                                                                                                                                     |
+| `save(obj \| objs, options?)`               | Creates or updates (upsert) a record — or, given an array, several records in one call.                                                                                                                                    |
+| `upsert(where, create, update, options?)`   | Updates the record matching `where` with `update`, or creates it with `create` if none matches.                                                                                                                            |
+| `update(where, obj, options?)`              | Updates the record matching `where` and returns it.                                                                                                                                                                        |
+| `updateMany(where, obj, options?)`          | Updates every record matching `where`, returning `{ count }`.                                                                                                                                                              |
+| `updateManyReturning(where, obj, options?)` | Same as `updateMany`, but returns the updated records.                                                                                                                                                                     |
+| `patch(id, obj, options?)`                  | Same as `update`, by primary key.                                                                                                                                                                                          |
+| `merge(where, obj, options?)`               | Fetches the record matching `where` and returns it deep-merged, in memory, with the given object — does **not** persist anything; `null` if none matches. See [Merging records with `merge`](#merging-records-with-merge). |
 
 **Deleting** (permanent — for soft-delete see [below](#soft-delete))
 
@@ -141,15 +142,61 @@ const totalPages = Math.ceil(count / pageSize);
 
 The same operation is available as a [dynamic method](./dynamic-methods.md#available-prefixes) (`findAndCountBy`, `findAndCountWhere`) and, for queries assembled at runtime, as [`getResultAndCount()`](./query-builder.md#pagination-with-getresultandcount) on the query builder.
 
+### Merging records with `merge`
+
+`merge(where, obj, options?)` fetches the record matching `where` and combines it, **in memory**, with `obj`. Nothing is persisted — pass the result to `save` or `patch` to write it. `defaultOrdering` is applied unless `options.order` is set, which matters when more than one record matches.
+
+Without any configuration, every field of `obj` overwrites the stored one: nested objects and arrays are **replaced**, not merged; `undefined` values are skipped; and `null` values are written. The fetched record is the one mutated and returned, and `obj` is never modified.
+
+To change this, pass a [`MergeConfig`](./utility-types.md) — in the repository's constructor options (`mergeConfig`, for every call) or in the method options (`options.mergeConfig`, for that call only). The one in the method options **replaces** the repository's, it isn't combined with it.
+
+| Field               | Default    | Description                                                                                                                                                                          |
+| ------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `undefinedBehavior` | `"ignore"` | `"ignore"` skips source fields whose value is `undefined`, keeping the stored value; `"keep"` writes the `undefined`.                                                                |
+| `nullBehavior`      | `"keep"`   | `"keep"` writes source fields whose value is `null`; `"ignore"` skips them, keeping the stored value.                                                                                |
+| `fields`            | none       | Per-field strategies, by field name. Fields that aren't listed are overwritten by the source value. `undefinedBehavior` and `nullBehavior` also apply to the nested entities merged. |
+
+Each entry of `fields` picks a `strategy`. Only the strategies that fit the field's type are accepted:
+
+| Strategy  | Field type        | Behavior                                                                                                                                                                                                                                                                      | Extra options                                                                    |
+| --------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `to-one`  | Nested entity     | Merges the source object **recursively** into the stored one instead of replacing it.                                                                                                                                                   | `fields` — strategies for the nested entity (default: none).                     |
+| `to-many` | Array of entities | Matches the items of both lists by `pk`: matched items are merged recursively, items only in the stored list are kept and items only in the source list are appended. Items without a `pk` value can't be matched: the stored ones are kept and the source ones are appended. | `pk` (**required**); `fields` — strategies for each item (default: none).        |
+| `concat`  | Array of scalars  | Concatenates the stored and the source lists, without removing duplicates.                                                                                                                                                                                                    | `whosFirst`: `"target"` (stored items first) or `"source"`. Default: `"target"`. |
+| `custom`  | Any field         | Stores what `customFn(target, source)` returns. It's only called when the source value isn't `null` or `undefined` (those follow `nullBehavior`/`undefinedBehavior`), and `target` may be `undefined`.                                                                        | `customFn` (**required**).                                                       |
+
+```typescript
+const user = await userRepository.merge(
+    { id: "1" },
+    { name: "Maria", tags: ["admin"], address: { city: "Recife" }, posts: [{ id: 2, title: "Edited" }] },
+    {
+        relations: { address: true, posts: true },
+        mergeConfig: {
+            nullBehavior: "ignore",
+            fields: {
+                tags: { strategy: "concat", whosFirst: "source" },
+                address: { strategy: "to-one" },
+                posts: { strategy: "to-many", pk: "id" },
+            },
+        },
+    },
+);
+
+if (user) await userRepository.save(user);
+```
+
+The record is fetched with the `select`/`relations` from the options, so load the relations you want to merge into: without them there is nothing to match against.
+
 ### Method options
 
 Most methods accept an options object as their last argument, with a shape that depends on the method:
 
-| Type                                      | Fields                                                    | Used by                                                                                                                                                                                                           |
-| ----------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order` | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — the read methods, which also apply `defaultOrdering` unless `order` is passed.                                                         |
-| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                        | Single-record methods that return an `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `merge`, `delete`, `remove`, `increment`, ..., the `*Returning` methods and the soft-delete single-record methods. |
-| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                               | Methods that don't return a shaped `Entity` — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, the `*Many` numeric methods and the soft-delete batch methods.  |
+| Type                                      | Fields                                                                   | Used by                                                                                                                                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — the read methods, which also apply `defaultOrdering` unless `order` is passed.                                                        |
+| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                                       | Single-record methods that return an `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., the `*Returning` methods and the soft-delete single-record methods.         |
+| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — the same fetch options as `MethodOptions`, plus `mergeConfig`.                                                                                                                                         |
+| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                              | Methods that don't return a shaped `Entity` — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, the `*Many` numeric methods and the soft-delete batch methods. |
 
 `createMany` and `createManyReturning` also accept `ignoreConflicts`. `transaction`, `query` and `getDbClient` accept their own options or none at all.
 
