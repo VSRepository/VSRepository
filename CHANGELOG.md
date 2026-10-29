@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [3.0.0-dev.2] - 2026-10-27
+## [3.0.0-dev.2] - 2026-10-29
 
 ### Added
 
@@ -30,7 +30,7 @@ All notable changes to this project will be documented in this file.
 - **BREAKING:** Dynamic methods without `By` or `Where` are no longer supported for `findOneOrThrow`, `findOne` and `count`; use the corresponding base methods or add a `By`/`Where` filter
 - **BREAKING:** The `merge` method was removed from the `VSRepoAdapter` contract — adapters no longer need to implement it
 
-## [3.0.0-dev.2] - 2026-10-27 (Português)
+## [3.0.0-dev.2] - 2026-10-29 (Português)
 
 ### Adicionado
 
