@@ -503,6 +503,26 @@ describe("MergeEntitiesResolver", () => {
                 expect(result.tags).toEqual(["a", "b", "a"]);
             });
 
+            it("should deduplicate repeated values", () => {
+                const result = MergeEntitiesResolver.resolve(
+                    user,
+                    { tags: ["a", "c"] },
+                    { fields: { tags: { strategy: "concat", deduplicate: true } } },
+                );
+
+                expect(result.tags).toEqual(["a", "b", "c"]);
+            });
+
+            it("should deduplicate repeated values respecting whosFirst", () => {
+                const result = MergeEntitiesResolver.resolve(
+                    user,
+                    { tags: ["a", "c"] },
+                    { fields: { tags: { strategy: "concat", whosFirst: "source", deduplicate: true } } },
+                );
+
+                expect(result.tags).toEqual(["a", "c", "b"]);
+            });
+
             it("should assign null when the source is null", () => {
                 const result = MergeEntitiesResolver.resolve(user, { tags: null } as any, {
                     fields: { tags: { strategy: "concat" } },

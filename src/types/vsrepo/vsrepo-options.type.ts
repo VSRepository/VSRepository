@@ -36,6 +36,8 @@ export type VSRepoOptions<T, K> = {
      * @default true
      */
     vsPlaceholders?: boolean;
-
+    /**
+     * Default configuration used by `merge()` to combine the stored record with the given object.
+     */
     mergeConfig?: MergeConfig<T>;
 };

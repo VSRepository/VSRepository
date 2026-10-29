@@ -47,10 +47,12 @@ export class MergeEntitiesResolver {
                     const sourceList: unknown[] = value;
                     const targetList: unknown[] = Array.isArray(targetAny[key]) ? targetAny[key] : [];
 
-                    targetAny[key] =
+                    const concated =
                         fieldConfig.whosFirst === "source"
                             ? sourceList.concat(targetList)
                             : targetList.concat(sourceList);
+
+                    targetAny[key] = fieldConfig.deduplicate ? [...new Set(concated)] : concated;
                 } else if (fieldConfig.strategy === "custom") {
                     targetAny[key] = fieldConfig.customFn(targetAny[key], value);
                 }

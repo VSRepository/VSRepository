@@ -650,8 +650,8 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /**
-     * Fetches a record by primary key and returns it deep-merged, in memory, with `obj`.
-     * Nothing is persisted: pass the result to `save` or `patch` to write it. Returns `null` if the record doesn't exist.
+     * Fetches the record matching `where` and returns it deep-merged, in memory, with `obj`.
+     * Nothing is persisted: pass the result to `save` or `patch` to write it.
      */
     async merge<U extends DeepPartial<Entity>>(
         where: VSRepoWhere<Entity>,
