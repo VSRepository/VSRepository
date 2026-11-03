@@ -68,12 +68,10 @@ describe("DynamicMethodsResolver", () => {
             vi.spyOn(logger, "endPerformLog").mockResolvedValue(undefined);
         });
 
-        type TestRepository = Record<string, (...args: any[]) => Promise<any>> & { _vsrepocache: Map<any, any> };
+        type TestRepository = Record<string, (...args: any[]) => Promise<any>>;
 
         function buildRepo(method: string, options?: DynamicMethodOptions<User>): TestRepository {
-            class Repository {
-                _vsrepocache = new Map();
-            }
+            class Repository {}
 
             DynamicMethod(options)(Repository.prototype, method);
 
@@ -105,8 +103,6 @@ describe("DynamicMethodsResolver", () => {
 
         it("should correctly map the dynamic methods", () => {
             class UserRepository {
-                _vsrepocache = new Map();
-
                 @DynamicMethod()
                 declare findById: any;
 
@@ -127,8 +123,6 @@ describe("DynamicMethodsResolver", () => {
             const findById = Symbol("findById");
 
             class UserRepository {
-                _vsrepocache = new Map();
-
                 @DynamicMethod()
                 [findById]: any;
             }
@@ -149,8 +143,6 @@ describe("DynamicMethodsResolver", () => {
 
         it("should correctly resolve the dynamicMethods and call the adapter", async () => {
             class UserRepository {
-                _vsrepocache = new Map();
-
                 @DynamicMethod()
                 declare findById: any;
 
@@ -182,17 +174,13 @@ describe("DynamicMethodsResolver", () => {
         });
 
         it("should return 0 when the repository has no dynamic methods", () => {
-            class UserRepository {
-                _vsrepocache = new Map();
-            }
+            class UserRepository {}
 
             expect(resolver.resolve(new UserRepository() as any)).toBe(0);
         });
 
         it("should resolve the dynamic methods inherited from a parent repository", () => {
             class BaseRepository {
-                _vsrepocache = new Map();
-
                 @DynamicMethod()
                 declare findByName: any;
             }
@@ -211,8 +199,6 @@ describe("DynamicMethodsResolver", () => {
 
         it("should resolve a redeclared dynamic method only once using the child definition", async () => {
             class BaseRepository {
-                _vsrepocache = new Map();
-
                 @DynamicMethod({ proxyTo: "findByName" })
                 declare findByValue: any;
             }
@@ -231,12 +217,6 @@ describe("DynamicMethodsResolver", () => {
             expect(adapter.findMany).toHaveBeenCalledWith({ age: "value" }, expect.anything());
         });
 
-        it("should store the resolver of each method in the repository cache", () => {
-            const repo = buildRepo("findByName");
-
-            expect(repo._vsrepocache.has("findByName")).toBe(true);
-        });
-
         describe("method resolution", () => {
             it("should resolve a method through proxyTo", async () => {
                 const repo = buildRepo("searchUsers", { proxyTo: "findByNameAndAge" });
@@ -251,8 +231,8 @@ describe("DynamicMethodsResolver", () => {
 
                 expect(error).toBeInstanceOf(VSRepoError);
                 expect(error.type).toBe(VSRepoErrorType.RESOLVER);
-                expect(error.message).toContain("Unknown dynamic method: fetchByName.");
-                expect(logger.logError).toHaveBeenCalledWith("Unknown dynamic method: fetchByName.");
+                expect(error.message).toContain("Unknown dynamic method: fetchByName");
+                expect(logger.logError).toHaveBeenCalledWith("Unknown dynamic method: fetchByName");
             });
 
             it("should throw a RESOLVER error when proxyTo points to an unknown method", () => {
@@ -907,7 +887,7 @@ describe("DynamicMethodsResolver", () => {
                     expect(error).toBeInstanceOf(VSRepoError);
                     expect(error.type).toBe(VSRepoErrorType.RESOLVER);
                     expect(error.message).toContain(
-                        `This dynamic method prefix doesn't support the ordering or pagination modifiers: ${method}.`,
+                        `This dynamic method prefix doesn't support the ordering or pagination modifiers: ${method}`,
                     );
                     expect(logger.logError).toHaveBeenCalled();
                 });
@@ -964,9 +944,7 @@ describe("DynamicMethodsResolver", () => {
             it("should log how many methods are being resolved", () => {
                 buildRepo("findByName");
 
-                expect(logger.logDebug).toHaveBeenCalledWith("Resolving 1 dynamic method(s):", [
-                    expect.objectContaining({ propertyKey: "findByName" }),
-                ]);
+                expect(logger.logDebug).toHaveBeenCalledWith("Resolving 1 dynamic method(s)...");
             });
 
             it("should log a preview of the args with positional placeholders", () => {
@@ -1019,16 +997,14 @@ describe("DynamicMethodsResolver", () => {
 
                 const texts = vi.mocked(logger.logDebug).mock.calls.map(([text]) => text);
 
-                expect(texts).toEqual(["Resolving 1 dynamic method(s):"]);
+                expect(texts).toEqual(["Resolving 1 dynamic method(s)..."]);
             });
         });
     });
 
     describe("resolveQueries", () => {
         function buildQueryRepo(method: string, sql: string, options?: QueryMethodOptions, customResolver = resolver) {
-            class Repository {
-                _vsrepocache = new Map();
-            }
+            class Repository {}
 
             QueryMethod(sql, options)(Repository.prototype, method);
 
@@ -1044,8 +1020,6 @@ describe("DynamicMethodsResolver", () => {
 
         it("should return the number of resolved query methods", () => {
             class UserRepository {
-                _vsrepocache = new Map();
-
                 @QueryMethod("select * from user")
                 declare findAll: any;
 
@@ -1061,9 +1035,7 @@ describe("DynamicMethodsResolver", () => {
         });
 
         it("should return 0 when the repository has no query methods", () => {
-            class UserRepository {
-                _vsrepocache = new Map();
-            }
+            class UserRepository {}
 
             expect(resolver.resolveQueries(new UserRepository() as any)).toBe(0);
         });
@@ -1071,15 +1043,11 @@ describe("DynamicMethodsResolver", () => {
         it("should log how many query methods are being resolved", () => {
             buildQueryRepo("findAll", "select * from user");
 
-            expect(logger.logDebug).toHaveBeenCalledWith("Resolving 1 query method(s):", [
-                expect.objectContaining({ propertyKey: "findAll", value: "select * from user" }),
-            ]);
+            expect(logger.logDebug).toHaveBeenCalledWith("Resolving 1 query method(s)...");
         });
 
         it("should resolve the query methods inherited from a parent repository", () => {
             class BaseRepository {
-                _vsrepocache = new Map();
-
                 @QueryMethod("select 1")
                 declare ping: any;
             }
@@ -1097,8 +1065,6 @@ describe("DynamicMethodsResolver", () => {
 
         it("should resolve a redeclared query method only once using the child definition", async () => {
             class BaseRepository {
-                _vsrepocache = new Map();
-
                 @QueryMethod("select 1")
                 declare ping: any;
             }

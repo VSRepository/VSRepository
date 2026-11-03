@@ -361,7 +361,7 @@ export class DynamicMethodsResolver<T, K> {
         const override = DynamicMethodsResolver.supportedMethods.find(m => m.validate(dynamicMethod));
 
         if (!override) {
-            this.logAndThrowError(`Unknown dynamic method: ${dynamicMethod}.`);
+            this.logAndThrowError(`Unknown dynamic method: ${dynamicMethod}`);
         }
 
         return {
@@ -478,7 +478,7 @@ export class DynamicMethodsResolver<T, K> {
             DynamicMethodsResolver.customizationModifiers.OrderBy.test(dynamicMethodInfo.keyToMapReplaced)
         ) {
             this.logAndThrowError(
-                `This dynamic method prefix doesn't support the ordering or pagination modifiers: ${dynamicMethodInfo.originalDynamicMethodName}.`,
+                `This dynamic method prefix doesn't support the ordering or pagination modifiers: ${dynamicMethodInfo.originalDynamicMethodName}`,
             );
         }
 
@@ -682,7 +682,7 @@ export class DynamicMethodsResolver<T, K> {
             } else {
                 if (DynamicMethodsResolver.operators.Or.test(keySplitedAND)) {
                     this.logAndThrowError(
-                        `The logical operator "Or" cannot appear after an "AND" (all caps): ${dynamicMethodInfo.originalDynamicMethodName}.`,
+                        `The logical operator "Or" cannot appear after an "AND" (all caps): ${dynamicMethodInfo.originalDynamicMethodName}`,
                     );
                 }
                 keysSplitedOr = [keySplitedAND];
@@ -907,7 +907,7 @@ export class DynamicMethodsResolver<T, K> {
     }
 
     resolve(instance: VSRepository<T, K, any>): number {
-        const dynamicMethodsMap: Map<string | symbol, DynamicMethodOptions> | undefined = Reflect.getMetadata(
+        const dynamicMethodsMap: Map<string | symbol, VSRepoMethod> | undefined = Reflect.getMetadata(
             DYNAMIC_METHODS_KEY,
             instance.constructor.prototype,
         );
@@ -918,11 +918,9 @@ export class DynamicMethodsResolver<T, K> {
             return 0;
         }
 
-        const dynamicMethods = dynamicMethodsMap
-            .entries()
-            .reduce<VSRepoMethod[]>((prev, cur) => [...prev, { propertyKey: cur[0], ...cur[1] }], []);
+        const dynamicMethods = [...dynamicMethodsMap.values()];
 
-        this.logger.logDebug(`Resolving ${dynamicMethods.length} dynamic method(s):`, dynamicMethods);
+        this.logger.logDebug(`Resolving ${dynamicMethods.length} dynamic method(s)...`);
 
         for (const method of dynamicMethods) {
             if (typeof method.propertyKey === "symbol") {
@@ -948,7 +946,7 @@ export class DynamicMethodsResolver<T, K> {
                 dynamicMethodWhereOps = this.resolvePrettyWheres(dynamicMethodInfo);
             }
 
-            instance._vsrepocache.set(originalKey, (args, methodOptions) => {
+            const cacheFn = (args: any[], methodOptions?: MethodOptions<T, any>): VSRepoArgs<T> => {
                 const options = methodOptions ?? {};
 
                 const vsrepoResolveArgsData: VSRepoResolveArgsData<T, K> = {
@@ -991,7 +989,7 @@ export class DynamicMethodsResolver<T, K> {
                 }
 
                 return this.resolveVSRepoArgs(vsrepoResolveArgsData);
-            });
+            };
 
             // * If para evitar cálculo desnecessário
             if (this.logger.getLogLevel() === VSLogLevel.DEBUG) {
@@ -1001,14 +999,17 @@ export class DynamicMethodsResolver<T, K> {
                     argsSimulation.push(DEBUG_ARG_SYMBOL);
                 }
 
-                const vsrepoArgs = instance._vsrepocache.get(originalKey)!(argsSimulation);
+                const vsrepoArgs = cacheFn(argsSimulation);
 
                 const { db: _, ...options } = vsrepoArgs.options ?? {};
 
-                this.logger.logDebug(`Args preview for ${originalKey}:`, {
-                    ...vsrepoArgs,
-                    options,
-                });
+                this.logger.logDebug(
+                    `Args preview for ${originalKey}${method.proxyTo !== undefined ? ` (proxyTo: ${method.proxyTo})` : ""}:`,
+                    {
+                        ...vsrepoArgs,
+                        options,
+                    },
+                );
             }
 
             (instance as any)[originalKey] = async (...args: any[]) => {
@@ -1032,7 +1033,7 @@ export class DynamicMethodsResolver<T, K> {
 
                 args = args.slice(0, dynamicMethodInfo.argsCount + 1);
 
-                const vsrepoArgs = instance._vsrepocache.get(originalKey)!(args, methodOptions);
+                const vsrepoArgs = cacheFn(args, methodOptions);
 
                 const start = this.logger.startPerformLog(
                     `run ${String(originalKey)} (-> ${dynamicMethodInfo.method})`,
@@ -1080,10 +1081,8 @@ export class DynamicMethodsResolver<T, K> {
     }
 
     resolveQueries(instance: VSRepository<T, K, any>): number {
-        const queryMethodsMap: Map<string | symbol, VSRepoQuery> | undefined = Reflect.getMetadata(
-            QUERY_METHODS_KEY,
-            instance.constructor.prototype,
-        );
+        const queryMethodsMap: Map<string | symbol, VSRepoQuery & { propertyKey: string | symbol }> | undefined =
+            Reflect.getMetadata(QUERY_METHODS_KEY, instance.constructor.prototype);
 
         if (!queryMethodsMap?.size) {
             this.logger.logDebug("No query methods to resolve");
@@ -1091,14 +1090,9 @@ export class DynamicMethodsResolver<T, K> {
             return 0;
         }
 
-        const queryMethods = queryMethodsMap
-            .entries()
-            .reduce<(VSRepoQuery & { propertyKey: string | symbol })[]>(
-                (prev, cur) => [...prev, { propertyKey: cur[0], ...cur[1] }],
-                [],
-            );
+        const queryMethods = [...queryMethodsMap.values()];
 
-        this.logger.logDebug(`Resolving ${queryMethods.length} query method(s):`, queryMethods);
+        this.logger.logDebug(`Resolving ${queryMethods.length} query method(s)...`);
 
         for (const method of queryMethods) {
             const originalKey = method.propertyKey;
@@ -1106,6 +1100,12 @@ export class DynamicMethodsResolver<T, K> {
             const modifyingQueryMethod = method.modifying ?? false;
             const valueQueryMethod = method.value;
             const singleResult = method.singleResult ?? false;
+
+            this.logger.logDebug(`Options for ${originalKey.toString()}:`, {
+                query: valueQueryMethod,
+                modifying: modifyingQueryMethod,
+                singleResult,
+            });
 
             (instance as any)[originalKey] = async (...args: unknown[]) => {
                 let db: any;

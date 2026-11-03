@@ -281,12 +281,6 @@ describe("VSRepository", () => {
                 expect(repo.findByName).toBeTypeOf("function");
             });
 
-            it("should populate the internal cache with the resolved dynamic methods", () => {
-                const repo = new DynamicUserRepository({ adapter });
-
-                expect(repo._vsrepocache.has("findByName")).toBe(true);
-            });
-
             it("should log and rethrow when the resolution fails", () => {
                 const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 

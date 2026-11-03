@@ -25,11 +25,11 @@ import { VSRepoQuery } from "../types/vsrepo/vsrepo-query.type.js";
  */
 export function QueryMethod(value: string, options?: QueryMethodOptions): PropertyDecorator {
     return (target: object, propertyKey: string | symbol) => {
-        const methodsMap: Map<string | symbol, VSRepoQuery> =
+        const methodsMap: Map<string | symbol, VSRepoQuery & { propertyKey: string | symbol }> =
             Reflect.getOwnMetadata(QUERY_METHODS_KEY, target) ??
-            new Map(Reflect.getMetadata(QUERY_METHODS_KEY, target) ?? []);
+            new Map(Reflect.getMetadata(QUERY_METHODS_KEY, target));
 
-        methodsMap.set(propertyKey, { ...options, value });
+        methodsMap.set(propertyKey, { ...options, value, propertyKey });
 
         Reflect.defineMetadata(QUERY_METHODS_KEY, methodsMap, target);
     };
