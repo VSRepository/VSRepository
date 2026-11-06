@@ -19,9 +19,11 @@ import { VSRepository } from "../VSRepository.js";
  *
  * @publicApi
  */
-export function EnableSoftDelete<Entity>(
-    field?: (KeysOfType<Entity, Primitive> & string) | (string & {}),
-): (target: typeof VSRepository<Entity, any>) => void {
+export function EnableSoftDelete<T extends object>(
+    field?: T extends typeof VSRepository<infer Entity, any>
+        ? (KeysOfType<Entity, Primitive> & string) | (string & {})
+        : string,
+): (target: T) => void {
     return target => {
         Reflect.defineMetadata(ENABLE_SOFT_DELETE_KEY, { field, active: true } satisfies SoftDeleteMetadata, target);
     };
