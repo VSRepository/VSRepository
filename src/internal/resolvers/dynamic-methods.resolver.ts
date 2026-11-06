@@ -105,7 +105,7 @@ export class DynamicMethodsResolver<T, K> {
     }
 
     private static readonly supportedMethods: {
-        validate: (dm: string) => boolean;
+        regex: RegExp;
         getOverrides: (dm: string) => Partial<DynamicMethodInfo>;
     }[] = (() => {
         const $whereMethodBoilerPlate = ({
@@ -122,243 +122,95 @@ export class DynamicMethodsResolver<T, K> {
             argsCount: argsCount ?? 1,
         });
 
+        const methodWithInfixRegex = (prefix: string, suffix: "By" | "Where") =>
+            new RegExp(`^${prefix}(?:\\p{Lu}.*?)??${suffix}`, "u");
+
+        const getVariants = (
+            methodName: string,
+            baseInfo: Partial<DynamicMethodInfo>,
+            boilerplateOpt?: {
+                otherParams?: string[];
+                argsCount?: number;
+            },
+        ) => [
+            {
+                regex: methodWithInfixRegex(methodName, "By"),
+                getOverrides(dm: string) {
+                    return {
+                        keyToMapReplaced: dm.replace(this.regex, ""),
+                        ...baseInfo,
+                    };
+                },
+            },
+            {
+                regex: methodWithInfixRegex(methodName, "Where"),
+                getOverrides(dm: string) {
+                    return {
+                        keyToMapReplaced: dm.replace(this.regex, ""),
+                        ...baseInfo,
+                        ...$whereMethodBoilerPlate(boilerplateOpt),
+                    };
+                },
+            },
+        ];
+
         return [
-            {
-                validate: dm => dm.startsWith("findOneBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findOneBy", ""),
-                    ignoreOrderByAndPagination: false,
-                    method: "findOne",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("findBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findBy", ""),
-                    ignoreOrderByAndPagination: false,
-                    method: "findMany",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("findAndCountBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findAndCountBy", ""),
-                    ignoreOrderByAndPagination: false,
-                    findAndCountMode: true,
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("findAndCountWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findAndCountWhere", ""),
-                    ignoreOrderByAndPagination: false,
-                    findAndCountMode: true,
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("findOneOrThrowBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findOneOrThrowBy", ""),
-                    ignoreOrderByAndPagination: false,
-                    method: "findOneOrThrow",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("findOneOrThrowWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findOneOrThrowWhere", ""),
-                    ignoreOrderByAndPagination: false,
-                    method: "findOneOrThrow",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("findWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findWhere", ""),
-                    ignoreOrderByAndPagination: false,
-                    method: "findMany",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("findOneWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("findOneWhere", ""),
-                    ignoreOrderByAndPagination: false,
-                    method: "findOne",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("countBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("countBy", ""),
-                    ignoreSelect: true,
-                    method: "count",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("countWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("countWhere", ""),
-                    ignoreSelect: true,
-                    method: "count",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("existsBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("existsBy", ""),
-                    ignoreSelect: true,
-                    existsMode: true,
-                    method: "exists",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("existsWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("existsWhere", ""),
-                    ignoreSelect: true,
-                    existsMode: true,
-                    method: "exists",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("updateManyReturningBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("updateManyReturningBy", ""),
+            getVariants("findOneOrThrow", { ignoreOrderByAndPagination: false, method: "findOneOrThrow" }),
+            getVariants("findOne", { ignoreOrderByAndPagination: false, method: "findOne" }),
+            getVariants("findAndCount", { ignoreOrderByAndPagination: false, findAndCountMode: true }),
+            getVariants("find", { ignoreOrderByAndPagination: false, method: "findMany" }),
+            getVariants("count", { ignoreSelect: true, method: "count" }),
+            getVariants("exists", { ignoreSelect: true, existsMode: true, method: "exists" }),
+            getVariants(
+                "updateManyReturning",
+                {
                     method: "updateManyReturning",
                     dataIndex: -2,
                     otherParams: ["data"],
                     argsCount: 1,
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("updateManyReturningWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("updateManyReturningWhere", ""),
-                    method: "updateManyReturning",
-                    dataIndex: -2,
-                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("updateManyBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("updateManyBy", ""),
+                },
+                { otherParams: ["where", "data"], argsCount: 2 },
+            ),
+            getVariants(
+                "updateMany",
+                {
                     ignoreSelect: true,
                     method: "updateMany",
                     dataIndex: -2,
                     otherParams: ["data"],
                     argsCount: 1,
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("updateManyWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("updateManyWhere", ""),
-                    ignoreSelect: true,
-                    method: "updateMany",
-                    dataIndex: -2,
-                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("updateBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("updateBy", ""),
+                },
+                { otherParams: ["where", "data"], argsCount: 2 },
+            ),
+            getVariants(
+                "update",
+                {
                     method: "update",
                     dataIndex: -2,
                     otherParams: ["data"],
                     argsCount: 1,
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("updateWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("updateWhere", ""),
-                    method: "update",
-                    dataIndex: -2,
-                    ...$whereMethodBoilerPlate({ otherParams: ["where", "data"], argsCount: 2 }),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("upsertBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("upsertBy", ""),
+                },
+                { otherParams: ["where", "data"], argsCount: 2 },
+            ),
+            getVariants(
+                "upsert",
+                {
                     method: "upsert",
                     createIndex: -3,
                     updateIndex: -2,
                     otherParams: ["create", "update"],
                     argsCount: 2,
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("upsertWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("upsertWhere", ""),
-                    method: "upsert",
-                    createIndex: -3,
-                    updateIndex: -2,
-                    ...$whereMethodBoilerPlate({ otherParams: ["where", "create", "update"], argsCount: 3 }),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("deleteManyReturningBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("deleteManyReturningBy", ""),
-                    method: "deleteManyReturning",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("deleteManyReturningWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("deleteManyReturningWhere", ""),
-                    method: "deleteManyReturning",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("deleteManyBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("deleteManyBy", ""),
-                    ignoreSelect: true,
-                    method: "deleteMany",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("deleteManyWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("deleteManyWhere", ""),
-                    ignoreSelect: true,
-                    method: "deleteMany",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("deleteBy"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("deleteBy", ""),
-                    method: "delete",
-                }),
-            },
-            {
-                validate: dm => dm.startsWith("deleteWhere"),
-                getOverrides: dm => ({
-                    keyToMapReplaced: dm.replace("deleteWhere", ""),
-                    method: "delete",
-                    ...$whereMethodBoilerPlate(),
-                }),
-            },
-        ];
+                },
+                { otherParams: ["where", "create", "update"], argsCount: 3 },
+            ),
+            getVariants("deleteManyReturning", { method: "deleteManyReturning" }),
+            getVariants("deleteMany", { ignoreSelect: true, method: "deleteMany" }),
+            getVariants("delete", { method: "delete" }),
+        ].flat();
     })();
 
     private resolveDynamicMethodInfo(dynamicMethod: string): DynamicMethodInfo {
-        const override = DynamicMethodsResolver.supportedMethods.find(m => m.validate(dynamicMethod));
+        const override = DynamicMethodsResolver.supportedMethods.find(m => m.regex.test(dynamicMethod));
 
         if (!override) {
             this.logAndThrowError(`Unknown dynamic method: ${dynamicMethod}`);
