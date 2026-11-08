@@ -511,6 +511,236 @@ describe("DynamicMethodsResolver", () => {
             });
         });
 
+        describe("infix support", () => {
+            describe("By variants", () => {
+                it.each([
+                    ["findUsersByName", "findMany"],
+                    ["findManyUsersByName", "findMany"],
+                    ["findAllActiveUsersByName", "findMany"],
+                    ["findOneUserByName", "findOne"],
+                    ["findOneOrThrowUserByName", "findOneOrThrow"],
+                    ["countUsersByName", "count"],
+                    ["existsUserByName", "exists"],
+                    ["deleteUserByName", "delete"],
+                    ["deleteOneUserByName", "delete"],
+                    ["deleteManyUsersByName", "deleteMany"],
+                    ["deleteManyReturningUsersByName", "deleteManyReturning"],
+                ])("should map %s to adapter.%s", async (method, adapterMethod) => {
+                    const repo = buildRepo(method);
+
+                    await repo[method]!("Ana");
+
+                    expect((adapter as any)[adapterMethod]).toHaveBeenCalledWith({ name: "Ana" }, { db: "default-db" });
+                });
+
+                it("should map findAndCountUsersByName to adapter.findMany and adapter.count", async () => {
+                    const repo = buildRepo("findAndCountUsersByName");
+
+                    await repo.findAndCountUsersByName!("Ana");
+
+                    expect(adapter.findMany).toHaveBeenCalledWith({ name: "Ana" }, { db: "default-db" });
+                    expect(adapter.count).toHaveBeenCalledWith({ name: "Ana" }, { db: "default-db" });
+                });
+
+                it.each([
+                    ["updateUserByName", "update"],
+                    ["updateManyUsersByName", "updateMany"],
+                    ["updateManyReturningUsersByName", "updateManyReturning"],
+                ])("should map %s to adapter.%s passing the data payload", async (method, adapterMethod) => {
+                    const repo = buildRepo(method);
+
+                    await repo[method]!("Ana", { age: 30 });
+
+                    expect((adapter as any)[adapterMethod]).toHaveBeenCalledWith(
+                        { name: "Ana" },
+                        { age: 30 },
+                        { db: "default-db" },
+                    );
+                });
+
+                it("should map upsertUserByName passing the create and update payloads", async () => {
+                    const repo = buildRepo("upsertUserByName");
+
+                    await repo.upsertUserByName!("Ana", { name: "Ana", age: 20 }, { age: 21 });
+
+                    expect(adapter.upsert).toHaveBeenCalledWith(
+                        { name: "Ana" },
+                        { name: "Ana", age: 20 },
+                        { age: 21 },
+                        { db: "default-db" },
+                    );
+                });
+            });
+
+            describe("Where variants", () => {
+                it.each([
+                    ["findUsersWhere", "findMany"],
+                    ["findOneUserWhere", "findOne"],
+                    ["findOneOrThrowUserWhere", "findOneOrThrow"],
+                    ["countUsersWhere", "count"],
+                    ["existsUserWhere", "exists"],
+                    ["deleteUserWhere", "delete"],
+                    ["deleteManyUsersWhere", "deleteMany"],
+                    ["deleteManyReturningUsersWhere", "deleteManyReturning"],
+                ])("should map %s to adapter.%s using the provided where", async (method, adapterMethod) => {
+                    const repo = buildRepo(method);
+
+                    await repo[method]!({ name: { contains: "A" } });
+
+                    expect((adapter as any)[adapterMethod]).toHaveBeenCalledWith(
+                        { name: { contains: "A" } },
+                        { db: "default-db" },
+                    );
+                });
+
+                it("should map findAndCountUsersWhere to adapter.findMany and adapter.count using the provided where", async () => {
+                    const repo = buildRepo("findAndCountUsersWhere");
+                    const where = { name: { contains: "A" } };
+
+                    await repo.findAndCountUsersWhere!(where);
+
+                    expect(adapter.findMany).toHaveBeenCalledWith(where, { db: "default-db" });
+                    expect(adapter.count).toHaveBeenCalledWith(where, { db: "default-db" });
+                });
+
+                it.each([
+                    ["updateUserWhere", "update"],
+                    ["updateManyUsersWhere", "updateMany"],
+                    ["updateManyReturningUsersWhere", "updateManyReturning"],
+                ])("should map %s to adapter.%s using the provided where and data", async (method, adapterMethod) => {
+                    const repo = buildRepo(method);
+
+                    await repo[method]!({ age: { gt: 18 } }, { name: "Adult" });
+
+                    expect((adapter as any)[adapterMethod]).toHaveBeenCalledWith(
+                        { age: { gt: 18 } },
+                        { name: "Adult" },
+                        { db: "default-db" },
+                    );
+                });
+
+                it("should map upsertUserWhere using the provided where, create and update", async () => {
+                    const repo = buildRepo("upsertUserWhere");
+
+                    await repo.upsertUserWhere!({ id: "1" }, { id: "1", name: "Ana" }, { name: "Ana" });
+
+                    expect(adapter.upsert).toHaveBeenCalledWith(
+                        { id: "1" },
+                        { id: "1", name: "Ana" },
+                        { name: "Ana" },
+                        { db: "default-db" },
+                    );
+                });
+            });
+
+            describe("infix shapes", () => {
+                it.each([
+                    ["findAByName", "a single-letter infix"],
+                    ["findUsersByName", "a single-word infix"],
+                    ["findAllActiveUsersByName", "a multi-word infix"],
+                    ["findÁrvoresByName", "an infix starting with a non-ASCII uppercase letter"],
+                    ["findUsersWithoutPostsByName", "an infix containing a relation keyword"],
+                    ["findOrdersByName", "an infix starting with a logical operator keyword"],
+                    ["findAndroidAppsByName", "an infix starting with the And keyword"],
+                ])("should resolve %s (%s) to the same where as findByName", async method => {
+                    const repo = buildRepo(method);
+
+                    await repo[method]!("Ana");
+
+                    expect(adapter.findMany).toHaveBeenCalledWith({ name: "Ana" }, { db: "default-db" });
+                });
+
+                it("should use the first By as the separator and keep the following ones in the field name", async () => {
+                    const repo = buildRepo("findUsersByCreatedBy");
+
+                    await repo.findUsersByCreatedBy!("admin");
+
+                    expect(adapter.findMany).toHaveBeenCalledWith({ createdBy: "admin" }, { db: "default-db" });
+                });
+
+                it("should use the first By as the separator even when a Where follows it", async () => {
+                    const repo = buildRepo("findUsersByWhereName");
+
+                    await repo.findUsersByWhereName!("Ana");
+
+                    expect(adapter.findMany).toHaveBeenCalledWith({ whereName: "Ana" }, { db: "default-db" });
+                });
+
+                it("should resolve the prefix with precedence over the infix (findOne vs find)", async () => {
+                    const repo = buildRepo("findOneUserByName");
+
+                    await repo.findOneUserByName!("Ana");
+
+                    expect(adapter.findOne).toHaveBeenCalledTimes(1);
+                    expect(adapter.findMany).not.toHaveBeenCalled();
+                });
+
+                it("should resolve the prefix with precedence over the infix (deleteMany vs delete)", async () => {
+                    const repo = buildRepo("deleteManyUsersByName");
+
+                    await repo.deleteManyUsersByName!("Ana");
+
+                    expect(adapter.deleteMany).toHaveBeenCalledTimes(1);
+                    expect(adapter.delete).not.toHaveBeenCalled();
+                });
+
+                it("should resolve the prefix with precedence over the infix (updateManyReturning vs updateMany vs update)", async () => {
+                    const repo = buildRepo("updateManyReturningUsersByName");
+
+                    await repo.updateManyReturningUsersByName!("Ana", { age: 1 });
+
+                    expect(adapter.updateManyReturning).toHaveBeenCalledTimes(1);
+                    expect(adapter.updateMany).not.toHaveBeenCalled();
+                    expect(adapter.update).not.toHaveBeenCalled();
+                });
+            });
+
+            describe("invalid names", () => {
+                it.each([
+                    ["findUsers", "no By/Where separator"],
+                    ["countUsers", "no By/Where separator"],
+                    ["findusersByName", "an infix starting with a lowercase letter"],
+                    ["fetchUsersByName", "an unknown prefix"],
+                ])("%s should throw a RESOLVER error (%s)", (method, _reason) => {
+                    const error = catchError(() => buildRepo(method));
+
+                    expect(error).toBeInstanceOf(VSRepoError);
+                    expect(error.type).toBe(VSRepoErrorType.RESOLVER);
+                    expect(error.message).toContain(`Unknown dynamic method: ${method}`);
+                    expect(logger.logError).toHaveBeenCalledWith(`Unknown dynamic method: ${method}`);
+                });
+
+                it('should throw a RESOLVER error when "Or" appears after an "AND" in a method with infix', () => {
+                    const error = catchError(() => buildRepo("findUsersByNameANDAgeOrId"));
+
+                    expect(error).toBeInstanceOf(VSRepoError);
+                    expect(error.type).toBe(VSRepoErrorType.RESOLVER);
+                    expect(error.message).toContain('The logical operator "Or" cannot appear after an "AND"');
+                });
+            });
+
+            // * By/Where only separate when not followed by a lowercase letter, so infixes like "Bytes" are not cut
+            it.each([
+                ["findBytesByName", { name: "Ana" }],
+                ["findByteArraysByName", { name: "Ana" }],
+                ["findBypassUsersByNameAndAge", { name: "Ana", age: 20 }],
+            ])("%s should not take the By of the infix as the separator", async (method, expectedWhere) => {
+                const repo = buildRepo(method);
+
+                await repo[method]!("Ana", 20);
+
+                expect(adapter.findMany).toHaveBeenCalledWith(expectedWhere, { db: "default-db" });
+            });
+
+            it("should not take a Where starting a lowercase word as the separator", async () => {
+                const repo = buildRepo("findWherebyUsersWhere");
+
+                await repo.findWherebyUsersWhere!({ name: "Ana" });
+
+                expect(adapter.findMany).toHaveBeenCalledWith({ name: "Ana" }, { db: "default-db" });
+            });
+        });
+
         describe("method options", () => {
             it("should use the adapter db client by default", async () => {
                 const repo = buildRepo("findByName");

@@ -123,7 +123,7 @@ export class DynamicMethodsResolver<T, K> {
         });
 
         const methodWithInfixRegex = (prefix: string, suffix: "By" | "Where") =>
-            new RegExp(`^${prefix}(?:\\p{Lu}.*?)??${suffix}`, "u");
+            new RegExp(`^${prefix}(?:\\p{Lu}.*?)??${suffix}(?!\\p{Ll})`, "u");
 
         const getVariants = (
             methodName: string,
