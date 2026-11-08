@@ -592,6 +592,184 @@ describe("VSRepository", () => {
 
                     expect(result?.age).toBeUndefined();
                 });
+
+                describe("global config", () => {
+                    it("should use the global one when the repository has none", async () => {
+                        VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+
+                        const result = await make().merge(W, { name: null as any, age: 30 });
+
+                        expect(result).toEqual({ ...stored, age: 30 });
+                    });
+
+                    it("should use the global one by default, even when the repository options omit mergeConfig", async () => {
+                        VSRepository.setGlobalConfig({ mergeConfig: { undefinedBehavior: "keep" } });
+
+                        const result = await make({ mergeConfig: undefined }).merge(W, {
+                            age: undefined,
+                        } as Partial<User>);
+
+                        expect(result?.age).toBeUndefined();
+                    });
+
+                    it("should merge the repository's config over the global one instead of replacing it", async () => {
+                        VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+                        const repo = make({ mergeConfig: { undefinedBehavior: "keep" } });
+
+                        const result = await repo.merge(W, { name: null as any, age: undefined } as Partial<User>);
+
+                        // nullBehavior comes from the global config, undefinedBehavior from the repository
+                        expect(result).toEqual({ ...stored, age: undefined });
+                    });
+
+                    it("should prefer the repository's value for a property set in both", async () => {
+                        VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+                        const repo = make({ mergeConfig: { nullBehavior: "keep" } });
+
+                        const result = await repo.merge(W, { name: null as any });
+
+                        expect(result).toEqual({ ...stored, name: null });
+                    });
+
+                    it("should apply the repository's fields on top of the global behaviors", async () => {
+                        VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+                        const repo = make({
+                            mergeConfig: {
+                                fields: { age: { strategy: "custom", customFn: (target, source) => target + source } },
+                            },
+                        });
+
+                        const result = await repo.merge(W, { age: 5, name: null as any });
+
+                        expect(result).toEqual({ ...stored, age: 25 });
+                    });
+
+                    it("should not be affected by a global config set after the repository is created", async () => {
+                        const repo = make();
+                        VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+
+                        const result = await repo.merge(W, { name: null as any });
+
+                        expect(result).toEqual({ ...stored, name: null });
+                    });
+
+                    it("should not mutate the global config nor the repository's one", async () => {
+                        const globalConfig = { nullBehavior: "ignore" } as const;
+                        const repoConfig = { undefinedBehavior: "keep" } as const;
+                        VSRepository.setGlobalConfig({ mergeConfig: globalConfig });
+                        const repo = make({ mergeConfig: repoConfig });
+
+                        await repo.merge(W, { age: 30 }, { mergeConfig: { nullBehavior: "keep" } });
+
+                        expect(globalConfig).toEqual({ nullBehavior: "ignore" });
+                        expect(repoConfig).toEqual({ undefinedBehavior: "keep" });
+                    });
+                });
+
+                describe("method options", () => {
+                    it("should merge the method's config over the repository's instead of replacing it", async () => {
+                        const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                        const result = await repo.merge(W, { name: null as any, age: undefined } as Partial<User>, {
+                            mergeConfig: { undefinedBehavior: "keep" },
+                        });
+
+                        // nullBehavior comes from the repository, undefinedBehavior from the call
+                        expect(result).toEqual({ ...stored, age: undefined });
+                    });
+
+                    it("should inherit the global config through the repository", async () => {
+                        VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+                        const repo = make({ mergeConfig: { undefinedBehavior: "ignore" } });
+
+                        const result = await repo.merge(W, { name: null as any, age: undefined } as Partial<User>, {
+                            mergeConfig: { undefinedBehavior: "keep" },
+                        });
+
+                        expect(result).toEqual({ ...stored, age: undefined });
+                    });
+
+                    it("should use the repository's config when the method has none", async () => {
+                        const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                        const result = await repo.merge(W, { name: null as any }, { db: "tx" });
+
+                        expect(result).toEqual(stored);
+                    });
+
+                    it("should use the global config when neither the repository nor the method have one", async () => {
+                        VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+
+                        const result = await make().merge(W, { name: null as any });
+
+                        expect(result).toEqual(stored);
+                    });
+
+                    it("should use only the method's config when there is no repository nor global one", async () => {
+                        const result = await make().merge(
+                            W,
+                            { name: null as any },
+                            { mergeConfig: { nullBehavior: "ignore" } },
+                        );
+
+                        expect(result).toEqual(stored);
+                    });
+
+                    it("should combine the fields of the repository and of the method", async () => {
+                        const repo = make({
+                            mergeConfig: {
+                                fields: { age: { strategy: "custom", customFn: (target, source) => target + source } },
+                            },
+                        });
+
+                        const result = await repo.merge(
+                            W,
+                            { age: 5, score: 3 },
+                            {
+                                mergeConfig: {
+                                    fields: {
+                                        score: {
+                                            strategy: "custom",
+                                            customFn: (target, source) => target + source * 2,
+                                        },
+                                    },
+                                },
+                            },
+                        );
+
+                        expect(result).toEqual({ ...stored, age: 25, score: 6 });
+                    });
+
+                    it("should prefer the method's strategy for a field configured in both", async () => {
+                        const repo = make({
+                            mergeConfig: {
+                                fields: { age: { strategy: "custom", customFn: (target, source) => target + source } },
+                            },
+                        });
+
+                        const result = await repo.merge(
+                            W,
+                            { age: 5 },
+                            {
+                                mergeConfig: {
+                                    fields: { age: { strategy: "custom", customFn: (_, source) => source * 10 } },
+                                },
+                            },
+                        );
+
+                        expect(result?.age).toBe(50);
+                    });
+
+                    it("should not change the repository's config for later calls", async () => {
+                        mocks.findOne!.mockImplementation(async () => ({ ...stored }));
+                        const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                        await repo.merge(W, { name: null as any }, { mergeConfig: { nullBehavior: "keep" } });
+                        const result = await repo.merge(W, { name: null as any });
+
+                        expect(result).toEqual(stored);
+                    });
+                });
             });
         });
 
