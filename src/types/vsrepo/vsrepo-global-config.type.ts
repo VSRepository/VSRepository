@@ -16,6 +16,10 @@ export type VSRepoGlobalConfig = {
     lazyDynamicMethods?: boolean;
     /** Default for the `vsPlaceholders` option. */
     vsPlaceholders?: boolean;
-
+    /**
+     * Default `undefinedBehavior`/`nullBehavior` used by `merge()`. The `mergeConfig` given in a repository's
+     * options (and the one given in a `merge()` call) is **merged** over this one, instead of replacing it.
+     * `fields` can't be set globally, since it depends on the entity.
+     */
     mergeConfig?: Pick<MergeConfig<any>, "undefinedBehavior" | "nullBehavior">;
 };

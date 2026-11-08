@@ -130,8 +130,8 @@ export interface MergeConfig<T> {
  */
 export interface MergeOptions<T, K extends VSRepoOrmTypes = VSRepoOrmTypes> extends MethodOptions<T, K> {
     /**
-     * Merge configuration for this call. It **replaces** the `mergeConfig` given in the
-     * repository's constructor options.
+     * Merge configuration for this call. It is **merged** over the repository's `mergeConfig`
+     * (which already includes the global one), so only the properties it sets are overridden.
      *
      * default: The repository's `mergeConfig`, or no configuration if it doesn't have one
      */

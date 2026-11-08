@@ -108,7 +108,7 @@ Use `@EnableSoftDelete()` sem argumento junto com `VSRepository.setGlobalConfig(
 
 ## Configuração, logging e erros
 
-- `VSRepository.setGlobalConfig({ softDeleteField, logLevel, lazyDynamicMethods, vsPlaceholders })` define padrões compartilhados — veja [Configuração global](./base-methods.pt-BR.md#configuração-global).
+- `VSRepository.setGlobalConfig({ softDeleteField, logLevel, lazyDynamicMethods, vsPlaceholders, mergeConfig })` define padrões compartilhados — veja [Configuração global](./base-methods.pt-BR.md#configuração-global).
 - `VSLogLevel.NONE` desativa o logging por completo; `logSlowThresholdMs` foi removido.
 - `TransactionIsolationLevel` foi renomeado para **`VSRepoIsolationLevel`**, e `isolationLevel` também aceita os valores string do enum (`"Serializable"`).
 - `VSRepoErrorType.DECORATOR` e `VSRepoErrorType.VALIDATOR` foram removidos; `VS_PLACEHOLDERS` e `VSSQL` foram adicionados — veja [Tratamento de erros](./error-handling.pt-BR.md).

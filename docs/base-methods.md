@@ -18,7 +18,7 @@
 | `logLevel`           | `VSLogLevel`                 | Optional. Minimum severity printed by the internal logger. Defaults to `VSLogLevel.WARN`; use `VSLogLevel.NONE` to disable logging completely.                                                                                                                                                                                                        |
 | `lazyDynamicMethods` | `boolean`                    | Optional. Defaults to `false`. When `true`, postpones resolving `@DynamicMethod`/`@QueryMethod` methods — the repository itself must call `resolveDynamicMethods()` manually later. See [Lazily resolving dynamic methods](./dynamic-methods.md#lazily-resolving-dynamic-methods).                                                                    |
 | `vsPlaceholders`     | `boolean`                    | Optional. Defaults to `true`. Raw SQL strings passed to `query()` and `@QueryMethod` use VSRepository's own placeholders (`?1`, `?2`, ...) instead of your adapter's native syntax. Pass `false` to write the native syntax instead. See [Agnostic placeholders with `vsPlaceholders`](./query-methods.md#agnostic-placeholders-with-vsplaceholders). |
-| `mergeConfig`        | `MergeConfig<Entity>`        | Optional. Default configuration used by `merge()`; a call can replace it through `options.mergeConfig`. See [Merging records with `merge`](#merging-records-with-merge).                                                                                                                                                                              |
+| `mergeConfig`        | `MergeConfig<Entity>`        | Optional. Default configuration used by `merge()`, merged over the global one; a call can override parts of it with `options.mergeConfig`. See [Merging records with `merge`](#merging-records-with-merge).                                                                                                                                           |
 
 Soft-delete is no longer a constructor option — it's enabled with the [`@EnableSoftDelete`](#soft-delete) decorator.
 
@@ -32,15 +32,17 @@ VSRepository.setGlobalConfig({
     softDeleteField: "deletedAt",
     vsPlaceholders: true,
     lazyDynamicMethods: false,
+    mergeConfig: { nullBehavior: "ignore" },
 });
 ```
 
-| Field                | Description                                                                         |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `softDeleteField`    | Soft-delete field used by `@EnableSoftDelete()` when it doesn't specify one itself. |
-| `logLevel`           | Default for the `logLevel` option.                                                  |
-| `lazyDynamicMethods` | Default for the `lazyDynamicMethods` option.                                        |
-| `vsPlaceholders`     | Default for the `vsPlaceholders` option.                                            |
+| Field                | Description                                                                                                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `softDeleteField`    | Soft-delete field used by `@EnableSoftDelete()` when it doesn't specify one itself.                                                                                                                             |
+| `logLevel`           | Default for the `logLevel` option.                                                                                                                                                                              |
+| `lazyDynamicMethods` | Default for the `lazyDynamicMethods` option.                                                                                                                                                                    |
+| `vsPlaceholders`     | Default for the `vsPlaceholders` option.                                                                                                                                                                        |
+| `mergeConfig`        | Default `undefinedBehavior` and `nullBehavior` for `merge()`. Repository and call configs are merged over it, see [Merging records with `merge`](#merging-records-with-merge). |
 
 ---
 
@@ -148,7 +150,29 @@ The same operation is available as a [dynamic method](./dynamic-methods.md#avail
 
 Without any configuration, every field of `obj` overwrites the stored one: nested objects and arrays are **replaced**, not merged; `undefined` values are skipped; and `null` values are written. The fetched record is the one mutated and returned, and `obj` is never modified.
 
-To change this, pass a [`MergeConfig`](./utility-types.md) — in the repository's constructor options (`mergeConfig`, for every call) or in the method options (`options.mergeConfig`, for that call only). The one in the method options **replaces** the repository's, it isn't combined with it.
+To change this, pass a [`MergeConfig`](./utility-types.md). It can be set at three levels, each one **merged** over the previous (a property set in a more specific level wins, the ones it doesn't set are inherited):
+
+1. Globally, with `VSRepository.setGlobalConfig({ mergeConfig })` — only `undefinedBehavior` and `nullBehavior`, since `fields` depends on the entity. Only repositories created **after** the call are affected.
+2. In the repository's constructor options (`mergeConfig`, for every call of that repository).
+3. In the method options (`options.mergeConfig`, for that call only).
+
+The merge is deep, so `fields` entries of different levels are combined too: a field configured in the repository and another one configured in the call both apply. If the same field is configured in two levels, their properties are merged.
+
+```typescript
+VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+
+class UserRepository extends VSRepository<User, string> {
+    constructor() {
+        super({
+            adapter,
+            mergeConfig: { fields: { tags: { strategy: "concat" } } }, // nullBehavior: "ignore" is inherited
+        });
+    }
+}
+
+// `nullBehavior` is "ignore" (global), `tags` is concatenated (repository) and `undefinedBehavior` is "keep" (call)
+await userRepository.merge({ id: "1" }, obj, { mergeConfig: { undefinedBehavior: "keep" } });
+```
 
 | Field               | Default    | Description                                                                                                                                                                          |
 | ------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
