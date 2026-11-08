@@ -96,7 +96,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         this.mergeConfig =
             options.mergeConfig && VSRepository.globalConfig.mergeConfig
                 ? merge(VSRepository.globalConfig.mergeConfig, options.mergeConfig)
-                : options.mergeConfig;
+                : (options.mergeConfig ?? VSRepository.globalConfig.mergeConfig);
 
         this.resolveSoftDelete();
 
@@ -650,7 +650,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                 return MergeEntitiesResolver.resolve(
                     entity,
                     obj,
-                    mergeConfig && this.mergeConfig ? merge(this.mergeConfig, mergeConfig) : mergeConfig,
+                    mergeConfig && this.mergeConfig
+                        ? merge(this.mergeConfig, mergeConfig)
+                        : (mergeConfig ?? this.mergeConfig),
                 );
             },
             "merge",
