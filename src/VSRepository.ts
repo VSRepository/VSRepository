@@ -259,22 +259,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         return this.adapter as A;
     }
 
-    /** Static form of `createQueryBuilder()` for the given repository. */
-    static getQueryBuilder<E, O extends VSRepoOrmTypes>(
-        repository: VSRepository<E, any, O>,
-        db?: ClientOrTransaction<O>,
-    ): VSQueryBuilder<E, O> {
-        return repository.createQueryBuilder(db);
-    }
-
-    /** Static form of `createRawQueryBuilder()` for the given repository. */
-    static getRawQueryBuilder<O extends VSRepoOrmTypes>(
-        repository: VSRepository<any, any, O>,
-        db?: ClientOrTransaction<O>,
-    ): VSRawQueryBuilder<O> {
-        return repository.createRawQueryBuilder(db);
-    }
-
     /**
      * Replaces the defaults shared by every repository. Per-repository options take precedence.
      * Only repositories created after the call are affected.

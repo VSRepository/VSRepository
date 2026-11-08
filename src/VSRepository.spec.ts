@@ -1127,25 +1127,5 @@ describe("VSRepository", () => {
 
             expect(mocks.query).toHaveBeenCalledWith("select 1 from user", expect.objectContaining({ db: "tx" }));
         });
-
-        it("should expose the query builder through the static getQueryBuilder", () => {
-            const repo = make();
-            const spy = vi.spyOn(repo, "createQueryBuilder");
-
-            const qb = VSRepository.getQueryBuilder(repo, "tx" as any);
-
-            expect(qb).toBeInstanceOf(VSQueryBuilder);
-            expect(spy).toHaveBeenCalledWith("tx");
-        });
-
-        it("should expose the raw query builder through the static getRawQueryBuilder", () => {
-            const repo = make();
-            const spy = vi.spyOn(repo, "createRawQueryBuilder");
-
-            const qb = VSRepository.getRawQueryBuilder(repo, "tx" as any);
-
-            expect(qb).toBeInstanceOf(VSRawQueryBuilder);
-            expect(spy).toHaveBeenCalledWith("tx");
-        });
     });
 });
