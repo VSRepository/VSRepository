@@ -210,7 +210,7 @@ O soft-delete é um conceito **nativo e de primeira classe**, habilitado por rep
 @EnableSoftDelete("deletedAt")
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter });
+        super({ adapter });
     }
 }
 ```

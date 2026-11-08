@@ -31,6 +31,7 @@ import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js
 import { PaginatedResult } from "./types/utils/paginated-result.type.js";
 import { MergeConfig, MergeOptions } from "./types/utils/merge-config.type.js";
 import { MergeEntitiesResolver } from "./internal/resolvers/merge-entities.resolver.js";
+import merge from "deepmerge";
 
 /**
  * ORM-agnostic base repository. Extend it and provide an adapter to get the base methods
@@ -44,7 +45,7 @@ import { MergeEntitiesResolver } from "./internal/resolvers/merge-entities.resol
  * ```typescript
  * class UserRepository extends VSRepository<User, string> {
  *     constructor() {
- *         super({ pkName: "id", adapter: new SomeOrmAdapter(...) });
+ *         super({ adapter: new SomeOrmAdapter(...) });
  *     }
  *
  *     *@DynamicMethod()
@@ -91,7 +92,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
         this.defaultOrdering = options.defaultOrdering;
         this.vsPlaceholders = options.vsPlaceholders ?? VSRepository.globalConfig.vsPlaceholders ?? true;
-        this.mergeConfig = options.mergeConfig;
+
+        this.mergeConfig =
+            options.mergeConfig && VSRepository.globalConfig.mergeConfig
+                ? merge(VSRepository.globalConfig.mergeConfig, options.mergeConfig)
+                : options.mergeConfig;
 
         this.resolveSoftDelete();
 
@@ -642,7 +647,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                 );
                 if (!entity) return null;
 
-                return MergeEntitiesResolver.resolve(entity, obj, mergeConfig ?? this.mergeConfig);
+                return MergeEntitiesResolver.resolve(
+                    entity,
+                    obj,
+                    mergeConfig && this.mergeConfig ? merge(this.mergeConfig, mergeConfig) : mergeConfig,
+                );
             },
             "merge",
             options,

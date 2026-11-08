@@ -341,7 +341,7 @@ Por padrão, o construtor do `VSRepository` já resolve todo `@DynamicMethod`/`@
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
         this.resolveDynamicMethods();
     }
 
@@ -355,7 +355,7 @@ Adiar a chamada ainda mais — para um hook de ciclo de vida posterior — é ig
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
     }
 
     @DynamicMethod()
@@ -384,7 +384,7 @@ Com `lazyDynamicMethods: true`, essa inicialização de campo já rodou no momen
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
         this.resolveDynamicMethods();
     }
 

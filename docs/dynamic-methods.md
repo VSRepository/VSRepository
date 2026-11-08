@@ -341,7 +341,7 @@ By default, the `VSRepository` constructor synchronously resolves every `@Dynami
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
         this.resolveDynamicMethods();
     }
 
@@ -355,7 +355,7 @@ Deferring the call further — to a later lifecycle hook — is just as valid, a
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
     }
 
     @DynamicMethod()
@@ -384,7 +384,7 @@ With `lazyDynamicMethods: true`, that field initialization already ran by the ti
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
         this.resolveDynamicMethods();
     }
 

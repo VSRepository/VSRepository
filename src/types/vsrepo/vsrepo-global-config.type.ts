@@ -1,4 +1,5 @@
 import { VSLogLevel } from "../../internal/enums/vs-log-level.enum.js";
+import { MergeConfig } from "../utils/merge-config.type.js";
 
 /**
  * Defaults shared by every repository, set with `VSRepository.setGlobalConfig()`.
@@ -15,4 +16,6 @@ export type VSRepoGlobalConfig = {
     lazyDynamicMethods?: boolean;
     /** Default for the `vsPlaceholders` option. */
     vsPlaceholders?: boolean;
+
+    mergeConfig?: Pick<MergeConfig<any>, "undefinedBehavior" | "nullBehavior">;
 };
