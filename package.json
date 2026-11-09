@@ -1,6 +1,6 @@
 {
   "name": "vsrepo",
-  "version": "3.0.0-dev.2",
+  "version": "3.0.0-dev.3",
   "description": "ORM-agnostic repository pattern library",
   "homepage": "https://github.com/VSRepository/VSRepository#readme",
   "repository": {

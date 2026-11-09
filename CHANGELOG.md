@@ -6,6 +6,42 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev.3] - 2026-11-08
+
+### Added
+
+- Dynamic methods now support infixes between the operation and `By`/`Where`, such as `findUsersByName`, across the supported dynamic-method variants
+- `VSRepository.setGlobalConfig()` now supports partial `mergeConfig` defaults for `undefinedBehavior` and `nullBehavior`
+- `reflect-metadata` is now declared as a peer dependency, supporting versions `0.1.x` and `0.2.x`
+
+### Changed
+
+- `mergeConfig` now merges global, repository and per-call configuration instead of replacing previously configured values; defaults are used when no more specific configuration is provided
+- `@EnableSoftDelete` now provides type-safe field inference
+- Dynamic-method resolution and internal logging/error messages were simplified and improved
+
+### Removed
+
+- **BREAKING:** Removed the static `VSRepository.getQueryBuilder()` and `VSRepository.getRawQueryBuilder()` helpers; use the repository instance methods instead
+
+## [3.0.0-dev.3] - 2026-11-08 (Português)
+
+### Adicionado
+
+- Métodos dinâmicos agora aceitam infixos entre a operação e `By`/`Where`, como `findUsersByName`, em todas as variantes dinâmicas suportadas
+- `VSRepository.setGlobalConfig()` agora aceita defaults parciais de `mergeConfig` para `undefinedBehavior` e `nullBehavior`
+- `reflect-metadata` agora é uma peer dependency, aceitando as versões `0.1.x` e `0.2.x`
+
+### Alterado
+
+- `mergeConfig` agora combina as configurações global, do repository e da chamada em vez de substituir os valores já configurados; defaults são usados quando não há uma configuração mais específica
+- `@EnableSoftDelete` agora infere o campo de forma tipada
+- A resolução de métodos dinâmicos e as mensagens internas de log/erro foram simplificadas e aprimoradas
+
+### Removido
+
+- **BREAKING:** Os helpers estáticos `VSRepository.getQueryBuilder()` e `VSRepository.getRawQueryBuilder()` foram removidos; use os métodos da instância do repository
+
 ## [3.0.0-dev.2] - 2026-10-29
 
 ### Added

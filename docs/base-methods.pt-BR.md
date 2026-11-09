@@ -36,12 +36,12 @@ VSRepository.setGlobalConfig({
 });
 ```
 
-| Campo                | Descrição                                                                                                                                                                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `softDeleteField`    | Campo de soft-delete usado pelo `@EnableSoftDelete()` quando ele não especifica um próprio.                                                                                                                                                      |
-| `logLevel`           | Padrão da option `logLevel`.                                                                                                                                                                                                                     |
-| `lazyDynamicMethods` | Padrão da option `lazyDynamicMethods`.                                                                                                                                                                                                           |
-| `vsPlaceholders`     | Padrão da option `vsPlaceholders`.                                                                                                                                                                                                               |
+| Campo                | Descrição                                                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `softDeleteField`    | Campo de soft-delete usado pelo `@EnableSoftDelete()` quando ele não especifica um próprio.                                                                                                         |
+| `logLevel`           | Padrão da option `logLevel`.                                                                                                                                                                        |
+| `lazyDynamicMethods` | Padrão da option `lazyDynamicMethods`.                                                                                                                                                              |
+| `vsPlaceholders`     | Padrão da option `vsPlaceholders`.                                                                                                                                                                  |
 | `mergeConfig`        | Padrão de `undefinedBehavior` e `nullBehavior` do `merge()`. As configs do repository e da chamada são mescladas sobre ele, veja [Mesclando registros com `merge`](#mesclando-registros-com-merge). |
 
 ---

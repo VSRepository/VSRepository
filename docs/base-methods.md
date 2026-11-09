@@ -36,12 +36,12 @@ VSRepository.setGlobalConfig({
 });
 ```
 
-| Field                | Description                                                                                                                                                                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `softDeleteField`    | Soft-delete field used by `@EnableSoftDelete()` when it doesn't specify one itself.                                                                                                                             |
-| `logLevel`           | Default for the `logLevel` option.                                                                                                                                                                              |
-| `lazyDynamicMethods` | Default for the `lazyDynamicMethods` option.                                                                                                                                                                    |
-| `vsPlaceholders`     | Default for the `vsPlaceholders` option.                                                                                                                                                                        |
+| Field                | Description                                                                                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `softDeleteField`    | Soft-delete field used by `@EnableSoftDelete()` when it doesn't specify one itself.                                                                                            |
+| `logLevel`           | Default for the `logLevel` option.                                                                                                                                             |
+| `lazyDynamicMethods` | Default for the `lazyDynamicMethods` option.                                                                                                                                   |
+| `vsPlaceholders`     | Default for the `vsPlaceholders` option.                                                                                                                                       |
 | `mergeConfig`        | Default `undefinedBehavior` and `nullBehavior` for `merge()`. Repository and call configs are merged over it, see [Merging records with `merge`](#merging-records-with-merge). |
 
 ---
