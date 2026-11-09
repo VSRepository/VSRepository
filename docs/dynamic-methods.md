@@ -73,6 +73,33 @@ class UserRepository extends VSRepository<User, string> {
 
 > `groupBy` is **not planned** — it doesn't map cleanly onto the ORM-agnostic contract. `aggregate` as a separate prefix is also unlikely to be implemented: the most common aggregate operations (`sum`, `average`, `min`, `max`, `increment`, `decrement`, `multiply`, `divide`) are already available as dedicated base methods — see [Atomic and aggregate methods](./base-methods.md#atomic-and-aggregate-methods). For anything more complex — including `groupBy` — use a `@QueryMethod` with raw SQL or the [raw query builder](./raw-query-builder.md#raw-query-builder) (`createRawQueryBuilder()`), which exposes `groupBy`/`having` directly.
 
+> Every prefix also accepts an [infix](#infix) between the operation and the separator.
+
+## Infix
+
+Between the operation and the `By`/`Where` separator you can add one or more descriptive words, purely for readability: `findUsersByName`, `countAdminsByRole`, `deleteManyExpiredTokensByUserId`. The infix is **discarded** — it never changes which adapter method is called, the filters or the arguments, so `findUsersByName` behaves exactly like `findByName`.
+
+```typescript
+class UserRepository extends VSRepository<User, string> {
+    // same as findOneByEmail
+    @DynamicMethod()
+    declare findOneUserByEmail: (email: string, options?: MethodOptions<User>) => Promise<User | null>;
+
+    @DynamicMethod()
+    declare updateManyUsersByName: (name: string, options?: MethodOptions<User>) => Promise<CountResult>;
+}
+```
+
+Rules:
+
+- It works with every prefix of the [table above](#available-prefixes) and with `proxyTo`.
+- The infix must start with an **uppercase letter** (non-ASCII ones such as `Á` are accepted): `findUsersByName` is valid, `findusersByName` is not. A name with an infix but no `By`/`Where` after it (`findUsers`) is not a dynamic method either. Both throw a `VSRepoError` (`RESOLVER`) when the repository is constructed.
+- The operation is resolved first, and the most specific prefix wins: `findOneUserByName` is a `findOne` (not a `find` with the infix `OneUser`), `deleteManyUsersByName` is a `deleteMany`, and `updateManyReturningUsersByName` is an `updateManyReturning`.
+
+> [!WARNING]
+>
+> **The infix is not a filter.** `findActiveUsersByName` does **not** restrict the result to active users — `Active` is just a label and only `name` is filtered. To filter by `active`, say so after the separator (`findUsersByNameAndActiveIsTrue`).
+
 ## Field filters
 
 Applied as suffixes to the field name inside the method. Several filters have aliases — use whichever reads best:
@@ -314,7 +341,7 @@ By default, the `VSRepository` constructor synchronously resolves every `@Dynami
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
         this.resolveDynamicMethods();
     }
 
@@ -328,7 +355,7 @@ Deferring the call further — to a later lifecycle hook — is just as valid, a
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
     }
 
     @DynamicMethod()
@@ -357,7 +384,7 @@ With `lazyDynamicMethods: true`, that field initialization already ran by the ti
 ```typescript
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter, lazyDynamicMethods: true });
+        super({ adapter, lazyDynamicMethods: true });
         this.resolveDynamicMethods();
     }
 

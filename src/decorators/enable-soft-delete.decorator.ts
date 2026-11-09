@@ -1,5 +1,8 @@
 import { ENABLE_SOFT_DELETE_KEY } from "../internal/constants/enable-soft-delete-key.constant.js";
 import { SoftDeleteMetadata } from "../types/decorators/soft-delete-metadata.type.js";
+import { KeysOfType } from "../types/utils/keys-of-type.type.js";
+import { Primitive } from "../types/utils/primitive.type.js";
+import { VSRepository } from "../VSRepository.js";
 
 /**
  * Enables soft delete on a `VSRepository` subclass: reads only see non-deleted records (see the `see`
@@ -16,8 +19,12 @@ import { SoftDeleteMetadata } from "../types/decorators/soft-delete-metadata.typ
  *
  * @publicApi
  */
-export function EnableSoftDelete(field?: string): ClassDecorator {
-    return (target: Function): void => {
+export function EnableSoftDelete<T extends object>(
+    field?: T extends typeof VSRepository<infer Entity, any>
+        ? (KeysOfType<Entity, Primitive> & string) | (string & {})
+        : string,
+): (target: T) => void {
+    return target => {
         Reflect.defineMetadata(ENABLE_SOFT_DELETE_KEY, { field, active: true } satisfies SoftDeleteMetadata, target);
     };
 }

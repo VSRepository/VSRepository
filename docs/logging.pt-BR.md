@@ -12,7 +12,6 @@ Todo repository tem um logger interno, configurado via `logLevel` nas options do
 import { VSLogLevel } from "vsrepo";
 
 super({
-    pkName: "id",
     adapter,
     logLevel: VSLogLevel.DEBUG,
 });

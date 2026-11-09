@@ -11,7 +11,6 @@ import { MethodOptions } from "./types/utils/methods-options.type.js";
 import { Ordering } from "./types/utils/ordering.type.js";
 import { VSLogger } from "./internal/utils/vs-logger.util.js";
 import { VSLogLevel } from "./internal/enums/vs-log-level.enum.js";
-import { VSRepoArgs } from "./types/vsrepo/vsrepo-args.type.js";
 import { DynamicMethodsResolver } from "./internal/resolvers/dynamic-methods.resolver.js";
 import { VSRepoError } from "./errors/VSRepoError.js";
 import { VSRepoErrorType } from "./internal/enums/vsrepo-error-type.enum.js";
@@ -32,6 +31,7 @@ import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js
 import { PaginatedResult } from "./types/utils/paginated-result.type.js";
 import { MergeConfig, MergeOptions } from "./types/utils/merge-config.type.js";
 import { MergeEntitiesResolver } from "./internal/resolvers/merge-entities.resolver.js";
+import merge from "deepmerge";
 
 /**
  * ORM-agnostic base repository. Extend it and provide an adapter to get the base methods
@@ -45,7 +45,7 @@ import { MergeEntitiesResolver } from "./internal/resolvers/merge-entities.resol
  * ```typescript
  * class UserRepository extends VSRepository<User, string> {
  *     constructor() {
- *         super({ pkName: "id", adapter: new SomeOrmAdapter(...) });
+ *         super({ adapter: new SomeOrmAdapter(...) });
  *     }
  *
  *     *@DynamicMethod()
@@ -73,13 +73,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private static globalConfig: VSRepoGlobalConfig = {};
 
     /**
-     * This is a property managed by VSRepository, please don't modify it!!
-     * @internal
-     */
-    _vsrepocache: Map<string, (args: any[], methodOptions?: MethodOptions<Entity, OrmTypes>) => VSRepoArgs<Entity>> =
-        new Map();
-
-    /**
      * Creates the repository and, unless `lazyDynamicMethods` is `true`, resolves its
      * `@DynamicMethod`/`@QueryMethod` fields.
      */
@@ -92,14 +85,18 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.pkName = this.adapter.getPkName() as KeysOfType<Entity, PKType>;
         } else {
             throw new VSRepoError(
-                "Your adapter did not implement the 'getPkName' method; try updating your adapter to a newer version or manually configure 'pkName' in the constructor's 'options'.",
+                "Your adapter did not implement the 'getPkName' method; try updating your adapter to a newer version or manually configure 'pkName' in the constructor's 'options'",
                 VSRepoErrorType.BASE,
             );
         }
 
         this.defaultOrdering = options.defaultOrdering;
         this.vsPlaceholders = options.vsPlaceholders ?? VSRepository.globalConfig.vsPlaceholders ?? true;
-        this.mergeConfig = options.mergeConfig;
+
+        this.mergeConfig =
+            options.mergeConfig && VSRepository.globalConfig.mergeConfig
+                ? merge(VSRepository.globalConfig.mergeConfig, options.mergeConfig)
+                : (options.mergeConfig ?? VSRepository.globalConfig.mergeConfig);
 
         this.resolveSoftDelete();
 
@@ -111,7 +108,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
         this.logger.logInfo(
             `Initializing ${this.constructor.name} (pk: '${String(this.pkName)}'` +
-                (this.softDeleteField ? `, softDeleteField: '${String(this.softDeleteField)}'` : "") +
+                (this.softDeleteField ? `, softDeleteField: '${this.softDeleteField}'` : "") +
                 (this.defaultOrdering ? `, defaultOrdering: ${JSON.stringify(this.defaultOrdering)}` : "") +
                 `, adapter: ${this.adapter.constructor.name}` +
                 `)`,
@@ -144,7 +141,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
             if (!this.softDeleteField) {
                 throw new VSRepoError(
-                    "A field for soft delete must be specified, configure it via the decorator or set it globally.",
+                    "A field for soft delete must be specified, configure it via the decorator or set it globally",
                     VSRepoErrorType.BASE,
                 );
             }
@@ -164,7 +161,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.logger.logWarn(
                 `resolveDynamicMethods() was called more than once on ${this.constructor.name}. ` +
                     `If you are calling it manually, make sure lazyDynamicMethods is set to true ` +
-                    `in the constructor options to skip the automatic resolution.`,
+                    `in the constructor options to skip the automatic resolution`,
             );
 
             this.alreadyWarnedResolveDynamicMethods = true;
@@ -182,13 +179,13 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         let queryMethodsCount = 0;
 
         try {
-            const start = this.logger.startPerformLog("resolve dynamic methods");
+            // const start = this.logger.startPerformLog("resolve dynamic methods");
             dynamicMethodsCount = dynamicMethodsResolver.resolve(this);
-            this.logger.endPerformLog(start);
+            // this.logger.endPerformLog(start);
 
-            const startQuery = this.logger.startPerformLog("resolve query methods");
+            // const startQuery = this.logger.startPerformLog("resolve query methods");
             queryMethodsCount = dynamicMethodsResolver.resolveQueries(this);
-            this.logger.endPerformLog(startQuery);
+            // this.logger.endPerformLog(startQuery);
         } catch (err) {
             this.logger.logError(`Failed to initialize ${this.constructor.name}`, err);
             throw err;
@@ -265,22 +262,6 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Returns the adapter this repository delegates to, optionally typed as a specific adapter class. */
     getAdapter<A extends VSRepoAdapter<Entity> = VSRepoAdapter<Entity>>(): A {
         return this.adapter as A;
-    }
-
-    /** Static form of `createQueryBuilder()` for the given repository. */
-    static getQueryBuilder<E, O extends VSRepoOrmTypes>(
-        repository: VSRepository<E, any, O>,
-        db?: ClientOrTransaction<O>,
-    ): VSQueryBuilder<E, O> {
-        return repository.createQueryBuilder(db);
-    }
-
-    /** Static form of `createRawQueryBuilder()` for the given repository. */
-    static getRawQueryBuilder<O extends VSRepoOrmTypes>(
-        repository: VSRepository<any, any, O>,
-        db?: ClientOrTransaction<O>,
-    ): VSRawQueryBuilder<O> {
-        return repository.createRawQueryBuilder(db);
     }
 
     /**
@@ -666,7 +647,13 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                 );
                 if (!entity) return null;
 
-                return MergeEntitiesResolver.resolve(entity, obj, mergeConfig ?? this.mergeConfig);
+                return MergeEntitiesResolver.resolve(
+                    entity,
+                    obj,
+                    mergeConfig && this.mergeConfig
+                        ? merge(this.mergeConfig, mergeConfig)
+                        : (mergeConfig ?? this.mergeConfig),
+                );
             },
             "merge",
             options,
@@ -702,7 +689,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
 
     private failSoftDelete(): never {
         this.fail(
-            "this method can only be used if you have enabled soft delete in this repository.",
+            "this method can only be used if you have enabled soft delete in this repository",
             VSRepoErrorType.BASE,
         );
     }

@@ -18,7 +18,7 @@
 | `logLevel`           | `VSLogLevel`                 | Opcional. Severidade mínima impressa pelo logger interno. O padrão é `VSLogLevel.WARN`; use `VSLogLevel.NONE` para desativar os logs por completo.                                                                                                                                                                                                                       |
 | `lazyDynamicMethods` | `boolean`                    | Opcional. O padrão é `false`. Quando `true`, adia a resolução dos métodos `@DynamicMethod`/`@QueryMethod` — o próprio repository precisa chamar `resolveDynamicMethods()` manualmente depois. Veja [Resolução lazy dos métodos dinâmicos](./dynamic-methods.pt-BR.md#resolução-lazy-dos-métodos-dinâmicos).                                                              |
 | `vsPlaceholders`     | `boolean`                    | Opcional. O padrão é `true`. Strings SQL cruas passadas para `query()` e `@QueryMethod` usam os placeholders próprios do VSRepository (`?1`, `?2`, ...) em vez da sintaxe nativa do seu adapter. Passe `false` para escrever a sintaxe nativa. Veja [Placeholders agnósticos com `vsPlaceholders`](./query-methods.pt-BR.md#placeholders-agnósticos-com-vsplaceholders). |
-| `mergeConfig`        | `MergeConfig<Entity>`        | Opcional. Configuração padrão usada pelo `merge()`; uma chamada pode substituí-la por `options.mergeConfig`. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge).                                                                                                                                                                                     |
+| `mergeConfig`        | `MergeConfig<Entity>`        | Opcional. Configuração padrão usada pelo `merge()`, mesclada sobre a global; uma chamada pode sobrescrever partes dela com `options.mergeConfig`. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge).                                                                                                                                                |
 
 O soft-delete não é mais uma option do construtor — ele é habilitado com o decorator [`@EnableSoftDelete`](#soft-delete).
 
@@ -32,15 +32,17 @@ VSRepository.setGlobalConfig({
     softDeleteField: "deletedAt",
     vsPlaceholders: true,
     lazyDynamicMethods: false,
+    mergeConfig: { nullBehavior: "ignore" },
 });
 ```
 
-| Campo                | Descrição                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| `softDeleteField`    | Campo de soft-delete usado pelo `@EnableSoftDelete()` quando ele não especifica um próprio. |
-| `logLevel`           | Padrão da option `logLevel`.                                                                |
-| `lazyDynamicMethods` | Padrão da option `lazyDynamicMethods`.                                                      |
-| `vsPlaceholders`     | Padrão da option `vsPlaceholders`.                                                          |
+| Campo                | Descrição                                                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `softDeleteField`    | Campo de soft-delete usado pelo `@EnableSoftDelete()` quando ele não especifica um próprio.                                                                                                         |
+| `logLevel`           | Padrão da option `logLevel`.                                                                                                                                                                        |
+| `lazyDynamicMethods` | Padrão da option `lazyDynamicMethods`.                                                                                                                                                              |
+| `vsPlaceholders`     | Padrão da option `vsPlaceholders`.                                                                                                                                                                  |
+| `mergeConfig`        | Padrão de `undefinedBehavior` e `nullBehavior` do `merge()`. As configs do repository e da chamada são mescladas sobre ele, veja [Mesclando registros com `merge`](#mesclando-registros-com-merge). |
 
 ---
 
@@ -148,7 +150,29 @@ A mesma operação existe como [método dinâmico](./dynamic-methods.pt-BR.md#pr
 
 Sem nenhuma configuração, cada campo de `obj` sobrescreve o armazenado: objetos aninhados e arrays são **substituídos**, não mesclados; valores `undefined` são ignorados; e valores `null` são escritos. O registro buscado é o que é alterado e retornado, e o `obj` nunca é modificado.
 
-Para mudar isso, passe um [`MergeConfig`](./utility-types.pt-BR.md) — nas options do construtor do repository (`mergeConfig`, para todas as chamadas) ou nas options do método (`options.mergeConfig`, só para aquela chamada). O das options do método **substitui** o do repository, não é combinado com ele.
+Para mudar isso, passe um [`MergeConfig`](./utility-types.pt-BR.md). Ele pode ser definido em três níveis, cada um **mesclado** sobre o anterior (uma propriedade definida em um nível mais específico vence, e as que ele não define são herdadas):
+
+1. Globalmente, com `VSRepository.setGlobalConfig({ mergeConfig })` — só `undefinedBehavior` e `nullBehavior`, já que `fields` depende da entidade. Só os repositories criados **depois** da chamada são afetados.
+2. Nas options do construtor do repository (`mergeConfig`, para todas as chamadas daquele repository).
+3. Nas options do método (`options.mergeConfig`, só para aquela chamada).
+
+A mesclagem é profunda, então as entradas de `fields` de níveis diferentes também são combinadas: um campo configurado no repository e outro configurado na chamada valem os dois. Se o mesmo campo é configurado em dois níveis, as propriedades dele são mescladas.
+
+```typescript
+VSRepository.setGlobalConfig({ mergeConfig: { nullBehavior: "ignore" } });
+
+class UserRepository extends VSRepository<User, string> {
+    constructor() {
+        super({
+            adapter,
+            mergeConfig: { fields: { tags: { strategy: "concat" } } }, // nullBehavior: "ignore" é herdado
+        });
+    }
+}
+
+// `nullBehavior` é "ignore" (global), `tags` é concatenado (repository) e `undefinedBehavior` é "keep" (chamada)
+await userRepository.merge({ id: "1" }, obj, { mergeConfig: { undefinedBehavior: "keep" } });
+```
 
 | Campo               | Padrão     | Descrição                                                                                                                                                                                      |
 | ------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -210,7 +234,7 @@ O soft-delete é um conceito **nativo e de primeira classe**, habilitado por rep
 @EnableSoftDelete("deletedAt")
 class UserRepository extends VSRepository<User, string> {
     constructor() {
-        super({ pkName: "id", adapter });
+        super({ adapter });
     }
 }
 ```

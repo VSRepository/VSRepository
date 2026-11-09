@@ -34,8 +34,8 @@ export class VSPlaceholdersParser {
             if (!Number.isInteger(position) || position < 1 || position > args.length) {
                 const reason =
                     args.length === 0
-                        ? "no arguments were provided in 'args'."
-                        : `expected a number between 1 and ${args.length} (the length of 'args').`;
+                        ? "no arguments were provided in 'args'"
+                        : `expected a number between 1 and ${args.length} (the length of 'args')`;
 
                 throw new VSRepoError(
                     `Invalid 'vsPlaceholders' reference '?${match[1]}' in query — ${reason}`,

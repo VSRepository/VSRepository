@@ -41,7 +41,7 @@ Os métodos base foram retrabalhados em torno de filtros `where` em vez de lista
 | `get`, `getOrThrow`, `save`, `remove`, `patch`, `has`, `softRemove`, `sum`, `average`, `min`, `max` | Continuam existindo, com os mesmos nomes (`get`/`getOrThrow` agora também aceitam `order`/`pagination`)                                                                                                                                                                       |
 | `merge(pk, obj, options?)`                                                                          | `merge(where, obj, options?)` — recebe um `where` em vez de uma chave primária (`merge({ id }, obj)`), agora é implementado pelo próprio `VSRepository` e aceita `mergeConfig`; veja [Mesclando registros com `merge`](./base-methods.pt-BR.md#mesclando-registros-com-merge) |
 
-Métodos base novos: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany`, além dos estáticos `VSRepository.setGlobalConfig()`, `getQueryBuilder()` e `getRawQueryBuilder()`, e do `getAdapter()` de instância. Veja [Métodos base](./base-methods.pt-BR.md).
+Métodos base novos: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `create`, `createMany`, `createManyReturning`, `upsert`, `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning`, `count`, `exists`, `softDelete`, `softDeleteMany`, `restore`, `restoreMany`, além do estático `VSRepository.setGlobalConfig()`, e do `getAdapter()` de instância. Veja [Métodos base](./base-methods.pt-BR.md).
 
 Os tipos de options também foram refinados: o `MethodOptions` ganhou `pagination` e `order`, e o novo `SimpleMethodOptions` (sem `pagination`/`order`) é o que os métodos de um único registro aceitam — veja [Options dos métodos](./base-methods.pt-BR.md#options-dos-métodos).
 
@@ -108,7 +108,7 @@ Use `@EnableSoftDelete()` sem argumento junto com `VSRepository.setGlobalConfig(
 
 ## Configuração, logging e erros
 
-- `VSRepository.setGlobalConfig({ softDeleteField, logLevel, lazyDynamicMethods, vsPlaceholders })` define padrões compartilhados — veja [Configuração global](./base-methods.pt-BR.md#configuração-global).
+- `VSRepository.setGlobalConfig({ softDeleteField, logLevel, lazyDynamicMethods, vsPlaceholders, mergeConfig })` define padrões compartilhados — veja [Configuração global](./base-methods.pt-BR.md#configuração-global).
 - `VSLogLevel.NONE` desativa o logging por completo; `logSlowThresholdMs` foi removido.
 - `TransactionIsolationLevel` foi renomeado para **`VSRepoIsolationLevel`**, e `isolationLevel` também aceita os valores string do enum (`"Serializable"`).
 - `VSRepoErrorType.DECORATOR` e `VSRepoErrorType.VALIDATOR` foram removidos; `VS_PLACEHOLDERS` e `VSSQL` foram adicionados — veja [Tratamento de erros](./error-handling.pt-BR.md).

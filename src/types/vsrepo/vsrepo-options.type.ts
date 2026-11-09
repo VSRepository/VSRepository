@@ -38,6 +38,8 @@ export type VSRepoOptions<T, K> = {
     vsPlaceholders?: boolean;
     /**
      * Default configuration used by `merge()` to combine the stored record with the given object.
+     * It is **merged** over the global `mergeConfig` (`VSRepository.setGlobalConfig()`), so only the
+     * properties it sets are overridden. The `mergeConfig` given in a `merge()` call is merged over this one.
      */
     mergeConfig?: MergeConfig<T>;
 };
