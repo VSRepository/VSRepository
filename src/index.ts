@@ -33,7 +33,7 @@ export {
 } from "./internal/utils/placeholder-fns.util.js";
 
 // Public types
-export type { VSRepoOptions } from "./types/vsrepo/vsrepo-options.type.js";
+export type { VSRepoConfig } from "./types/vsrepo/vsrepo-config.type.js";
 export type { VSRepoOrmTypes } from "./types/vsrepo/vsrepo-orm-types.type.js";
 export type {
     VSRepoWhere,

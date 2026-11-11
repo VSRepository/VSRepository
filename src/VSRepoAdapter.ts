@@ -200,7 +200,7 @@ export abstract class VSRepoAdapter<T = any> {
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<number | null>;
 
-    /** Optional. Returns the primary key name, so users don't have to set `pkName` in the `VSRepository` options. */
+    /** Optional. Returns the primary key name, so users don't have to set `pkName` in the `VSRepository` config. */
     public getPkName?(): string;
 
     /**

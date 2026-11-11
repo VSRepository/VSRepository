@@ -6,9 +6,9 @@
 
 [← Back to the table of contents](./README.md)
 
-## Constructor options
+## Constructor config
 
-`VSRepoOptions<Entity, PKType>`, passed to `super(...)` inside your repository's constructor:
+`VSRepoConfig<Entity, PKType>`, passed to `super(...)` inside your repository's constructor:
 
 | Option               | Type                         | Description                                                                                                                                                                                                                                                                                                                                           |
 | -------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -24,7 +24,7 @@ Soft-delete is no longer a constructor option — it's enabled with the [`@Enabl
 
 ### Global configuration
 
-`VSRepository.setGlobalConfig()` sets defaults shared by every repository. Per-repository options take precedence, and only repositories created **after** the call are affected, so call it once at startup, before instantiating any repository:
+`VSRepository.setGlobalConfig()` sets defaults shared by every repository. Per-repository config take precedence, and only repositories created **after** the call are affected, so call it once at startup, before instantiating any repository:
 
 ```typescript
 VSRepository.setGlobalConfig({
@@ -153,7 +153,7 @@ Without any configuration, every field of `obj` overwrites the stored one: neste
 To change this, pass a [`MergeConfig`](./utility-types.md). It can be set at three levels, each one **merged** over the previous (a property set in a more specific level wins, the ones it doesn't set are inherited):
 
 1. Globally, with `VSRepository.setGlobalConfig({ mergeConfig })` — only `undefinedBehavior` and `nullBehavior`, since `fields` depends on the entity. Only repositories created **after** the call are affected.
-2. In the repository's constructor options (`mergeConfig`, for every call of that repository).
+2. In the repository's constructor config (`mergeConfig`, for every call of that repository).
 3. In the method options (`options.mergeConfig`, for that call only).
 
 The merge is deep, so `fields` entries of different levels are combined too: a field configured in the repository and another one configured in the call both apply. If the same field is configured in two levels, their properties are merged.

@@ -6,9 +6,9 @@
 
 [← Voltar para o Sumário](./README.pt-BR.md)
 
-## Options do construtor
+## Config do construtor
 
-`VSRepoOptions<Entity, PKType>`, passadas para `super(...)` dentro do construtor do seu repository:
+`VSRepoConfig<Entity, PKType>`, passadas para `super(...)` dentro do construtor do seu repository:
 
 | Option               | Tipo                         | Descrição                                                                                                                                                                                                                                                                                                                                                                |
 | -------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -24,7 +24,7 @@ O soft-delete não é mais uma option do construtor — ele é habilitado com o 
 
 ### Configuração global
 
-`VSRepository.setGlobalConfig()` define padrões compartilhados por todos os repositories. As options de cada repository têm precedência, e só os repositories criados **depois** da chamada são afetados — então chame uma vez na inicialização, antes de instanciar qualquer repository:
+`VSRepository.setGlobalConfig()` define padrões compartilhados por todos os repositories. A config de cada repository têm precedência, e só os repositories criados **depois** da chamada são afetados — então chame uma vez na inicialização, antes de instanciar qualquer repository:
 
 ```typescript
 VSRepository.setGlobalConfig({
@@ -153,7 +153,7 @@ Sem nenhuma configuração, cada campo de `obj` sobrescreve o armazenado: objeto
 Para mudar isso, passe um [`MergeConfig`](./utility-types.pt-BR.md). Ele pode ser definido em três níveis, cada um **mesclado** sobre o anterior (uma propriedade definida em um nível mais específico vence, e as que ele não define são herdadas):
 
 1. Globalmente, com `VSRepository.setGlobalConfig({ mergeConfig })` — só `undefinedBehavior` e `nullBehavior`, já que `fields` depende da entidade. Só os repositories criados **depois** da chamada são afetados.
-2. Nas options do construtor do repository (`mergeConfig`, para todas as chamadas daquele repository).
+2. Na config do construtor do repository (`mergeConfig`, para todas as chamadas daquele repository).
 3. Nas options do método (`options.mergeConfig`, só para aquela chamada).
 
 A mesclagem é profunda, então as entradas de `fields` de níveis diferentes também são combinadas: um campo configurado no repository e outro configurado na chamada valem os dois. Se o mesmo campo é configurado em dois níveis, as propriedades dele são mescladas.

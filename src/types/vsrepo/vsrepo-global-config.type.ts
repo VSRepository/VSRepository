@@ -4,7 +4,7 @@ import { MergeConfig } from "../utils/merge-config.type.js";
 /**
  * Defaults shared by every repository, set with `VSRepository.setGlobalConfig()`. They act as the
  * fallback value for each corresponding per-repository option, so an option set in a repository's
- * own options always wins over the global one. Only repositories created after the call are affected.
+ * own config always wins over the global one. Only repositories created after the call are affected.
  *
  * @publicApi
  */
