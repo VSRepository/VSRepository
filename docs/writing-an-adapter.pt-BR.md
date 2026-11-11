@@ -33,7 +33,7 @@ Os tipos que você vai encontrar pelo contrato estão todos documentados em [Tip
 
 ## O contrato `VSRepoAdapter`
 
-O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos abaixo são `abstract`, exceto o `getPkName()` opcional no final. Esta é a visão geral — as assinaturas exatas e o JSDoc de cada método ficam em [`src/VSRepoAdapter.ts`](https://github.com/VSRepository/VSRepository/blob/main/src/VSRepoAdapter.ts), que é a fonte de verdade do contrato:
+O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos de instância abaixo são `abstract`, exceto o `getPkName()` opcional no final. A classe também expõe o hook estático opcional `setGlobalConfig()` descrito abaixo. Esta é a visão geral — as assinaturas exatas e o JSDoc de cada método ficam em [`src/VSRepoAdapter.ts`](https://github.com/VSRepository/VSRepository/blob/main/src/VSRepoAdapter.ts), que é a fonte de verdade do contrato:
 
 | Grupo                     | Métodos                                                                                      | Papel                                                                                                                                                   |
 | ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,9 +43,18 @@ O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos abaixo sã
 | Atualização e remoção     | `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning` | Versões que retornam a entidade, uma lista ou só `{ count }` (`CountResult`).                                                                           |
 | Atômicos                  | `incrementOne`/`decrementOne`/`multiplyOne`/`divideOne` e suas variantes `*Many`             | Update aritmético avaliado no servidor contra o valor atual da linha, restrito a `NumericKeys<T>`. `*One` retorna a entidade, `*Many` um `CountResult`. |
 | Agregações                | `sum`, `average`, `min`, `max`                                                               | Retornam `number \| null` — `null` quando nenhum registro bate no filtro.                                                                               |
-| Opcional (não `abstract`) | `getPkName?()`                                                                               | Veja abaixo.                                                                                                                                            |
+| Opcional (não `abstract`) | `getPkName?()`                                                                               | Declara o campo de primary key da entidade para que `pkName` possa ser omitido da config do repository.                                                 |
+| Estático opcional         | `setGlobalConfig?(config)`                                                                   | Configura defaults específicos do adapter compartilhados pelas instâncias. Veja abaixo.                                                                 |
 
 O `getPkName()` opcional permite que o adapter declare ao repository qual campo é a primary key da entidade. Ao instanciar um `VSRepository`, você pode omitir o `pkName` da config do construtor e ele será lido do `adapter.getPkName()`. Se você omitir e o adapter não implementar o `getPkName()`, o construtor lança um `VSRepoError`.
+
+O hook estático opcional `setGlobalConfig(config)` serve para defaults controlados pela implementação do adapter, como client do banco, schema ou configuração de logging. O core não chama esse método automaticamente nem interpreta `config`; o adapter define seu formato e comportamento. Chame-o na classe do adapter antes de criar as instâncias:
+
+```typescript
+MyOrmAdapter.setGlobalConfig({ client, schema: "app" });
+```
+
+Esse hook é separado do `VSRepository.setGlobalConfig()`, que configura o comportamento do repository, como logging, soft-delete e defaults de merge.
 
 O `getPlaceholder(index)` é **obrigatório**: ele declara a sintaxe de placeholder que seu banco/driver espera para o N-ésimo (base 0) parâmetro ligado numa query raw — ex.: PostgreSQL retorna `` `$${index + 1}` `` (`$1`, `$2`, ...), enquanto SQLite/MySQL ignoram `index` e sempre retornam `"?"`. É ele que faz as funcionalidades de query parametrizada funcionarem: fragmentos `VSSql`, os placeholders próprios do VSRepository (`?1`, `?2`, ... — `vsPlaceholders`, ligado por padrão) e o raw query builder compilam através dele. O core exporta implementações prontas — `getPostgresPlaceholder`, `getSqlitePlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder`, `getCockroachPlaceholder` e `getVsPlaceholder`. Veja [Query methods](./query-methods.pt-BR.md#fragmentos-parametrizados-com-vssql).
 
