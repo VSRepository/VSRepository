@@ -6,6 +6,30 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev.4] - 2026-11-11
+
+### Added
+
+- Exported the `EnableSoftDelete` decorator, `Class` type and `VSRepoAdapterConstructor` type from the package root
+- `VSRepoAdapter` implementations may now expose an optional static `setGlobalConfig()` hook for adapter-specific defaults
+
+### Changed
+
+- **BREAKING:** Renamed the public `VSRepoOptions` type to `VSRepoConfig`
+- Expanded the `VSRepoGlobalConfig` documentation with option behavior, precedence and defaults
+
+## [3.0.0-dev.4] - 2026-11-11 (Português)
+
+### Adicionado
+
+- Os exports da raiz do pacote agora incluem o decorator `EnableSoftDelete`, o tipo `Class` e o tipo `VSRepoAdapterConstructor`
+- Implementações de `VSRepoAdapter` agora podem expor um hook estático opcional `setGlobalConfig()` para defaults específicos do adapter
+
+### Alterado
+
+- **BREAKING:** O tipo público `VSRepoOptions` foi renomeado para `VSRepoConfig`
+- A documentação de `VSRepoGlobalConfig` foi expandida com o comportamento, a precedência e os defaults das options
+
 ## [3.0.0-dev.3] - 2026-11-08
 
 ### Added
