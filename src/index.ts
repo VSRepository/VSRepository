@@ -13,6 +13,7 @@ export { VSSql } from "./internal/utils/vs-sql.util.js";
 // Decorators
 export { DynamicMethod } from "./decorators/dynamic-method.decorator.js";
 export { QueryMethod } from "./decorators/query-method.decorator.js";
+export { EnableSoftDelete } from "./decorators/enable-soft-delete.decorator.js";
 
 // Public enums
 export { VSRepoErrorType } from "./internal/enums/vsrepo-error-type.enum.js";
@@ -77,6 +78,8 @@ export type { SimpleAdapterMethodOptions } from "./types/adapter/simple-adapter-
 export type { RestrictAdapterMethodOptions } from "./types/adapter/restrict-adapter-method-options.type.js";
 export type { CompiledQuery } from "./types/utils/compiled-query.type.js";
 export type { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
+export type { Class } from "./types/utils/class.type.js";
+export type { VSRepoAdapterConstructor } from "./types/vsrepo/vsrepo-adapter-constructor.type.js";
 
 // Internal features
 export { VSLogger } from "./internal/utils/vs-logger.util.js";

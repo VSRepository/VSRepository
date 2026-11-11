@@ -15,7 +15,16 @@ import { VSRepoWhere } from "./types/vsrepo/vsrepo-where.type.js";
  *
  * @publicApi
  */
-export abstract class VSRepoAdapter<T> {
+export abstract class VSRepoAdapter<T = any> {
+    /**
+     * Configures adapter-specific defaults shared by adapter instances.
+     *
+     * Adapter implementations may expose this hook when they support global configuration.
+     *
+     * @param config Adapter-specific global configuration.
+     */
+    static setGlobalConfig?(config: unknown): void;
+
     /** Runs `fn` inside a native transaction of the underlying ORM/database. */
     public abstract runInTransaction<R>(fn: (tx: any) => Promise<R>, options?: VSRepoTransactionOptions): Promise<R>;
 
