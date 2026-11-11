@@ -12,7 +12,7 @@ import { Ordering } from "../utils/ordering.type.js";
  *
  * @publicApi
  */
-export type VSRepoOptions<T, K> = {
+export type VSRepoConfig<T, K> = {
     /** Adapter that translates the repository's operations into calls against the underlying ORM/database. */
     adapter: VSRepoAdapter<T>;
     /** Name of the field that represents the entity's primary key (PK). */

@@ -1,4 +1,4 @@
-import { VSRepoOptions } from "./types/vsrepo/vsrepo-options.type.js";
+import { VSRepoConfig } from "./types/vsrepo/vsrepo-config.type.js";
 import { CountResult } from "./types/utils/count-result.type.js";
 import { DeepPartial } from "./types/utils/deep-partial.type.js";
 import { KeysOfType } from "./types/utils/keys-of-type.type.js";
@@ -76,11 +76,11 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      * Creates the repository and, unless `lazyDynamicMethods` is `true`, resolves its
      * `@DynamicMethod`/`@QueryMethod` fields.
      */
-    constructor(options: VSRepoOptions<Entity, PKType>) {
-        this.adapter = options.adapter;
+    constructor(config: VSRepoConfig<Entity, PKType>) {
+        this.adapter = config.adapter;
 
-        if (options.pkName) {
-            this.pkName = options.pkName;
+        if (config.pkName) {
+            this.pkName = config.pkName;
         } else if (this.adapter.getPkName) {
             this.pkName = this.adapter.getPkName() as KeysOfType<Entity, PKType>;
         } else {
@@ -90,19 +90,19 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             );
         }
 
-        this.defaultOrdering = options.defaultOrdering;
-        this.vsPlaceholders = options.vsPlaceholders ?? VSRepository.globalConfig.vsPlaceholders ?? true;
+        this.defaultOrdering = config.defaultOrdering;
+        this.vsPlaceholders = config.vsPlaceholders ?? VSRepository.globalConfig.vsPlaceholders ?? true;
 
         this.mergeConfig =
-            options.mergeConfig && VSRepository.globalConfig.mergeConfig
-                ? merge(VSRepository.globalConfig.mergeConfig, options.mergeConfig)
-                : (options.mergeConfig ?? VSRepository.globalConfig.mergeConfig);
+            config.mergeConfig && VSRepository.globalConfig.mergeConfig
+                ? merge(VSRepository.globalConfig.mergeConfig, config.mergeConfig)
+                : (config.mergeConfig ?? VSRepository.globalConfig.mergeConfig);
 
         this.resolveSoftDelete();
 
         this.mergeWheresResolver = new MergeWheresResolver<Entity>(this.softDeleteField);
         this.logger = new VSLogger(
-            options.logLevel ?? VSRepository.globalConfig.logLevel ?? VSLogLevel.WARN,
+            config.logLevel ?? VSRepository.globalConfig.logLevel ?? VSLogLevel.WARN,
             this.constructor.name + "Logger",
         );
 
@@ -117,16 +117,16 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         let dynamicMethodsCount: number | undefined;
         let queryMethodsCount: number | undefined;
 
-        options.lazyDynamicMethods ??= VSRepository.globalConfig.lazyDynamicMethods;
+        config.lazyDynamicMethods ??= VSRepository.globalConfig.lazyDynamicMethods;
 
-        if (!options.lazyDynamicMethods) {
+        if (!config.lazyDynamicMethods) {
             const result = this.resolveDynamicMethods();
             dynamicMethodsCount = result.dynamicMethodsCount;
             queryMethodsCount = result.queryMethodsCount;
         }
 
         this.logger.logInfo(
-            `${this.constructor.name} ready (${options.lazyDynamicMethods ? "Resolution of dynamic methods postponed" : `${dynamicMethodsCount} dynamic method(s), ${queryMethodsCount} query method(s) resolved`})`,
+            `${this.constructor.name} ready (${config.lazyDynamicMethods ? "Resolution of dynamic methods postponed" : `${dynamicMethodsCount} dynamic method(s), ${queryMethodsCount} query method(s) resolved`})`,
         );
     }
 
@@ -161,7 +161,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.logger.logWarn(
                 `resolveDynamicMethods() was called more than once on ${this.constructor.name}. ` +
                     `If you are calling it manually, make sure lazyDynamicMethods is set to true ` +
-                    `in the constructor options to skip the automatic resolution`,
+                    `in the constructor config to skip the automatic resolution`,
             );
 
             this.alreadyWarnedResolveDynamicMethods = true;
@@ -265,7 +265,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     }
 
     /**
-     * Replaces the defaults shared by every repository. Per-repository options take precedence.
+     * Replaces the defaults shared by every repository. Per-repository config take precedence.
      * Only repositories created after the call are affected.
      */
     static setGlobalConfig(globalConfig: VSRepoGlobalConfig): void {

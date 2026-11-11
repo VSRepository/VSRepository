@@ -105,7 +105,7 @@ Just like base, dynamic and query methods, `query()` accepts `db` in `options` t
 
 ## Agnostic placeholders with `vsPlaceholders`
 
-Raw SQL strings passed to `query()` and `@QueryMethod` don't depend on the placeholder dialect of your adapter/database: they use VSRepository's own agnostic, positional placeholders — `?1`, `?2`, ... (1-based, Spring Data JPA style). This is the default (`vsPlaceholders: true`); set it to `false` in the [constructor options](./base-methods.md#constructor-options) — or globally with `VSRepository.setGlobalConfig()` — to write your database's native syntax instead.
+Raw SQL strings passed to `query()` and `@QueryMethod` don't depend on the placeholder dialect of your adapter/database: they use VSRepository's own agnostic, positional placeholders — `?1`, `?2`, ... (1-based, Spring Data JPA style). This is the default (`vsPlaceholders: true`); set it to `false` in the [constructor config](./base-methods.md#constructor-config) — or globally with `VSRepository.setGlobalConfig()` — to write your database's native syntax instead.
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {

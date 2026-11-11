@@ -6,7 +6,7 @@
 
 # Logging
 
-Every repository has an internal logger, configured via `logLevel` on the constructor options — or for every repository at once with [`VSRepository.setGlobalConfig()`](./base-methods.md#global-configuration):
+Every repository has an internal logger, configured via `logLevel` on the constructor config — or for every repository at once with [`VSRepository.setGlobalConfig()`](./base-methods.md#global-configuration):
 
 ```typescript
 import { VSLogLevel } from "vsrepo";

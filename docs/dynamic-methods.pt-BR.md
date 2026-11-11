@@ -336,7 +336,7 @@ await userRepository.findOneByEmail("john@example.com", { relations: { address: 
 
 ## Resolução lazy dos métodos dinâmicos
 
-Por padrão, o construtor do `VSRepository` já resolve todo `@DynamicMethod`/`@QueryMethod` da subclasse de forma síncrona. Passando `lazyDynamicMethods: true` nas options do construtor, essa resolução é adiada — o repository fica pronto para uso (métodos base como `get`, `save`, etc.), mas os métodos dinâmicos só existem depois que a própria subclasse chamar o método `protected resolveDynamicMethods()`, herdado de `VSRepository`:
+Por padrão, o construtor do `VSRepository` já resolve todo `@DynamicMethod`/`@QueryMethod` da subclasse de forma síncrona. Passando `lazyDynamicMethods: true` na config do construtor, essa resolução é adiada — o repository fica pronto para uso (métodos base como `get`, `save`, etc.), mas os métodos dinâmicos só existem depois que a própria subclasse chamar o método `protected resolveDynamicMethods()`, herdado de `VSRepository`:
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {

@@ -1,6 +1,6 @@
 /**
  * Minimum severity a message must have to be printed by the repository's
- * internal logger, configured via `VSRepoOptions.logLevel`. Levels are
+ * internal logger, configured via `VSRepoConfig.logLevel`. Levels are
  * ordered from most to least verbose; setting a level suppresses all
  * messages below it.
  *

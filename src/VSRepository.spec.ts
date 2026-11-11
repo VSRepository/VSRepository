@@ -11,7 +11,7 @@ import { VSLogger } from "./internal/utils/vs-logger.util.js";
 import { VSQueryBuilder } from "./internal/utils/vs-query-builder.util.js";
 import { VSRawQueryBuilder } from "./internal/utils/vs-raw-query-builder.util.js";
 import { VSSql } from "./internal/utils/vs-sql.util.js";
-import { VSRepoOptions } from "./types/vsrepo/vsrepo-options.type.js";
+import { VSRepoConfig } from "./types/vsrepo/vsrepo-config.type.js";
 import { VSRepoAdapter } from "./VSRepoAdapter.js";
 import { VSRepository } from "./VSRepository.js";
 
@@ -23,11 +23,11 @@ interface User {
     deletedAt: Date | null;
 }
 
-type UserRepoOptions = Omit<VSRepoOptions<User, string>, "adapter"> & { adapter: VSRepoAdapter<User> };
+type UserRepoConfig = Omit<VSRepoConfig<User, string>, "adapter"> & { adapter: VSRepoAdapter<User> };
 
 class UserRepository extends VSRepository<User, string> {
-    constructor(options: UserRepoOptions) {
-        super({ logLevel: VSLogLevel.NONE, ...options });
+    constructor(config: UserRepoConfig) {
+        super({ logLevel: VSLogLevel.NONE, ...config });
     }
 
     callResolveDynamicMethods() {
@@ -98,8 +98,8 @@ describe("VSRepository", () => {
     let mocks: Record<string, Mock>;
     let adapter: VSRepoAdapter<User>;
 
-    const make = (options: Partial<UserRepoOptions> = {}) => new UserRepository({ adapter, ...options });
-    const makeSoft = (options: Partial<UserRepoOptions> = {}) => new SoftUserRepository({ adapter, ...options });
+    const make = (options: Partial<UserRepoConfig> = {}) => new UserRepository({ adapter, ...options });
+    const makeSoft = (options: Partial<UserRepoConfig> = {}) => new SoftUserRepository({ adapter, ...options });
 
     async function catchAsyncError(fn: () => Promise<unknown>): Promise<any> {
         try {

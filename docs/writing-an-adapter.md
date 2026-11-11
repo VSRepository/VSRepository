@@ -33,7 +33,7 @@ The types you'll meet throughout the contract are all documented in [Utility typ
 
 ## The `VSRepoAdapter` contract
 
-The contract is the abstract class `VSRepoAdapter<T>`. Every method below is `abstract`, except the optional `getPkName()` at the end. This is an overview — the exact signatures and JSDoc for every method live in [`src/VSRepoAdapter.ts`](https://github.com/VSRepository/VSRepository/blob/main/src/VSRepoAdapter.ts), which is the source of truth for the contract:
+The contract is the abstract class `VSRepoAdapter<T>`. Every instance method below is `abstract`, except the optional `getPkName()` at the end. The class also exposes the optional static `setGlobalConfig()` hook described below. This is an overview — the exact signatures and JSDoc for every method live in [`src/VSRepoAdapter.ts`](https://github.com/VSRepository/VSRepository/blob/main/src/VSRepoAdapter.ts), which is the source of truth for the contract:
 
 | Group                     | Methods                                                                                      | Role                                                                                                                                                         |
 | ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -43,9 +43,18 @@ The contract is the abstract class `VSRepoAdapter<T>`. Every method below is `ab
 | Updates and deletes       | `update`, `updateMany`, `updateManyReturning`, `delete`, `deleteMany`, `deleteManyReturning` | Variants that return the entity, a list, or just `{ count }` (`CountResult`).                                                                                |
 | Atomic                    | `incrementOne`/`decrementOne`/`multiplyOne`/`divideOne` and their `*Many` variants           | Arithmetic update evaluated server-side against the row's current value, restricted to `NumericKeys<T>`. `*One` returns the entity, `*Many` a `CountResult`. |
 | Aggregations              | `sum`, `average`, `min`, `max`                                                               | Return `number \| null` — `null` when no record matches the filter.                                                                                          |
-| Optional (not `abstract`) | `getPkName?()`                                                                               | See below.                                                                                                                                                   |
+| Optional (not `abstract`) | `getPkName?()`                                                                               | Declares the entity's primary-key field so `pkName` can be omitted from the repository config.                                                               |
+| Optional static           | `setGlobalConfig?(config)`                                                                   | Configures adapter-specific defaults shared by adapter instances. See below.                                                                                 |
 
-The optional `getPkName()` lets the adapter declare the entity's primary-key field to the repository. When instantiating a `VSRepository`, you can omit `pkName` from the constructor options and it will be read from `adapter.getPkName()`. If you omit it and the adapter doesn't implement `getPkName()`, the constructor throws a `VSRepoError`.
+The optional `getPkName()` lets the adapter declare the entity's primary-key field to the repository. When instantiating a `VSRepository`, you can omit `pkName` from the constructor config and it will be read from `adapter.getPkName()`. If you omit it and the adapter doesn't implement `getPkName()`, the constructor throws a `VSRepoError`.
+
+The optional static `setGlobalConfig(config)` hook is for defaults owned by the adapter implementation, such as a database client, schema or logging configuration. The core does not call this method automatically and does not interpret `config`; the adapter defines its shape and behavior. Call it on the adapter class before creating adapter instances:
+
+```typescript
+MyOrmAdapter.setGlobalConfig({ client, schema: "app" });
+```
+
+This hook is separate from `VSRepository.setGlobalConfig()`, which configures repository behavior such as logging, soft-delete and merge defaults.
 
 `getPlaceholder(index)` is **required**: it declares the placeholder syntax your database/driver expects for the Nth (0-based) bound parameter in a raw query — e.g. PostgreSQL returns `` `$${index + 1}` `` (`$1`, `$2`, ...), while SQLite/MySQL ignore `index` and always return `"?"`. It's what makes the parameterized query features work: `VSSql` fragments, VSRepository's own `?1`, `?2`, ... placeholders (`vsPlaceholders`, on by default) and the raw query builder all compile through it. The core exports ready-made implementations — `getPostgresPlaceholder`, `getSqlitePlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder`, `getCockroachPlaceholder` and `getVsPlaceholder`. See [Query methods](./query-methods.md#parameterized-fragments-with-vssql).
 
