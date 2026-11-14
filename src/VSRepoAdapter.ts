@@ -25,6 +25,25 @@ export abstract class VSRepoAdapter<T = any> {
      */
     static setGlobalConfig?(config: unknown): void;
 
+    /**
+     * Opens a transaction directly from a database client when the underlying ORM supports it.
+     *
+     * Adapters should expose this method when their ORM can start a transaction directly from a
+     * `dbClient`.
+     */
+    static execInTransaction?<R>(
+        dbClient: any,
+        fn: (tx: any) => Promise<R>,
+        options?: VSRepoTransactionOptions,
+    ): Promise<R>;
+
+    /**
+     * Optional type-only property for the adapter constructor configuration.
+     *
+     * Adapter implementations should override this property with their constructor configuration type.
+     */
+    public configType?: any;
+
     /** Runs `fn` inside a native transaction of the underlying ORM/database. */
     public abstract runInTransaction<R>(fn: (tx: any) => Promise<R>, options?: VSRepoTransactionOptions): Promise<R>;
 
