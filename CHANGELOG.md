@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev.5] - 2026-11-14
+
+### Added
+
+- `VSRepoAdapter` implementations may now expose an optional static `execInTransaction()` hook when their ORM supports opening a transaction directly from a database client
+- Added the optional type-only `configType` property so adapters can expose the type of their constructor configuration
+- Added `execInTransaction()` to the `VSRepoAdapterConstructor` contract
+
+## [3.0.0-dev.5] - 2026-11-14 (Português)
+
+### Adicionado
+
+- Implementações de `VSRepoAdapter` agora podem expor um hook estático opcional `execInTransaction()` quando o ORM oferece suporte a abrir uma transação diretamente a partir de um client do banco
+- Adicionada a propriedade opcional `configType`, usada apenas para tipagem, para que adapters possam expor o tipo da configuração do seu construtor
+- Adicionado `execInTransaction()` ao contrato `VSRepoAdapterConstructor`
+
 ## [3.0.0-dev.4] - 2026-11-11
 
 ### Added
