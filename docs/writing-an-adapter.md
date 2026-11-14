@@ -45,6 +45,7 @@ The contract is the abstract class `VSRepoAdapter<T>`. Every instance method bel
 | Aggregations              | `sum`, `average`, `min`, `max`                                                               | Return `number \| null` — `null` when no record matches the filter.                                                                                          |
 | Optional (not `abstract`) | `getPkName?()`                                                                               | Declares the entity's primary-key field so `pkName` can be omitted from the repository config.                                                               |
 | Optional static           | `setGlobalConfig?(config)`                                                                   | Configures adapter-specific defaults shared by adapter instances. See below.                                                                                 |
+| Optional static           | `execInTransaction?(dbClient, fn, options?)`                                                 | Opens a transaction directly from a database client when the underlying ORM supports it. See below.                                                          |
 
 The optional `getPkName()` lets the adapter declare the entity's primary-key field to the repository. When instantiating a `VSRepository`, you can omit `pkName` from the constructor config and it will be read from `adapter.getPkName()`. If you omit it and the adapter doesn't implement `getPkName()`, the constructor throws a `VSRepoError`.
 
@@ -55,6 +56,21 @@ MyOrmAdapter.setGlobalConfig({ client, schema: "app" });
 ```
 
 This hook is separate from `VSRepository.setGlobalConfig()`, which configures repository behavior such as logging, soft-delete and merge defaults.
+
+If the adapter's constructor accepts its own configuration, override the type-only `configType`
+property with that configuration type:
+
+```typescript
+type MyOrmAdapterConfig = { client: MyOrmClient; schema?: string };
+
+class MyOrmAdapter<T> extends VSRepoAdapter<T> {
+    public override configType?: MyOrmAdapterConfig;
+}
+```
+
+The optional static `execInTransaction(dbClient, fn, options)` hook is for ORMs that can open a
+transaction directly from an existing database client. Expose it when the ORM supports that
+operation; otherwise, the adapter does not need to implement it.
 
 `getPlaceholder(index)` is **required**: it declares the placeholder syntax your database/driver expects for the Nth (0-based) bound parameter in a raw query — e.g. PostgreSQL returns `` `$${index + 1}` `` (`$1`, `$2`, ...), while SQLite/MySQL ignore `index` and always return `"?"`. It's what makes the parameterized query features work: `VSSql` fragments, VSRepository's own `?1`, `?2`, ... placeholders (`vsPlaceholders`, on by default) and the raw query builder all compile through it. The core exports ready-made implementations — `getPostgresPlaceholder`, `getSqlitePlaceholder`, `getMySqlPlaceholder`, `getSqlServerPlaceholder`, `getCockroachPlaceholder` and `getVsPlaceholder`. See [Query methods](./query-methods.md#parameterized-fragments-with-vssql).
 
