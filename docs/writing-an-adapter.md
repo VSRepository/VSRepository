@@ -64,7 +64,7 @@ property with that configuration type:
 type MyOrmAdapterConfig = { client: MyOrmClient; schema?: string };
 
 class MyOrmAdapter<T> extends VSRepoAdapter<T> {
-    public override configType?: MyOrmAdapterConfig;
+    declare configType?: MyOrmAdapterConfig;
 }
 ```
 
