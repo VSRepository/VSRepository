@@ -343,6 +343,7 @@ By default, the `VSRepository` constructor synchronously resolves every `@Dynami
 class UserRepository extends VSRepository<User, string> {
     constructor() {
         super({ adapter, lazyDynamicMethods: true });
+
         this.resolveDynamicMethods();
     }
 
@@ -351,7 +352,7 @@ class UserRepository extends VSRepository<User, string> {
 }
 ```
 
-Deferring the call further — to a later lifecycle hook — is just as valid, and is where the option is actually useful: it lets you push the resolution cost (relevant for repositories with many decorated methods) to a more convenient point in the application's lifecycle, e.g. an async initialization hook:
+Deferring the call further — to a later lifecycle hook — is just as valid, and is where the option is actually useful: it lets you push the resolution cost to a more convenient point in the application's lifecycle, e.g. an async initialization hook:
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {

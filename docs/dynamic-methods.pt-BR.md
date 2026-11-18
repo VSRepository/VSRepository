@@ -343,6 +343,7 @@ Por padrão, o construtor do `VSRepository` já resolve todo `@DynamicMethod`/`@
 class UserRepository extends VSRepository<User, string> {
     constructor() {
         super({ adapter, lazyDynamicMethods: true });
+
         this.resolveDynamicMethods();
     }
 
@@ -351,7 +352,7 @@ class UserRepository extends VSRepository<User, string> {
 }
 ```
 
-Adiar a chamada ainda mais — para um hook de ciclo de vida posterior — é igualmente válido, e é onde a option realmente se torna útil: dá para empurrar o custo da resolução (relevante em repositories com muitos métodos decorados) para um momento mais oportuno do ciclo de vida da aplicação, ex.: um hook de inicialização assíncrona:
+Adiar a chamada ainda mais — para um hook de ciclo de vida posterior — é igualmente válido, e é onde a option realmente se torna útil: dá para empurrar o custo da resolução para um momento mais oportuno do ciclo de vida da aplicação, ex.: um hook de inicialização assíncrona:
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {

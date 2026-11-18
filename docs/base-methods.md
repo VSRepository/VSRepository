@@ -18,7 +18,7 @@
 | `logLevel`           | `VSLogLevel`                 | Optional. Minimum severity printed by the internal logger. Defaults to `VSLogLevel.WARN`; use `VSLogLevel.NONE` to disable logging completely.                                                                                                                                                                                                        |
 | `lazyDynamicMethods` | `boolean`                    | Optional. Defaults to `false`. When `true`, postpones resolving `@DynamicMethod`/`@QueryMethod` methods — the repository itself must call `resolveDynamicMethods()` manually later. See [Lazily resolving dynamic methods](./dynamic-methods.md#lazily-resolving-dynamic-methods).                                                                    |
 | `vsPlaceholders`     | `boolean`                    | Optional. Defaults to `true`. Raw SQL strings passed to `query()` and `@QueryMethod` use VSRepository's own placeholders (`?1`, `?2`, ...) instead of your adapter's native syntax. Pass `false` to write the native syntax instead. See [Agnostic placeholders with `vsPlaceholders`](./query-methods.md#agnostic-placeholders-with-vsplaceholders). |
-| `mergeConfig`        | `MergeConfig<Entity>`        | Optional. Default configuration used by `merge()`, merged over the global one; a call can override parts of it with `options.mergeConfig`. See [Merging records with `merge`](#merging-records-with-merge).                                                                                                                                           |
+| `mergeConfig`        | `MergeConfig<Entity>`        | Optional. Default configuration used by `merge()`/`combine()`, merged over the global one; a call can override parts of it with `options.mergeConfig`. See [Merging records with `merge`](#merging-records-with-merge).                                                                                                                               |
 
 Soft-delete is no longer a constructor option — it's enabled with the [`@EnableSoftDelete`](#soft-delete) decorator.
 
@@ -36,13 +36,13 @@ VSRepository.setGlobalConfig({
 });
 ```
 
-| Field                | Description                                                                                                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `softDeleteField`    | Soft-delete field used by `@EnableSoftDelete()` when it doesn't specify one itself.                                                                                            |
-| `logLevel`           | Default for the `logLevel` option.                                                                                                                                             |
-| `lazyDynamicMethods` | Default for the `lazyDynamicMethods` option.                                                                                                                                   |
-| `vsPlaceholders`     | Default for the `vsPlaceholders` option.                                                                                                                                       |
-| `mergeConfig`        | Default `undefinedBehavior` and `nullBehavior` for `merge()`. Repository and call configs are merged over it, see [Merging records with `merge`](#merging-records-with-merge). |
+| Field                | Description                                                                                                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `softDeleteField`    | Soft-delete field used by `@EnableSoftDelete()` when it doesn't specify one itself.                                                                                                        |
+| `logLevel`           | Default for the `logLevel` option.                                                                                                                                                         |
+| `lazyDynamicMethods` | Default for the `lazyDynamicMethods` option.                                                                                                                                               |
+| `vsPlaceholders`     | Default for the `vsPlaceholders` option.                                                                                                                                                   |
+| `mergeConfig`        | Default `undefinedBehavior` and `nullBehavior` for `merge()`/`combine()`. Repository and call configs are merged over it, see [Merging records with `merge`](#merging-records-with-merge). |
 
 ---
 
@@ -78,6 +78,7 @@ Available automatically on every `VSRepository` subclass. `where` is a [`VSRepoW
 | `updateManyReturning(where, obj, options?)` | Same as `updateMany`, but returns the updated records.                                                                                                                                                                     |
 | `patch(id, obj, options?)`                  | Same as `update`, by primary key.                                                                                                                                                                                          |
 | `merge(where, obj, options?)`               | Fetches the record matching `where` and returns it deep-merged, in memory, with the given object — does **not** persist anything; `null` if none matches. See [Merging records with `merge`](#merging-records-with-merge). |
+| `combine(id, obj, options?)`                | Same as `merge`, but fetches the record by primary key instead of a `where` — `null` if none matches. See [Merging records with `merge`](#merging-records-with-merge).                                                     |
 
 **Deleting** (permanent — for soft-delete see [below](#soft-delete))
 
@@ -147,6 +148,12 @@ The same operation is available as a [dynamic method](./dynamic-methods.md#avail
 ### Merging records with `merge`
 
 `merge(where, obj, options?)` fetches the record matching `where` and combines it, **in memory**, with `obj`. Nothing is persisted — pass the result to `save` or `patch` to write it. `defaultOrdering` is applied unless `options.order` is set, which matters when more than one record matches.
+
+`combine(id, obj, options?)` is the primary-key counterpart: it fetches the record by `id` instead of a `where` and otherwise behaves exactly like `merge`.
+
+```typescript
+const user = await userRepository.combine(1, { name: "Maria" });
+```
 
 Without any configuration, every field of `obj` overwrites the stored one: nested objects and arrays are **replaced**, not merged; `undefined` values are skipped; and `null` values are written. The fetched record is the one mutated and returned, and `obj` is never modified.
 
@@ -219,7 +226,7 @@ Most methods accept an options object as their last argument, with a shape that 
 | ----------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — the read methods, which also apply `defaultOrdering` unless `order` is passed.                                                        |
 | `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `relationsOptions`, `see`, `db`                                       | Single-record methods that return an `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., the `*Returning` methods and the soft-delete single-record methods.         |
-| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — the same fetch options as `MethodOptions`, plus `mergeConfig`.                                                                                                                                         |
+| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge`, `combine` — the same fetch options as `MethodOptions`, plus `mergeConfig`.                                                                                                                              |
 | `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                                                  | Methods that don't return a shaped `Entity` — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, the `*Many` numeric methods and the soft-delete batch methods. |
 
 `createMany` and `createManyReturning` also accept `ignoreConflicts`. `transaction`, `query` and `getDbClient` accept their own options or none at all.

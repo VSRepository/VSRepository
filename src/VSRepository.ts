@@ -646,6 +646,36 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         );
     }
 
+    /**
+     * Fetches the record with the given primary key and returns it deep-merged, in memory, with `obj`.
+     * Nothing is persisted: pass the result to `save` or `patch` to write it.
+     */
+    async combine<U extends DeepPartial<Entity>>(
+        id: PKType,
+        obj: U,
+        options?: MergeOptions<Entity, OrmTypes>,
+    ): Promise<(Entity & U) | null> {
+        return this.execBaseMethod(
+            async ({ mergeConfig, ...opt }: MergeOptions<Entity, OrmTypes>) => {
+                const entity = await this.adapter.findOne(
+                    this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)),
+                    this.resolveDefaultOrdering(opt),
+                );
+                if (!entity) return null;
+
+                return MergeEntitiesResolver.resolve(
+                    entity,
+                    obj,
+                    mergeConfig && this.mergeConfig
+                        ? merge(this.mergeConfig, mergeConfig)
+                        : (mergeConfig ?? this.mergeConfig),
+                );
+            },
+            "combine",
+            options,
+        );
+    }
+
     /** Counts the records matching `where` (all records if omitted). */
     async count(where?: VSRepoWhere<Entity>, options?: RestrictMethodOptions<Entity, OrmTypes>): Promise<number> {
         return this.execBaseMethod(

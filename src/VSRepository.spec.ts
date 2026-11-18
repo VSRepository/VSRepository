@@ -784,6 +784,75 @@ describe("VSRepository", () => {
             });
         });
 
+        describe("combine", () => {
+            const stored: User = { id: "1", name: "Ana", age: 20, score: 0, deletedAt: null };
+
+            beforeEach(() => {
+                mocks.findOne!.mockResolvedValue({ ...stored });
+            });
+
+            it("should fetch the record by primary key and return it merged with the given object", async () => {
+                const result = await make().combine("1", { age: 30 });
+
+                expect(mocks.findOne).toHaveBeenCalledTimes(1);
+                expect(mocks.findOne).toHaveBeenCalledWith({ id: "1" }, DB);
+                expect(result).toEqual({ ...stored, age: 30 });
+            });
+
+            it("should not persist anything", async () => {
+                await make().combine("1", { age: 30 });
+
+                for (const method of ["save", "saveMany", "create", "update", "updateMany", "upsert"]) {
+                    expect(mocks[method]).not.toHaveBeenCalled();
+                }
+            });
+
+            it("should return null when the record does not exist", async () => {
+                mocks.findOne!.mockResolvedValue(null);
+
+                const result = await make().combine("1", { age: 30 });
+
+                expect(result).toBeNull();
+            });
+
+            it("should use the db provided in the options", async () => {
+                await make().combine("1", { age: 30 }, { db: "tx" });
+
+                expect(mocks.findOne).toHaveBeenCalledWith({ id: "1" }, { db: "tx" });
+            });
+
+            it("should forward relationsOptions to the findOne that fetches the record", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { order: { createdAt: "desc" } } };
+
+                await make().combine("1", { age: 30 }, { relations, relationsOptions });
+
+                expect(mocks.findOne).toHaveBeenCalledWith({ id: "1" }, { ...DB, relations, relationsOptions });
+            });
+
+            describe("mergeConfig", () => {
+                it("should use the one given in the repository options", async () => {
+                    const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                    const result = await repo.combine("1", { name: null as any, age: 30 });
+
+                    expect(result).toEqual({ ...stored, age: 30 });
+                });
+
+                it("should prefer the one given in the method options", async () => {
+                    const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                    const result = await repo.combine(
+                        "1",
+                        { name: null as any },
+                        { mergeConfig: { nullBehavior: "keep" } },
+                    );
+
+                    expect(result).toEqual({ ...stored, name: null });
+                });
+            });
+        });
+
         describe("options", () => {
             it("should use the db provided in the options", async () => {
                 await make().find(W, { db: "tx" });
@@ -913,6 +982,7 @@ describe("VSRepository", () => {
                 ["get", "findOne", (r: UserRepository, o?: object) => r.get(W.name, o)],
                 ["getOrThrow", "findOneOrThrow", (r: UserRepository, o?: object) => r.getOrThrow(W.name, o)],
                 ["merge", "findOne", (r: UserRepository, o?: object) => r.merge(W, { age: 1 }, o)],
+                ["combine", "findOne", (r: UserRepository, o?: object) => r.combine("1", { age: 1 }, o)],
             ])("%s should apply it", async (_name, adapterMethod, run) => {
                 await run(make({ defaultOrdering }));
 
@@ -952,6 +1022,7 @@ describe("VSRepository", () => {
                 ["findOne", (r, o) => r.findOne(W, o), "findOne", W],
                 ["get", (r, o) => r.get("1", o), "findOne", { id: "1" }],
                 ["merge", (r, o) => r.merge(W, { age: 1 }, o), "findOne", W],
+                ["combine", (r, o) => r.combine("1", { age: 1 }, o), "findOne", { id: "1" }],
                 ["delete", (r, o) => r.delete(W, o), "delete", W],
                 ["update", (r, o) => r.update(W, { age: 1 }, o), "update", W],
                 ["count", (r, o) => r.count(W, o), "count", W],
