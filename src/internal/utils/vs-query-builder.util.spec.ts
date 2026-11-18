@@ -40,7 +40,7 @@ describe("VSRawQueryBuilder", () => {
             count: vi.fn(),
             exists: vi.fn(),
         } as any;
-        logger = { logDebug: vi.fn(), startPerformLog: vi.fn(), endPerformLog: vi.fn() } as any;
+        logger = { logDebug: vi.fn() } as any;
         mergeWheresResolver = { resolve: vi.fn() };
         qb = new VSQueryBuilder<User>(db, adapter, mergeWheresResolver, logger);
     });
@@ -389,7 +389,6 @@ describe("VSRawQueryBuilder", () => {
 
             qb.setDb(db2);
 
-            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("db replaced"), undefined);
             expect((qb as any).db).toBe(db2);
         });
 
@@ -401,7 +400,6 @@ describe("VSRawQueryBuilder", () => {
 
             await qb.setDb(db2).getResult();
 
-            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("db replaced"), undefined);
             expect((qb as any).db).toBe(db2);
 
             expect(adapter.findMany).toHaveBeenCalledWith(undefined, { db: db2 });
@@ -427,7 +425,6 @@ describe("VSRawQueryBuilder", () => {
                 .where({ deletedAt: null })
                 .clone();
 
-            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("clone"), undefined);
             expect(qb2).not.toBe(qb);
             expect({ ...qb }).toEqual({ ...qb2 });
         });
@@ -494,14 +491,6 @@ describe("VSRawQueryBuilder", () => {
                 .orderBy(mockOrder)
                 .limit(mockLimit)
                 .offset(mockOffset);
-
-            vi.spyOn(logger, "startPerformLog").mockReturnValue({} as any);
-            vi.spyOn(logger, "endPerformLog").mockReturnValue(undefined);
-        });
-
-        afterEach(() => {
-            expect(logger.startPerformLog).toHaveBeenCalledWith(expect.stringContaining("run query builder "));
-            expect(logger.endPerformLog).toHaveBeenCalledWith({});
         });
 
         it("getResult should correct call the adapter", async () => {

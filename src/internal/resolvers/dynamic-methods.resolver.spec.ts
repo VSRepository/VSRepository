@@ -32,8 +32,6 @@ describe("DynamicMethodsResolver", () => {
             logDebug: vi.fn(),
             getLogLevel: vi.fn(),
             logError: vi.fn(),
-            startPerformLog: vi.fn(),
-            endPerformLog: vi.fn(),
         } as any;
         adapter = {
             getDbClient: vi.fn().mockReturnValue("default-db"),
@@ -64,8 +62,6 @@ describe("DynamicMethodsResolver", () => {
         beforeEach(() => {
             vi.spyOn(mergeWheresResolver, "resolve").mockImplementation((_, val) => val ?? {});
             vi.spyOn(adapter, "findMany").mockResolvedValue([]);
-            vi.spyOn(logger, "startPerformLog").mockResolvedValue(undefined);
-            vi.spyOn(logger, "endPerformLog").mockResolvedValue(undefined);
         });
 
         type TestRepository = Record<string, (...args: any[]) => Promise<any>>;
@@ -160,8 +156,6 @@ describe("DynamicMethodsResolver", () => {
 
             expect(mergeWheresResolver.resolve).toHaveBeenCalledWith(undefined, { id: mockId });
             expect(adapter.findMany).toHaveBeenCalledWith({ id: mockId }, expect.anything());
-            expect(logger.startPerformLog).toHaveBeenCalled();
-            expect(logger.endPerformLog).toHaveBeenCalled();
 
             const mockName = "some name";
 
@@ -169,8 +163,6 @@ describe("DynamicMethodsResolver", () => {
 
             expect(mergeWheresResolver.resolve).toHaveBeenCalledWith(undefined, { name: mockName });
             expect(adapter.findMany).toHaveBeenCalledWith({ name: mockName }, expect.anything());
-            expect(logger.startPerformLog).toHaveBeenCalled();
-            expect(logger.endPerformLog).toHaveBeenCalled();
         });
 
         it("should return 0 when the repository has no dynamic methods", () => {
@@ -1144,48 +1136,6 @@ describe("DynamicMethodsResolver", () => {
             });
         });
 
-        describe("perform logs", () => {
-            it("should log the start and the end of the execution", async () => {
-                const start = { operation: "op", start: 0 };
-                vi.mocked(logger.startPerformLog).mockReturnValue(start);
-                const repo = buildRepo("findByName");
-
-                await repo.findByName!("Ana");
-
-                expect(logger.startPerformLog).toHaveBeenCalledWith("run findByName (-> findMany)");
-                expect(logger.endPerformLog).toHaveBeenCalledWith(start);
-            });
-
-            it("should use the proxied method in the log of the original key", async () => {
-                const repo = buildRepo("searchUsers", { proxyTo: "countByName" });
-
-                await repo.searchUsers!("Ana");
-
-                expect(logger.startPerformLog).toHaveBeenCalledWith("run searchUsers (-> count)");
-            });
-
-            it("should end the perform log and rethrow when the adapter fails", async () => {
-                const start = { operation: "op", start: 0 };
-                const failure = new Error("db down");
-                vi.mocked(logger.startPerformLog).mockReturnValue(start);
-                vi.mocked(adapter.findMany).mockRejectedValue(failure);
-                const repo = buildRepo("findByName");
-
-                await expect(repo.findByName!("Ana")).rejects.toBe(failure);
-
-                expect(logger.endPerformLog).toHaveBeenCalledTimes(1);
-                expect(logger.endPerformLog).toHaveBeenCalledWith(start);
-            });
-
-            it("should not start the perform log when the parameters are missing", async () => {
-                const repo = buildRepo("findByNameAndAge");
-
-                await catchAsyncError(() => repo.findByNameAndAge!("Ana"));
-
-                expect(logger.startPerformLog).not.toHaveBeenCalled();
-            });
-        });
-
         describe("debug mode", () => {
             beforeEach(() => {
                 vi.mocked(logger.getLogLevel).mockReturnValue(VSLogLevel.DEBUG);
@@ -1443,36 +1393,12 @@ describe("DynamicMethodsResolver", () => {
 
             await repo.findByName!("Ana");
 
-            expect(logger.logDebug).toHaveBeenCalledWith("QueryMethod 'findByName':", {
+            expect(logger.logDebug).toHaveBeenCalledWith("Running QueryMethod 'findByName':", {
                 query: "select * from user where name = ?",
                 args: ["Ana"],
                 modifying: false,
                 singleResult: true,
             });
-        });
-
-        it("should log the start and the end of the execution", async () => {
-            const start = { operation: "op", start: 0 };
-            vi.mocked(logger.startPerformLog).mockReturnValue(start);
-            const { repo } = buildQueryRepo("findAll", "select * from user");
-
-            await repo.findAll!();
-
-            expect(logger.startPerformLog).toHaveBeenCalledWith("run findAll (Modifying: false)");
-            expect(logger.endPerformLog).toHaveBeenCalledWith(start);
-        });
-
-        it("should end the perform log and rethrow when the query fails", async () => {
-            const start = { operation: "op", start: 0 };
-            const failure = new Error("syntax error");
-            vi.mocked(logger.startPerformLog).mockReturnValue(start);
-            vi.mocked(adapter.query).mockRejectedValue(failure);
-            const { repo } = buildQueryRepo("findAll", "select * from user");
-
-            await expect(repo.findAll!()).rejects.toBe(failure);
-
-            expect(logger.endPerformLog).toHaveBeenCalledTimes(1);
-            expect(logger.endPerformLog).toHaveBeenCalledWith(start);
         });
     });
 });

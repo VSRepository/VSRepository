@@ -67,25 +67,10 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         return this.mergeWheresResolver.resolve(this.seeMode, this.whereFilter);
     }
 
-    private trace(message: string, obj?: unknown): void {
-        this.logger.logDebug(`VSQueryBuilder: ${message}`, obj);
-    }
-
     private async execute<R>(operation: string, params: Record<string, unknown>, run: () => Promise<R>): Promise<R> {
-        this.trace(operation, { see: this.seeMode, ...params });
+        this.logger.logDebug(`Running VSQueryBuilder's '${operation}':`, { see: this.seeMode, ...params });
 
-        const start = this.logger.startPerformLog(`run query builder ${operation}`);
-
-        try {
-            const result = await run();
-            this.logger.endPerformLog(start);
-
-            return result;
-        } catch (err) {
-            this.logger.endPerformLog(start);
-
-            throw err;
-        }
+        return await run();
     }
 
     /**
@@ -101,8 +86,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     setDb(db: ClientOrTransaction<OrmTypes>): this {
         this.db = db;
-
-        this.trace("db replaced");
 
         return this;
     }
@@ -203,8 +186,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         qbClone.pagination = { ...this.pagination };
         qbClone.whereFilter = this.whereFilter;
         qbClone.seeMode = this.seeMode;
-
-        this.trace("clone");
 
         return qbClone;
     }

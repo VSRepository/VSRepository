@@ -984,33 +984,6 @@ describe("VSRepository", () => {
                 expect(vi.mocked(mocks.findMany!).mock.calls[0]![1].see).toBe("all");
             });
         });
-
-        describe("perform logs", () => {
-            it("should log the start and the end of the execution", async () => {
-                const token = { operation: "run find", start: 0 };
-                const start = vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-                const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-
-                await make().find(W);
-
-                expect(start).toHaveBeenCalledWith("run find");
-                expect(end).toHaveBeenCalledWith(token);
-            });
-
-            it("should end the perform log and rethrow when the adapter fails", async () => {
-                const token = { operation: "run count", start: 0 };
-                const failure = new Error("db down");
-                const repo = make();
-                vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-                const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-                mocks.count!.mockRejectedValue(failure);
-
-                await expect(repo.count(W)).rejects.toBe(failure);
-
-                expect(end).toHaveBeenCalledTimes(1);
-                expect(end).toHaveBeenCalledWith(token);
-            });
-        });
     });
 
     describe("soft delete methods", () => {
@@ -1267,37 +1240,12 @@ describe("VSRepository", () => {
 
             await make().query("select * from user where id = ?1", { args: ["1"], singleResult: true });
 
-            expect(logDebug).toHaveBeenCalledWith("UserRepository query:", {
+            expect(logDebug).toHaveBeenCalledWith("Running BaseMethod 'query':", {
                 query: "select * from user where id = ?",
                 args: ["1"],
                 modifying: false,
                 singleResult: true,
             });
-        });
-
-        it("should log the start and the end of the execution", async () => {
-            const token = { operation: "run query", start: 0 };
-            const start = vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-            const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-
-            await make().query("select 1");
-
-            expect(start).toHaveBeenCalledWith("run query");
-            expect(end).toHaveBeenCalledWith(token);
-        });
-
-        it("should end the perform log and rethrow when the adapter fails", async () => {
-            const token = { operation: "run query", start: 0 };
-            const failure = new Error("syntax error");
-            const repo = make();
-            vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-            const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-            mocks.query!.mockRejectedValue(failure);
-
-            await expect(repo.query("select 1")).rejects.toBe(failure);
-
-            expect(end).toHaveBeenCalledTimes(1);
-            expect(end).toHaveBeenCalledWith(token);
         });
     });
 

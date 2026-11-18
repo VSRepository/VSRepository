@@ -179,13 +179,8 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         let queryMethodsCount = 0;
 
         try {
-            // const start = this.logger.startPerformLog("resolve dynamic methods");
             dynamicMethodsCount = dynamicMethodsResolver.resolve(this);
-            // this.logger.endPerformLog(start);
-
-            // const startQuery = this.logger.startPerformLog("resolve query methods");
             queryMethodsCount = dynamicMethodsResolver.resolveQueries(this);
-            // this.logger.endPerformLog(startQuery);
         } catch (err) {
             this.logger.logError(`Failed to initialize ${this.constructor.name}`, err);
             throw err;
@@ -213,19 +208,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         const resolvedOptions = { ...options };
         resolvedOptions.db ??= this.getDbClient();
 
-        const start = this.logger.startPerformLog("run " + methodName);
+        this.logger.logDebug(`Running BaseMethod '${methodName}'`);
 
-        try {
-            const result = await fn(resolvedOptions);
-            this.logger.endPerformLog(start);
-
-            return result;
-        } catch (err) {
-            this.logger.endPerformLog(start);
-            // this.logger.logError(`Failed to run '${methodName}' on ${this.constructor.name}`, err);
-
-            throw err;
-        }
+        return await fn(resolvedOptions);
     }
 
     /**
@@ -360,33 +345,22 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         const queryOptions = { ...options, args };
         queryOptions.db ??= this.getDbClient();
 
-        this.logger.logDebug(`${this.constructor.name} query:`, {
+        this.logger.logDebug(`Running BaseMethod 'query':`, {
             query,
             args: queryOptions.args ?? [],
             modifying: queryOptions.modifying ?? false,
             singleResult: queryOptions.singleResult ?? false,
         });
 
-        const start = this.logger.startPerformLog("run query");
+        const result = await this.adapter.query<T>(query, {
+            args: queryOptions.args,
+            db: queryOptions.db,
+            modifying: queryOptions.modifying ?? false,
+        });
 
-        try {
-            const result = await this.adapter.query<T>(query, {
-                args: queryOptions.args,
-                db: queryOptions.db,
-                modifying: queryOptions.modifying ?? false,
-            });
+        const resolved = queryOptions.singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
 
-            const resolved = queryOptions.singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
-
-            this.logger.endPerformLog(start);
-
-            return resolved;
-        } catch (err) {
-            this.logger.endPerformLog(start);
-            // this.logger.logError(`Failed to run 'query' on ${this.constructor.name}`, err);
-
-            throw err;
-        }
+        return resolved;
     }
 
     private resolveDefaultOrdering(options: MethodOptions<Entity, OrmTypes>): MethodOptions<Entity, OrmTypes> {

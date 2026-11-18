@@ -16,7 +16,7 @@ describe("VSRawQueryBuilder", () => {
 
     beforeEach(() => {
         adapter = { getPlaceholder: vi.fn(getVsPlaceholder), query: vi.fn() } as any;
-        logger = { logDebug: vi.fn(), startPerformLog: vi.fn(), endPerformLog: vi.fn() } as any;
+        logger = { logDebug: vi.fn() } as any;
         qb = new VSRawQueryBuilder(db, adapter, logger);
     });
 
@@ -876,7 +876,6 @@ describe("VSRawQueryBuilder", () => {
 
             qb.setDb(db2);
 
-            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("db replaced"), undefined);
             expect((qb as any).db).toBe(db2);
         });
 
@@ -888,7 +887,6 @@ describe("VSRawQueryBuilder", () => {
 
             await qb.from("user").setDb(db2).execute();
 
-            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("db replaced"), undefined);
             expect((qb as any).db).toBe(db2);
 
             expect(adapter.query).toHaveBeenCalledWith(expect.any(String), { args: [], db: db2, modifying: false });
@@ -909,7 +907,6 @@ describe("VSRawQueryBuilder", () => {
 
             const qb2 = qb.select("id", "name", "age").from("user").limit(10).offset(2).where("active = true").clone();
 
-            expect(logger.logDebug).toHaveBeenCalledWith(expect.stringContaining("clone"), undefined);
             expect(qb2).not.toBe(qb);
             expect(qb.toSql()).toEqual(qb2.toSql());
         });
@@ -1002,12 +999,9 @@ describe("VSRawQueryBuilder", () => {
     describe("execute", () => {
         it("should run a query with the provided args", async () => {
             const resolved = [{ a: 1 }, { b: 2 }];
-            const start: any = Symbol();
 
             vi.spyOn(adapter, "query").mockResolvedValue(resolved);
             vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
-            vi.spyOn(logger, "startPerformLog").mockReturnValue(start);
-            vi.spyOn(logger, "endPerformLog").mockReturnValue();
 
             const result = await qb
                 .select("id", "name", "age")
@@ -1024,21 +1018,15 @@ describe("VSRawQueryBuilder", () => {
                 query: text,
                 args,
             });
-            expect(logger.startPerformLog).toHaveBeenCalledWith("run raw query builder execute");
-            expect(logger.endPerformLog).toHaveBeenCalledWith(start);
             expect(adapter.query).toHaveBeenCalledWith(text, { args, db, modifying: false });
             expect(result).toBe(resolved);
         });
 
         it("should propagate the adapter's error", async () => {
-            const start: any = Symbol();
-
             vi.spyOn(adapter, "query").mockRejectedValue(
                 new VSRepoAdapterError("some error", AdapterErrorCode.UNKNOWN, null),
             );
             vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
-            vi.spyOn(logger, "startPerformLog").mockReturnValue(start);
-            vi.spyOn(logger, "endPerformLog").mockReturnValue();
 
             await expect(
                 qb.select("id", "name", "age").from("user").limit(10).offset(2).where("active = true").execute(),
@@ -1051,27 +1039,20 @@ describe("VSRawQueryBuilder", () => {
                 query: text,
                 args,
             });
-            expect(logger.startPerformLog).toHaveBeenCalledWith("run raw query builder execute");
-            expect(logger.endPerformLog).toHaveBeenCalledWith(start);
             expect(adapter.query).toHaveBeenCalledWith(text, { args, db, modifying: false });
         });
 
         it("should throw if no from was provided", async () => {
             const resolved = [{ a: 1 }, { b: 2 }];
-            const start: any = Symbol();
 
             vi.spyOn(adapter, "query").mockRejectedValue(resolved);
             vi.spyOn(logger, "logDebug").mockReturnValue(undefined);
-            vi.spyOn(logger, "startPerformLog").mockReturnValue(start);
-            vi.spyOn(logger, "endPerformLog").mockReturnValue();
 
             await expect(
                 qb.select("id", "name", "age").limit(10).offset(2).where("active = true").execute(),
             ).rejects.toThrow(VSRepoError);
 
             expect(logger.logDebug).not.toHaveBeenCalled();
-            expect(logger.startPerformLog).not.toHaveBeenCalled();
-            expect(logger.endPerformLog).not.toHaveBeenCalled();
             expect(adapter.query).not.toHaveBeenCalled();
         });
     });

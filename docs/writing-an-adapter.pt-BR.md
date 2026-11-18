@@ -134,13 +134,10 @@ export class MyOrmAdapter<T> extends VSRepoAdapter<T> {
     private readonly logger = new VSLogger(VSLogLevel.WARN, "MyOrmAdapterLogger");
 
     async findOne(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>) {
-        const start = this.logger.startPerformLog("adapter findOne");
         try {
             // ... fala com o ORM ...
-            this.logger.endPerformLog(start);
             return result;
         } catch (err) {
-            this.logger.endPerformLog(start);
             this.logger.logError("adapter findOne falhou", err);
             throw new VSRepoAdapterError("adapter findOne falhou", AdapterErrorCode.UNKNOWN, err);
         }
@@ -155,7 +152,6 @@ O logger apenas observa a falha; o `VSRepoAdapterError` é o que quem chama real
 | `new VSLogger(logLevel, name)`                       | Cria um logger; `name` prefixa cada linha.                                                  |
 | `logDebug/logInfo/logWarn(text, obj?)`               | Loga no nível dado se `logLevel` permitir; `obj` é anexado como JSON formatado.             |
 | `logError(text, err?)`                               | Loga em `ERROR`; se `err` for uma `Error`, só `name`/`message`/`stack`/`cause` são logados. |
-| `startPerformLog(operation)` / `endPerformLog(data)` | Envolve um trecho de código para logar sua duração em nível `DEBUG`.                        |
 | `getLogLevel()`                                      | Retorna o `VSLogLevel` configurado do logger.                                               |
 
 Isso é puramente uma conveniência para autores de adapters — nada no core exige que seu adapter o utilize.

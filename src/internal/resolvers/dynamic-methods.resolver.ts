@@ -888,45 +888,31 @@ export class DynamicMethodsResolver<T, K> {
 
                 const vsrepoArgs = cacheFn(args, methodOptions);
 
-                const start = this.logger.startPerformLog(
-                    `run ${String(originalKey)} (-> ${dynamicMethodInfo.method})`,
-                );
+                this.logger.logDebug(`Running DynamicMethod '${originalKey}' (-> ${dynamicMethodInfo.method})`);
 
-                try {
-                    let result: any;
+                let result: any;
 
-                    if (dynamicMethodInfo.findAndCountMode) {
-                        const records = await (this.adapter as any).findMany(vsrepoArgs.where, vsrepoArgs.options);
-                        const count = await (this.adapter as any).count(vsrepoArgs.where, {
-                            db: vsrepoArgs.options.db,
-                        });
+                if (dynamicMethodInfo.findAndCountMode) {
+                    const records = await (this.adapter as any).findMany(vsrepoArgs.where, vsrepoArgs.options);
+                    const count = await (this.adapter as any).count(vsrepoArgs.where, {
+                        db: vsrepoArgs.options.db,
+                    });
 
-                        result = { result: records, count };
-                    } else {
-                        // * Todos os métodos do adapter seguem essa precedencia de parametros
-                        const argsOrdered: any[] = [
-                            vsrepoArgs.where,
-                            vsrepoArgs.obj,
-                            vsrepoArgs.create,
-                            vsrepoArgs.update,
-                            vsrepoArgs.options,
-                        ].filter(arg => arg !== undefined);
+                    result = { result: records, count };
+                } else {
+                    // * Todos os métodos do adapter seguem essa precedencia de parametros
+                    const argsOrdered: any[] = [
+                        vsrepoArgs.where,
+                        vsrepoArgs.obj,
+                        vsrepoArgs.create,
+                        vsrepoArgs.update,
+                        vsrepoArgs.options,
+                    ].filter(arg => arg !== undefined);
 
-                        result = await (this.adapter as any)[dynamicMethodInfo.method](...argsOrdered);
-                    }
-
-                    this.logger.endPerformLog(start);
-
-                    return result;
-                } catch (err) {
-                    this.logger.endPerformLog(start);
-                    // this.logger.logError(
-                    //     `Failed to run dynamic method '${String(originalKey)}' (-> ${dynamicMethodInfo.method})`,
-                    //     err,
-                    // );
-
-                    throw err;
+                    result = await (this.adapter as any)[dynamicMethodInfo.method](...argsOrdered);
                 }
+
+                return result;
             };
         }
 
@@ -985,38 +971,22 @@ export class DynamicMethodsResolver<T, K> {
                     finalArgs = compiled.args;
                 }
 
-                this.logger.logDebug(`QueryMethod '${String(originalKey)}':`, {
+                this.logger.logDebug(`Running QueryMethod '${String(originalKey)}':`, {
                     query: finalQuery,
                     args: finalArgs ?? [],
                     modifying: modifyingQueryMethod,
                     singleResult,
                 });
 
-                const start = this.logger.startPerformLog(
-                    `run ${String(originalKey)} (Modifying: ${modifyingQueryMethod})`,
-                );
+                const result = await this.adapter.query(finalQuery, {
+                    db,
+                    args: finalArgs,
+                    modifying: modifyingQueryMethod,
+                });
 
-                try {
-                    const result = await this.adapter.query(finalQuery, {
-                        db,
-                        args: finalArgs,
-                        modifying: modifyingQueryMethod,
-                    });
+                const resolved = singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
 
-                    const resolved = singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
-
-                    this.logger.endPerformLog(start);
-
-                    return resolved;
-                } catch (err) {
-                    this.logger.endPerformLog(start);
-                    // this.logger.logError(
-                    //     `Failed to run query method '${String(originalKey)}'`,
-                    //     err,
-                    // );
-
-                    throw err;
-                }
+                return resolved;
             };
         }
 
