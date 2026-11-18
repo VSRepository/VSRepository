@@ -7,7 +7,7 @@ import { VSRepoWhere } from "./types/vsrepo/vsrepo-where.type.js";
 import { MergeWheresResolver } from "./internal/resolvers/merge-wheres.resolver.js";
 import { VSRepoOrmTypes } from "./types/vsrepo/vsrepo-orm-types.type.js";
 import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
-import { MethodOptions } from "./types/utils/methods-options.type.js";
+import { MethodOptions } from "./types/utils/method-options.type.js";
 import { Ordering } from "./types/utils/ordering.type.js";
 import { VSLogger } from "./internal/utils/vs-logger.util.js";
 import { VSLogLevel } from "./internal/enums/vs-log-level.enum.js";
@@ -26,7 +26,7 @@ import { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js
 import { SoftDeleteMetadata } from "./types/decorators/soft-delete-metadata.type.js";
 import { ENABLE_SOFT_DELETE_KEY } from "./internal/constants/enable-soft-delete-key.constant.js";
 import { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
-import { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
+import { SimpleMethodOptions } from "./types/utils/simple-method-options.type.js";
 import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
 import { PaginatedResult } from "./types/utils/paginated-result.type.js";
 import { MergeConfig, MergeOptions } from "./types/utils/merge-config.type.js";

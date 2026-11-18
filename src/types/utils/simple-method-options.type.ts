@@ -1,5 +1,5 @@
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
-import { MethodOptions } from "./methods-options.type.js";
+import { MethodOptions } from "./method-options.type.js";
 
 /**
  * Variant of `MethodOptions` without `pagination` and `order`.

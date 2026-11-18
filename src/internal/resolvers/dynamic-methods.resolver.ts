@@ -6,7 +6,7 @@ import { DynamicMethodWhereOps } from "../../types/dynamic-methods/dynamic-metho
 import { Ordering } from "../../types/utils/ordering.type.js";
 import { VSRepoArgs } from "../../types/vsrepo/vsrepo-args.type.js";
 import { VSRepoMethod } from "../../types/vsrepo/vsrepo-method.type.js";
-import { MethodOptions } from "../../types/utils/methods-options.type.js";
+import { MethodOptions } from "../../types/utils/method-options.type.js";
 import { VSRepoPrettyWhere } from "../../types/vsrepo/vsrepo-pretty-where.type.js";
 import { VSRepoQuery } from "../../types/vsrepo/vsrepo-query.type.js";
 import { VSRepoResolveArgsData } from "../../types/vsrepo/vsrepo-resolve-args-data.type.js";

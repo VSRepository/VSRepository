@@ -1,8 +1,8 @@
 import { expectTypeOf } from "vitest";
 import type { InferMethodReturn } from "../utils/infer-method-return.type.js";
 import type { InferMethodType } from "../utils/infer-method-type.type.js";
-import type { MethodOptions } from "../utils/methods-options.type.js";
-import type { SimpleMethodOptions } from "../utils/simple-methods-options.type.js";
+import type { MethodOptions } from "../utils/method-options.type.js";
+import type { SimpleMethodOptions } from "../utils/simple-method-options.type.js";
 import type { VSRepoRelationsOptions } from "./vsrepo-relations-options.type.js";
 
 // These are compile-time checks: `bun run typecheck` is what fails if the types regress.

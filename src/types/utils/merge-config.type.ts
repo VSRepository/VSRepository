@@ -1,5 +1,5 @@
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
-import { MethodOptions } from "./methods-options.type.js";
+import { MethodOptions } from "./method-options.type.js";
 import { Primitive } from "./primitive.type.js";
 
 type ArrayItem<T> = NonNullable<T> extends readonly (infer U)[] ? U : never;
