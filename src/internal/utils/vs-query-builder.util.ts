@@ -7,6 +7,7 @@ import { Pagination } from "../../types/utils/pagination.type.js";
 import { SeeMode } from "../../types/utils/see-mode.type.js";
 import { VSRepoOrmTypes } from "../../types/vsrepo/vsrepo-orm-types.type.js";
 import { VSRepoRelations } from "../../types/vsrepo/vsrepo-relations.type.js";
+import { VSRepoRelationsOptions } from "../../types/vsrepo/vsrepo-relations-options.type.js";
 import { VSRepoSelect } from "../../types/vsrepo/vsrepo-select.type.js";
 import { VSRepoWhere } from "../../types/vsrepo/vsrepo-where.type.js";
 import { VSRepoAdapter } from "../../VSRepoAdapter.js";
@@ -18,9 +19,7 @@ import { VSLogger } from "./vs-logger.util.js";
  * Fluent builder for queries whose shape is only known at runtime (optional filters, user-controlled
  * ordering and pagination, ...).
  *
- * Chain the configuration methods (`select`, `relations`, `where`, `orderBy`, `limit`, `offset`, `see`)
- * and run it with a terminal method (`getResult`, `getOneResult`, `getOneResultOrThrow`, `getCount`,
- * `getExistence` or `getResultAndCount`). Nothing reaches the database before that.
+ * Chain the configuration methods and run it with a terminal method. Nothing reaches the database before that.
  *
  * The builder is mutable: every call changes the same instance. Use `clone()` to derive variations.
  * Soft delete is respected as in the repository methods.
@@ -68,25 +67,10 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         return this.mergeWheresResolver.resolve(this.seeMode, this.whereFilter);
     }
 
-    private trace(message: string, obj?: unknown): void {
-        this.logger.logDebug(`VSQueryBuilder: ${message}`, obj);
-    }
-
     private async execute<R>(operation: string, params: Record<string, unknown>, run: () => Promise<R>): Promise<R> {
-        this.trace(operation, { see: this.seeMode, ...params });
+        this.logger.logDebug(`Running VSQueryBuilder's '${operation}':`, { see: this.seeMode, ...params });
 
-        const start = this.logger.startPerformLog(`run query builder ${operation}`);
-
-        try {
-            const result = await run();
-            this.logger.endPerformLog(start);
-
-            return result;
-        } catch (err) {
-            this.logger.endPerformLog(start);
-
-            throw err;
-        }
+        return await run();
     }
 
     /**
@@ -102,8 +86,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     setDb(db: ClientOrTransaction<OrmTypes>): this {
         this.db = db;
-
-        this.trace("db replaced");
 
         return this;
     }
@@ -205,8 +187,6 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
         qbClone.whereFilter = this.whereFilter;
         qbClone.seeMode = this.seeMode;
 
-        this.trace("clone");
-
         return qbClone;
     }
 
@@ -224,6 +204,16 @@ export class VSQueryBuilder<Entity, OrmTypes extends VSRepoOrmTypes = VSRepoOrmT
      */
     relations(relations: VSRepoRelations<Entity>): this {
         this.options.relations = relations;
+
+        return this;
+    }
+
+    /**
+     * Sets the filter, order and pagination of the related records loaded by `select` or `relations`,
+     * replacing any previous `relationsOptions`. It doesn't load the relations by itself.
+     */
+    relationsOptions(relationsOptions: VSRepoRelationsOptions<Entity>): this {
+        this.options.relationsOptions = relationsOptions;
 
         return this;
     }

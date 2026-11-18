@@ -16,7 +16,7 @@ O `VSRepository` é dono de toda a abstração. Dado uma chamada como `userRepos
 
 - resolve a primary key em um `VSRepoWhere<T>` (`{ id: "user-1" }`),
 - junta o filtro de soft-delete implícito por `@EnableSoftDelete`/`see`,
-- loga a operação e mede o tempo,
+- loga a operação em `DEBUG`,
 - e então chama **exatamente um** método no seu adapter, com o `where` e as options já resolvidos.
 
 Tudo acima é agnóstico de ORM e compartilhado por todos os adapters. O que fica com você é o último passo — e é nele que está a maior parte do esforço: transformar um `VSRepoWhere<T>` mais um `AdapterMethodOptions<T>` em uma leitura ou escrita real contra o seu banco, e transformar o resultado de volta em um `T`. O seu adapter é o **único** código da stack que sabe que o seu ORM existe.
@@ -26,7 +26,7 @@ Os tipos que você vai encontrar pelo contrato estão todos documentados em [Tip
 | Tipo                      | Papel no contrato                                                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `VSRepoWhere<T>`          | O filtro já resolvido. Deve ser convertido para o equivalente do ORM do seu Adapter.                                           |
-| `AdapterMethodOptions<T>` | As options da chamada: `select`, `relations`, `see` e o handle da transação.                                                   |
+| `AdapterMethodOptions<T>` | As options da chamada: `select`, `relations`, `relationsOptions`, `see` e o handle da transação.                               |
 | `DeepPartial<T>`          | Uma entidade parcial para escritas — uma `DeepPartial` aninhada de uma relação é uma parcial aninhada, não um objeto completo. |
 | `CountResult`             | O que `createMany`/`deleteMany`/`updateMany` resolvem quando quem chama só quer `{ count }`.                                   |
 | `NumericKeys<T>`          | Restringe o argumento `field` dos métodos atômicos/de agregação a colunas numéricas (ou `DecimalLike`).                        |
@@ -46,6 +46,8 @@ O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos de instân
 | Opcional (não `abstract`) | `getPkName?()`                                                                               | Declara o campo de primary key da entidade para que `pkName` possa ser omitido da config do repository.                                                 |
 | Estático opcional         | `setGlobalConfig?(config)`                                                                   | Configura defaults específicos do adapter compartilhados pelas instâncias. Veja abaixo.                                                                 |
 | Estático opcional         | `execInTransaction?(dbClient, fn, options?)`                                                 | Abre uma transação diretamente a partir de um client do banco quando o ORM oferece suporte. Veja abaixo.                                                |
+
+`AdapterMethodOptions.relationsOptions` diz ao adapter como carregar as relações pedidas via `select`/`relations`: um objeto indexado pelo campo da relação, em que cada relação pode trazer `where` (em relações to-many e em relações to-one que podem ser `null`/`undefined`), `order` e `pagination` (só em relações to-many) e um `relationsOptions` aninhado para as relações dela. Traduza-o para os argumentos de leitura aninhados do seu ORM (por exemplo, o `include: { posts: { where, orderBy, skip, take } }` do Prisma), tanto no caminho do `select` quanto no do `relations`. Se o seu ORM não oferecer suporte, lance um `VSRepoError` claro, e documente. Veja [Filtrando, ordenando e paginando relations com `relationsOptions`](./select-and-relations.pt-BR.md#filtrando-ordenando-e-paginando-relations-com-relationsoptions).
 
 O `getPkName()` opcional permite que o adapter declare ao repository qual campo é a primary key da entidade. Ao instanciar um `VSRepository`, você pode omitir o `pkName` da config do construtor e ele será lido do `adapter.getPkName()`. Se você omitir e o adapter não implementar o `getPkName()`, o construtor lança um `VSRepoError`.
 
@@ -132,13 +134,10 @@ export class MyOrmAdapter<T> extends VSRepoAdapter<T> {
     private readonly logger = new VSLogger(VSLogLevel.WARN, "MyOrmAdapterLogger");
 
     async findOne(where: VSRepoWhere<T>, options?: AdapterMethodOptions<T>) {
-        const start = this.logger.startPerformLog("adapter findOne");
         try {
             // ... fala com o ORM ...
-            this.logger.endPerformLog(start);
             return result;
         } catch (err) {
-            this.logger.endPerformLog(start);
             this.logger.logError("adapter findOne falhou", err);
             throw new VSRepoAdapterError("adapter findOne falhou", AdapterErrorCode.UNKNOWN, err);
         }
@@ -148,13 +147,12 @@ export class MyOrmAdapter<T> extends VSRepoAdapter<T> {
 
 O logger apenas observa a falha; o `VSRepoAdapterError` é o que quem chama realmente recebe, que é o encapsulamento que a regra acima exige.
 
-| Método                                               | Descrição                                                                                   |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `new VSLogger(logLevel, name)`                       | Cria um logger; `name` prefixa cada linha.                                                  |
-| `logDebug/logInfo/logWarn(text, obj?)`               | Loga no nível dado se `logLevel` permitir; `obj` é anexado como JSON formatado.             |
-| `logError(text, err?)`                               | Loga em `ERROR`; se `err` for uma `Error`, só `name`/`message`/`stack`/`cause` são logados. |
-| `startPerformLog(operation)` / `endPerformLog(data)` | Envolve um trecho de código para logar sua duração em nível `DEBUG`.                        |
-| `getLogLevel()`                                      | Retorna o `VSLogLevel` configurado do logger.                                               |
+| Método                                 | Descrição                                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `new VSLogger(logLevel, name)`         | Cria um logger; `name` prefixa cada linha.                                                  |
+| `logDebug/logInfo/logWarn(text, obj?)` | Loga no nível dado se `logLevel` permitir; `obj` é anexado como JSON formatado.             |
+| `logError(text, err?)`                 | Loga em `ERROR`; se `err` for uma `Error`, só `name`/`message`/`stack`/`cause` são logados. |
+| `getLogLevel()`                        | Retorna o `VSLogLevel` configurado do logger.                                               |
 
 Isso é puramente uma conveniência para autores de adapters — nada no core exige que seu adapter o utilize.
 

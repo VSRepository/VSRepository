@@ -7,7 +7,7 @@ import { VSRepoWhere } from "./types/vsrepo/vsrepo-where.type.js";
 import { MergeWheresResolver } from "./internal/resolvers/merge-wheres.resolver.js";
 import { VSRepoOrmTypes } from "./types/vsrepo/vsrepo-orm-types.type.js";
 import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
-import { MethodOptions } from "./types/utils/methods-options.type.js";
+import { MethodOptions } from "./types/utils/method-options.type.js";
 import { Ordering } from "./types/utils/ordering.type.js";
 import { VSLogger } from "./internal/utils/vs-logger.util.js";
 import { VSLogLevel } from "./internal/enums/vs-log-level.enum.js";
@@ -26,7 +26,7 @@ import { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js
 import { SoftDeleteMetadata } from "./types/decorators/soft-delete-metadata.type.js";
 import { ENABLE_SOFT_DELETE_KEY } from "./internal/constants/enable-soft-delete-key.constant.js";
 import { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
-import { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
+import { SimpleMethodOptions } from "./types/utils/simple-method-options.type.js";
 import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
 import { PaginatedResult } from "./types/utils/paginated-result.type.js";
 import { MergeConfig, MergeOptions } from "./types/utils/merge-config.type.js";
@@ -66,6 +66,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private readonly defaultOrdering?: Ordering<Entity>;
     private readonly vsPlaceholders: boolean;
     private readonly mergeConfig?: MergeConfig<Entity>;
+    private readonly lazyDynamicMethods?: boolean;
 
     private dynamicMethodsResolved = false;
     private alreadyWarnedResolveDynamicMethods = false;
@@ -117,7 +118,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         let dynamicMethodsCount: number | undefined;
         let queryMethodsCount: number | undefined;
 
-        config.lazyDynamicMethods ??= VSRepository.globalConfig.lazyDynamicMethods;
+        this.lazyDynamicMethods = config.lazyDynamicMethods ??= VSRepository.globalConfig.lazyDynamicMethods;
 
         if (!config.lazyDynamicMethods) {
             const result = this.resolveDynamicMethods();
@@ -167,6 +168,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.alreadyWarnedResolveDynamicMethods = true;
         }
 
+        if (this.lazyDynamicMethods) {
+            this.logger.logInfo("Starting postponed resolution of dynamic methods");
+        }
+
         const dynamicMethodsResolver = new DynamicMethodsResolver<Entity, PKType>(
             this.logger,
             this.adapter,
@@ -179,16 +184,18 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         let queryMethodsCount = 0;
 
         try {
-            // const start = this.logger.startPerformLog("resolve dynamic methods");
             dynamicMethodsCount = dynamicMethodsResolver.resolve(this);
-            // this.logger.endPerformLog(start);
-
-            // const startQuery = this.logger.startPerformLog("resolve query methods");
             queryMethodsCount = dynamicMethodsResolver.resolveQueries(this);
-            // this.logger.endPerformLog(startQuery);
         } catch (err) {
             this.logger.logError(`Failed to initialize ${this.constructor.name}`, err);
             throw err;
+        }
+
+        if (this.lazyDynamicMethods) {
+            this.logger.logInfo(
+                `Postponed resolution of dynamic methods completed ` +
+                    `(${dynamicMethodsCount} dynamic method(s), ${queryMethodsCount} query method(s) resolved)`,
+            );
         }
 
         this.dynamicMethodsResolved = true;
@@ -213,19 +220,9 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         const resolvedOptions = { ...options };
         resolvedOptions.db ??= this.getDbClient();
 
-        const start = this.logger.startPerformLog("run " + methodName);
+        this.logger.logDebug(`Running BaseMethod '${methodName}'`);
 
-        try {
-            const result = await fn(resolvedOptions);
-            this.logger.endPerformLog(start);
-
-            return result;
-        } catch (err) {
-            this.logger.endPerformLog(start);
-            // this.logger.logError(`Failed to run '${methodName}' on ${this.constructor.name}`, err);
-
-            throw err;
-        }
+        return await fn(resolvedOptions);
     }
 
     /**
@@ -360,33 +357,22 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         const queryOptions = { ...options, args };
         queryOptions.db ??= this.getDbClient();
 
-        this.logger.logDebug(`${this.constructor.name} query:`, {
+        this.logger.logDebug(`Running BaseMethod 'query':`, {
             query,
             args: queryOptions.args ?? [],
             modifying: queryOptions.modifying ?? false,
             singleResult: queryOptions.singleResult ?? false,
         });
 
-        const start = this.logger.startPerformLog("run query");
+        const result = await this.adapter.query<T>(query, {
+            args: queryOptions.args,
+            db: queryOptions.db,
+            modifying: queryOptions.modifying ?? false,
+        });
 
-        try {
-            const result = await this.adapter.query<T>(query, {
-                args: queryOptions.args,
-                db: queryOptions.db,
-                modifying: queryOptions.modifying ?? false,
-            });
+        const resolved = queryOptions.singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
 
-            const resolved = queryOptions.singleResult && Array.isArray(result) ? (result[0] ?? null) : result;
-
-            this.logger.endPerformLog(start);
-
-            return resolved;
-        } catch (err) {
-            this.logger.endPerformLog(start);
-            // this.logger.logError(`Failed to run 'query' on ${this.constructor.name}`, err);
-
-            throw err;
-        }
+        return resolved;
     }
 
     private resolveDefaultOrdering(options: MethodOptions<Entity, OrmTypes>): MethodOptions<Entity, OrmTypes> {
@@ -656,6 +642,36 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
                 );
             },
             "merge",
+            options,
+        );
+    }
+
+    /**
+     * Fetches the record with the given primary key and returns it deep-merged, in memory, with `obj`.
+     * Nothing is persisted: pass the result to `save` or `patch` to write it.
+     */
+    async combine<U extends DeepPartial<Entity>>(
+        id: PKType,
+        obj: U,
+        options?: MergeOptions<Entity, OrmTypes>,
+    ): Promise<(Entity & U) | null> {
+        return this.execBaseMethod(
+            async ({ mergeConfig, ...opt }: MergeOptions<Entity, OrmTypes>) => {
+                const entity = await this.adapter.findOne(
+                    this.mergeWheresResolver.resolve(opt.see, this.wherePk(id)),
+                    this.resolveDefaultOrdering(opt),
+                );
+                if (!entity) return null;
+
+                return MergeEntitiesResolver.resolve(
+                    entity,
+                    obj,
+                    mergeConfig && this.mergeConfig
+                        ? merge(this.mergeConfig, mergeConfig)
+                        : (mergeConfig ?? this.mergeConfig),
+                );
+            },
+            "combine",
             options,
         );
     }

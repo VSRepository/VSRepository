@@ -1,5 +1,4 @@
 import { VSLogLevel } from "../enums/vs-log-level.enum.js";
-import { PerformData } from "../../types/utils/perform-data.type.js";
 
 /**
  * ANSI escape codes used to colorize log output.
@@ -118,26 +117,5 @@ export class VSLogger {
         }
 
         this.log(VSLogLevel.ERROR, text, err);
-    }
-
-    startPerformLog(operation: string): PerformData | undefined {
-        if (this.logLevel > VSLogLevel.DEBUG) return;
-
-        this.logDebug(`Starting to ${operation}...`);
-
-        return {
-            operation,
-            start: performance.now(),
-        };
-    }
-
-    endPerformLog(data: PerformData | undefined): void {
-        if (!data) return;
-
-        const end = performance.now();
-        const timeTook = end - data.start;
-        const timeTookLabel = timeTook.toFixed(2);
-
-        this.logDebug(`Took ${timeTookLabel}ms to ${data.operation}`);
     }
 }

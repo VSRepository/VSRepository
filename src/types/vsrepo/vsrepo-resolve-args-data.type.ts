@@ -1,6 +1,6 @@
 import { VSRepository } from "../../VSRepository.js";
 import { Pagination } from "../utils/pagination.type.js";
-import { MethodOptions } from "../utils/methods-options.type.js";
+import { MethodOptions } from "../utils/method-options.type.js";
 
 export interface VSRepoResolveArgsData<T, K> {
     instance: VSRepository<T, K>;

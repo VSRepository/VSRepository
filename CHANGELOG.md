@@ -6,6 +6,48 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0-dev.6] - 2026-11-18
+
+### Added
+
+- New `relationsOptions` option on `MethodOptions` (and therefore on `SimpleMethodOptions` and `MergeOptions`) and on `AdapterMethodOptions` to filter, order and paginate the related records loaded by `select` or `relations`: to-many relations accept `where`, `order` and `pagination`, to-one relations that can be `null`/`undefined` accept `where`, and every relation accepts a nested `relationsOptions` for its own relations
+- `relationsOptions` is typed per relation: unknown relations, `order`/`pagination` on to-one relations and `where` on required to-one relations are compile-time errors, including in dynamic methods declared with `InferMethodType`
+- `VSQueryBuilder` now has a `relationsOptions()` method
+- Dynamic methods now forward `relationsOptions` to the adapter, together with `select` and `relations`
+- Exported the `VSRepoRelationsOptions`, `VSRepoRelationOptions`, `VSRepoOptionalRelationOptions` and `VSRepoToManyRelationOptions` types from the package root
+- `resolveDynamicMethods()` now logs the lifecycle of the postponed (lazy) resolution at `INFO`: a line when the resolution starts and a summary when it completes, with how many dynamic and query methods were resolved
+- Added `combine(id, obj, options?)`, the primary-key version of `merge()`: it fetches the record by `id` instead of a `where` and merges it in memory, without persisting anything
+
+### Documentation
+
+- Documented `relationsOptions` in `select-and-relations`, the query builder, the utility types and the adapter-writing guide; it only configures relations already loaded by `select`/`relations`
+- Documented `combine()` alongside `merge()` in the base methods and utility types
+
+### Removed
+
+- **BREAKING:** Discontinued the "perform logs": the `startPerformLog()`/`endPerformLog()` methods were removed from `VSLogger` (and the `PerformData` type), and operations are no longer timed at `DEBUG`
+
+## [3.0.0-dev.6] - 2026-11-18 (Português)
+
+### Adicionado
+
+- Nova option `relationsOptions` em `MethodOptions` (e, portanto, em `SimpleMethodOptions` e `MergeOptions`) e em `AdapterMethodOptions` para filtrar, ordenar e paginar os registros relacionados carregados por `select` ou `relations`: relações to-many aceitam `where`, `order` e `pagination`, relações to-one que podem ser `null`/`undefined` aceitam `where`, e toda relação aceita um `relationsOptions` aninhado para as relações dela
+- `relationsOptions` é tipado por relação: relações inexistentes, `order`/`pagination` em relações to-one e `where` em relações to-one obrigatórias são erros em tempo de compilação, inclusive em métodos dinâmicos declarados com `InferMethodType`
+- O `VSQueryBuilder` agora possui o método `relationsOptions()`
+- Os métodos dinâmicos agora repassam `relationsOptions` ao adapter, junto com `select` e `relations`
+- Os tipos `VSRepoRelationsOptions`, `VSRepoRelationOptions`, `VSRepoOptionalRelationOptions` e `VSRepoToManyRelationOptions` agora são exportados pela raiz do pacote
+- O `resolveDynamicMethods()` agora loga em `INFO` o ciclo de vida da resolução adiada (lazy): uma linha quando a resolução começa e um resumo quando ela termina, com quantos métodos dinâmicos e query methods foram resolvidos
+- Adicionado `combine(id, obj, options?)`, a versão do `merge()` por chave primária: busca o registro pelo `id` em vez de um `where` e o mescla em memória, sem persistir nada
+
+### Documentação
+
+- Documentado o `relationsOptions` em `select-and-relations`, no query builder, nos utility types e no guia de criação de adapters; ele só configura relações já carregadas por `select`/`relations`
+- Documentado o `combine()` junto ao `merge()` nos métodos base e nos utility types
+
+### Removido
+
+- **BREAKING:** Os "perform logs" foram descontinuados: os métodos `startPerformLog()`/`endPerformLog()` foram removidos do `VSLogger` (e o tipo `PerformData`), e as operações não são mais cronometradas em `DEBUG`
+
 ## [3.0.0-dev.5] - 2026-11-14
 
 ### Added

@@ -14,6 +14,8 @@ import { VSSql } from "./internal/utils/vs-sql.util.js";
 import { VSRepoConfig } from "./types/vsrepo/vsrepo-config.type.js";
 import { VSRepoAdapter } from "./VSRepoAdapter.js";
 import { VSRepository } from "./VSRepository.js";
+import { Ordering } from "./types/utils/ordering.type.js";
+import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
 
 interface User {
     id: string;
@@ -237,7 +239,7 @@ describe("VSRepository", () => {
             });
 
             it("should apply the soft delete field and the default ordering to dynamic methods", async () => {
-                const order = [{ age: "DESC" }] as any;
+                const order: Ordering<User> = [{ age: "DESC" }];
                 const repo = new SoftDynamicUserRepository({ adapter, defaultOrdering: order });
 
                 await repo.findByName("Ana");
@@ -403,7 +405,7 @@ describe("VSRepository", () => {
                 new SoftDynamicUserRepository({
                     adapter,
                     logLevel: VSLogLevel.INFO,
-                    defaultOrdering: [{ age: "ASC" }] as any,
+                    defaultOrdering: [{ age: "ASC" }],
                 });
 
                 const lines = consoleLog.mock.calls.map(([line]) => String(line));
@@ -550,6 +552,15 @@ describe("VSRepository", () => {
                 await make().merge(W, { age: 30 }, { db: "tx" });
 
                 expect(mocks.findOne).toHaveBeenCalledWith(W, { db: "tx" });
+            });
+
+            it("should forward relationsOptions to the findOne that fetches the record", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { order: { createdAt: "desc" } } };
+
+                await make().merge(W, { age: 30 }, { relations, relationsOptions });
+
+                expect(mocks.findOne).toHaveBeenCalledWith(W, { ...DB, relations, relationsOptions });
             });
 
             describe("mergeConfig", () => {
@@ -773,6 +784,75 @@ describe("VSRepository", () => {
             });
         });
 
+        describe("combine", () => {
+            const stored: User = { id: "1", name: "Ana", age: 20, score: 0, deletedAt: null };
+
+            beforeEach(() => {
+                mocks.findOne!.mockResolvedValue({ ...stored });
+            });
+
+            it("should fetch the record by primary key and return it merged with the given object", async () => {
+                const result = await make().combine("1", { age: 30 });
+
+                expect(mocks.findOne).toHaveBeenCalledTimes(1);
+                expect(mocks.findOne).toHaveBeenCalledWith({ id: "1" }, DB);
+                expect(result).toEqual({ ...stored, age: 30 });
+            });
+
+            it("should not persist anything", async () => {
+                await make().combine("1", { age: 30 });
+
+                for (const method of ["save", "saveMany", "create", "update", "updateMany", "upsert"]) {
+                    expect(mocks[method]).not.toHaveBeenCalled();
+                }
+            });
+
+            it("should return null when the record does not exist", async () => {
+                mocks.findOne!.mockResolvedValue(null);
+
+                const result = await make().combine("1", { age: 30 });
+
+                expect(result).toBeNull();
+            });
+
+            it("should use the db provided in the options", async () => {
+                await make().combine("1", { age: 30 }, { db: "tx" });
+
+                expect(mocks.findOne).toHaveBeenCalledWith({ id: "1" }, { db: "tx" });
+            });
+
+            it("should forward relationsOptions to the findOne that fetches the record", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { order: { createdAt: "desc" } } };
+
+                await make().combine("1", { age: 30 }, { relations, relationsOptions });
+
+                expect(mocks.findOne).toHaveBeenCalledWith({ id: "1" }, { ...DB, relations, relationsOptions });
+            });
+
+            describe("mergeConfig", () => {
+                it("should use the one given in the repository options", async () => {
+                    const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                    const result = await repo.combine("1", { name: null as any, age: 30 });
+
+                    expect(result).toEqual({ ...stored, age: 30 });
+                });
+
+                it("should prefer the one given in the method options", async () => {
+                    const repo = make({ mergeConfig: { nullBehavior: "ignore" } });
+
+                    const result = await repo.combine(
+                        "1",
+                        { name: null as any },
+                        { mergeConfig: { nullBehavior: "keep" } },
+                    );
+
+                    expect(result).toEqual({ ...stored, name: null });
+                });
+            });
+        });
+
         describe("options", () => {
             it("should use the db provided in the options", async () => {
                 await make().find(W, { db: "tx" });
@@ -785,21 +865,58 @@ describe("VSRepository", () => {
                 const select = { id: true };
                 const relations = { posts: true };
 
-                await make().find(W, { select, relations } as any);
+                await make().find(W, { select, relations });
 
                 expect(mocks.findMany).toHaveBeenCalledWith(W, { db: "default-db", select, relations });
+            });
+
+            it("should forward relationsOptions to the adapter", async () => {
+                const relations = { posts: true };
+                const relationsOptions = {
+                    posts: { where: { published: true }, order: { createdAt: "desc" }, pagination: { limit: 10 } },
+                };
+
+                await make().find(W, { relations, relationsOptions });
+
+                expect(mocks.findMany).toHaveBeenCalledWith(W, { db: "default-db", relations, relationsOptions });
+            });
+
+            it("should forward relationsOptions on the single-record read methods", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { where: { published: true } } };
+
+                await make().get("1", { relations, relationsOptions });
+
+                expect(mocks.findOne).toHaveBeenCalledWith(expect.anything(), {
+                    db: "default-db",
+                    relations,
+                    relationsOptions,
+                });
             });
 
             it("should forward the options of the simple methods to the adapter", async () => {
                 const select = { id: true };
 
-                await make().update(W, { age: 1 }, { select, db: "tx" } as any);
+                await make().update(W, { age: 1 }, { select, db: "tx" });
 
                 expect(mocks.update).toHaveBeenCalledWith(W, { age: 1 }, { db: "tx", select });
             });
 
+            it("should forward relationsOptions on the simple methods", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { pagination: { limit: 2 } } };
+
+                await make().update(W, { age: 1 }, { relations, relationsOptions });
+
+                expect(mocks.update).toHaveBeenCalledWith(
+                    W,
+                    { age: 1 },
+                    { db: "default-db", relations, relationsOptions },
+                );
+            });
+
             it("should forward ignoreConflicts on the createMany methods", async () => {
-                await make().createMany([{ name: "Ana" }], { ignoreConflicts: true } as any);
+                await make().createMany([{ name: "Ana" }], { ignoreConflicts: true });
 
                 expect(mocks.createMany).toHaveBeenCalledWith([{ name: "Ana" }], {
                     db: "default-db",
@@ -856,7 +973,7 @@ describe("VSRepository", () => {
         });
 
         describe("default ordering", () => {
-            const defaultOrdering = [{ name: "ASC" }] as any;
+            const defaultOrdering: Ordering<User> = [{ name: "ASC" }];
 
             it.each([
                 ["find", "findMany", (r: UserRepository, o?: object) => r.find(W, o)],
@@ -865,6 +982,7 @@ describe("VSRepository", () => {
                 ["get", "findOne", (r: UserRepository, o?: object) => r.get(W.name, o)],
                 ["getOrThrow", "findOneOrThrow", (r: UserRepository, o?: object) => r.getOrThrow(W.name, o)],
                 ["merge", "findOne", (r: UserRepository, o?: object) => r.merge(W, { age: 1 }, o)],
+                ["combine", "findOne", (r: UserRepository, o?: object) => r.combine("1", { age: 1 }, o)],
             ])("%s should apply it", async (_name, adapterMethod, run) => {
                 await run(make({ defaultOrdering }));
 
@@ -875,7 +993,7 @@ describe("VSRepository", () => {
             });
 
             it("should prefer the order provided in the options", async () => {
-                const order = [{ age: "DESC" }] as any;
+                const order: Ordering<User> = [{ age: "DESC" }];
 
                 await make({ defaultOrdering }).find(W, { order });
 
@@ -904,6 +1022,7 @@ describe("VSRepository", () => {
                 ["findOne", (r, o) => r.findOne(W, o), "findOne", W],
                 ["get", (r, o) => r.get("1", o), "findOne", { id: "1" }],
                 ["merge", (r, o) => r.merge(W, { age: 1 }, o), "findOne", W],
+                ["combine", (r, o) => r.combine("1", { age: 1 }, o), "findOne", { id: "1" }],
                 ["delete", (r, o) => r.delete(W, o), "delete", W],
                 ["update", (r, o) => r.update(W, { age: 1 }, o), "update", W],
                 ["count", (r, o) => r.count(W, o), "count", W],
@@ -934,33 +1053,6 @@ describe("VSRepository", () => {
                 await makeSoft().find(W, { see: "all" });
 
                 expect(vi.mocked(mocks.findMany!).mock.calls[0]![1].see).toBe("all");
-            });
-        });
-
-        describe("perform logs", () => {
-            it("should log the start and the end of the execution", async () => {
-                const token = { operation: "run find", start: 0 };
-                const start = vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-                const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-
-                await make().find(W);
-
-                expect(start).toHaveBeenCalledWith("run find");
-                expect(end).toHaveBeenCalledWith(token);
-            });
-
-            it("should end the perform log and rethrow when the adapter fails", async () => {
-                const token = { operation: "run count", start: 0 };
-                const failure = new Error("db down");
-                const repo = make();
-                vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-                const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-                mocks.count!.mockRejectedValue(failure);
-
-                await expect(repo.count(W)).rejects.toBe(failure);
-
-                expect(end).toHaveBeenCalledTimes(1);
-                expect(end).toHaveBeenCalledWith(token);
             });
         });
     });
@@ -1068,7 +1160,7 @@ describe("VSRepository", () => {
 
         it("should forward the transaction options", async () => {
             const fn = vi.fn();
-            const options = { isolationLevel: "SERIALIZABLE" } as any;
+            const options: VSRepoTransactionOptions = { isolationLevel: "Serializable" };
 
             await make().transaction(fn, options);
 
@@ -1136,7 +1228,7 @@ describe("VSRepository", () => {
         });
 
         it("should pass the db and the modifying flag on", async () => {
-            await make().query("delete from user", { db: "tx", modifying: true } as any);
+            await make().query("delete from user", { db: "tx", modifying: true });
 
             expect(mocks.query).toHaveBeenCalledWith("delete from user", { args: [], db: "tx", modifying: true });
         });
@@ -1204,7 +1296,7 @@ describe("VSRepository", () => {
             mocks.query!.mockResolvedValue(3);
 
             await expect(
-                make().query("update user set age = 1", { singleResult: true, modifying: true } as any),
+                make().query("update user set age = 1", { singleResult: true, modifying: true }),
             ).resolves.toBe(3);
         });
 
@@ -1219,37 +1311,12 @@ describe("VSRepository", () => {
 
             await make().query("select * from user where id = ?1", { args: ["1"], singleResult: true });
 
-            expect(logDebug).toHaveBeenCalledWith("UserRepository query:", {
+            expect(logDebug).toHaveBeenCalledWith("Running BaseMethod 'query':", {
                 query: "select * from user where id = ?",
                 args: ["1"],
                 modifying: false,
                 singleResult: true,
             });
-        });
-
-        it("should log the start and the end of the execution", async () => {
-            const token = { operation: "run query", start: 0 };
-            const start = vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-            const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-
-            await make().query("select 1");
-
-            expect(start).toHaveBeenCalledWith("run query");
-            expect(end).toHaveBeenCalledWith(token);
-        });
-
-        it("should end the perform log and rethrow when the adapter fails", async () => {
-            const token = { operation: "run query", start: 0 };
-            const failure = new Error("syntax error");
-            const repo = make();
-            vi.spyOn(VSLogger.prototype, "startPerformLog").mockReturnValue(token);
-            const end = vi.spyOn(VSLogger.prototype, "endPerformLog").mockImplementation(() => {});
-            mocks.query!.mockRejectedValue(failure);
-
-            await expect(repo.query("select 1")).rejects.toBe(failure);
-
-            expect(end).toHaveBeenCalledTimes(1);
-            expect(end).toHaveBeenCalledWith(token);
         });
     });
 
@@ -1274,9 +1341,7 @@ describe("VSRepository", () => {
         });
 
         it("should make the query builder use the provided db", async () => {
-            await make()
-                .createQueryBuilder("tx" as any)
-                .getResult();
+            await make().createQueryBuilder("tx").getResult();
 
             expect(mocks.findMany).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ db: "tx" }));
         });
@@ -1297,11 +1362,7 @@ describe("VSRepository", () => {
         });
 
         it("should make the raw query builder use the provided db", async () => {
-            await make()
-                .createRawQueryBuilder("tx" as any)
-                .select("1")
-                .from("user")
-                .execute();
+            await make().createRawQueryBuilder("tx").select("1").from("user").execute();
 
             expect(mocks.query).toHaveBeenCalledWith("select 1 from user", expect.objectContaining({ db: "tx" }));
         });

@@ -76,10 +76,6 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         private readonly logger: VSLogger,
     ) {}
 
-    private trace(message: string, obj?: unknown): void {
-        this.logger.logDebug(`VSRawQueryBuilder: ${message}`, obj);
-    }
-
     private static validateNonEmptyString(value: string, context: string): void {
         if (value.trim().length === 0) {
             throw new VSRepoError(
@@ -395,8 +391,6 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     setDb(db: ClientOrTransaction<OrmTypes>): this {
         this.db = db;
 
-        this.trace("db replaced");
-
         return this;
     }
 
@@ -416,8 +410,6 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
         copy.limitValue = this.limitValue;
         copy.offsetValue = this.offsetValue;
         copy.distinctSelectMode = this.distinctSelectMode;
-
-        this.trace("clone");
 
         return copy;
     }
@@ -501,19 +493,8 @@ export class VSRawQueryBuilder<OrmTypes extends VSRepoOrmTypes = VSRepoOrmTypes>
     async execute<T = any>(): Promise<T> {
         const { query: text, args } = this.compileForAdapter();
 
-        this.trace("execute", { query: text, args });
+        this.logger.logDebug(`Running VSRawQueryBuilder's 'execute':`, { query: text, args });
 
-        const start = this.logger.startPerformLog("run raw query builder execute");
-
-        try {
-            const result = await this.adapter.query<T>(text, { args, db: this.db, modifying: false });
-            this.logger.endPerformLog(start);
-
-            return result;
-        } catch (err) {
-            this.logger.endPerformLog(start);
-
-            throw err;
-        }
+        return await this.adapter.query<T>(text, { args, db: this.db, modifying: false });
     }
 }

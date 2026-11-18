@@ -194,7 +194,6 @@ Errors thrown by the adapter while the query runs (e.g. `VSRepoAdapterError`) ar
 
 The builder uses the repository's logger, so it follows the same `logLevel` (see [Logging](./logging.md#logging)):
 
-- `DEBUG` traces `setDb`/`clone` calls and, before `execute()` runs, the compiled query and its args. The `db` is never logged.
-- `execute()` is timed as `run raw query builder execute`, and the duration is logged at `DEBUG`.
+- `DEBUG` logs, before `execute()` runs, the compiled query and its args. The `db` is never logged.
 
 [⬆️ Back to top](#top)

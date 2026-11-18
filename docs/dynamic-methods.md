@@ -38,7 +38,7 @@ class UserRepository extends VSRepository<User, string> {
 }
 ```
 
-> **`MethodOptions` is always accepted:** every dynamic method, whatever its prefix, accepts an optional `MethodOptions<Entity, OrmTypes>` (`select`, `relations`, `see`, `db`, ...) as its **last** argument — the resolver treats the argument beyond what the name requires as `MethodOptions`. You still need to **declare it in the TS signature** for TypeScript to let you pass it (as in every example above); the examples further down sometimes omit it for brevity when demonstrating something else, but it's available on all of them too.
+> **`MethodOptions` is always accepted:** every dynamic method, whatever its prefix, accepts an optional `MethodOptions<Entity, OrmTypes>` (`select`, `relations`, `relationsOptions`, `see`, `db`, ...) as its **last** argument — the resolver treats the argument beyond what the name requires as `MethodOptions`. You still need to **declare it in the TS signature** for TypeScript to let you pass it (as in every example above); the examples further down sometimes omit it for brevity when demonstrating something else, but it's available on all of them too.
 
 ## Available prefixes
 
@@ -331,6 +331,7 @@ await userRepository.findOneByEmail("john@example.com", { relations: { address: 
 
 - `options` (`MethodOptions<Entity, OrmTypes>`) is always the **last**, optional parameter, after every argument in `Args`. If one of those arguments is optional, pass `undefined` explicitly to reach `options`.
 - Without `options` the result has only the scalar fields; with them it follows the [same rules](./select-and-relations.md#strict-return-typing-with-infermethodreturn) as `InferMethodReturn` (including `select` winning over `relations`).
+- `relationsOptions` is accepted as well and doesn't change the result type.
 - It works together with the [decorator options](#decorator-options) (`proxyTo`, `injectOrdering`).
 - It is meant for dynamic methods that return entities (`findBy…`, `findOneBy…`, `findWhere…`, …). Methods that don't — `countBy…`, `existsBy…` — keep their regular signature.
 
@@ -342,6 +343,7 @@ By default, the `VSRepository` constructor synchronously resolves every `@Dynami
 class UserRepository extends VSRepository<User, string> {
     constructor() {
         super({ adapter, lazyDynamicMethods: true });
+
         this.resolveDynamicMethods();
     }
 
@@ -350,7 +352,7 @@ class UserRepository extends VSRepository<User, string> {
 }
 ```
 
-Deferring the call further — to a later lifecycle hook — is just as valid, and is where the option is actually useful: it lets you push the resolution cost (relevant for repositories with many decorated methods) to a more convenient point in the application's lifecycle, e.g. an async initialization hook:
+Deferring the call further — to a later lifecycle hook — is just as valid, and is where the option is actually useful: it lets you push the resolution cost to a more convenient point in the application's lifecycle, e.g. an async initialization hook:
 
 ```typescript
 class UserRepository extends VSRepository<User, string> {

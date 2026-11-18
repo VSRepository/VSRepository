@@ -18,7 +18,7 @@
 | `logLevel`           | `VSLogLevel`                 | Opcional. Severidade mínima impressa pelo logger interno. O padrão é `VSLogLevel.WARN`; use `VSLogLevel.NONE` para desativar os logs por completo.                                                                                                                                                                                                                       |
 | `lazyDynamicMethods` | `boolean`                    | Opcional. O padrão é `false`. Quando `true`, adia a resolução dos métodos `@DynamicMethod`/`@QueryMethod` — o próprio repository precisa chamar `resolveDynamicMethods()` manualmente depois. Veja [Resolução lazy dos métodos dinâmicos](./dynamic-methods.pt-BR.md#resolução-lazy-dos-métodos-dinâmicos).                                                              |
 | `vsPlaceholders`     | `boolean`                    | Opcional. O padrão é `true`. Strings SQL cruas passadas para `query()` e `@QueryMethod` usam os placeholders próprios do VSRepository (`?1`, `?2`, ...) em vez da sintaxe nativa do seu adapter. Passe `false` para escrever a sintaxe nativa. Veja [Placeholders agnósticos com `vsPlaceholders`](./query-methods.pt-BR.md#placeholders-agnósticos-com-vsplaceholders). |
-| `mergeConfig`        | `MergeConfig<Entity>`        | Opcional. Configuração padrão usada pelo `merge()`, mesclada sobre a global; uma chamada pode sobrescrever partes dela com `options.mergeConfig`. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge).                                                                                                                                                |
+| `mergeConfig`        | `MergeConfig<Entity>`        | Opcional. Configuração padrão usada pelo `merge()`/`combine()`, mesclada sobre a global; uma chamada pode sobrescrever partes dela com `options.mergeConfig`. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge).                                                                                                                                    |
 
 O soft-delete não é mais uma option do construtor — ele é habilitado com o decorator [`@EnableSoftDelete`](#soft-delete).
 
@@ -36,13 +36,13 @@ VSRepository.setGlobalConfig({
 });
 ```
 
-| Campo                | Descrição                                                                                                                                                                                           |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `softDeleteField`    | Campo de soft-delete usado pelo `@EnableSoftDelete()` quando ele não especifica um próprio.                                                                                                         |
-| `logLevel`           | Padrão da option `logLevel`.                                                                                                                                                                        |
-| `lazyDynamicMethods` | Padrão da option `lazyDynamicMethods`.                                                                                                                                                              |
-| `vsPlaceholders`     | Padrão da option `vsPlaceholders`.                                                                                                                                                                  |
-| `mergeConfig`        | Padrão de `undefinedBehavior` e `nullBehavior` do `merge()`. As configs do repository e da chamada são mescladas sobre ele, veja [Mesclando registros com `merge`](#mesclando-registros-com-merge). |
+| Campo                | Descrição                                                                                                                                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `softDeleteField`    | Campo de soft-delete usado pelo `@EnableSoftDelete()` quando ele não especifica um próprio.                                                                                                                     |
+| `logLevel`           | Padrão da option `logLevel`.                                                                                                                                                                                    |
+| `lazyDynamicMethods` | Padrão da option `lazyDynamicMethods`.                                                                                                                                                                          |
+| `vsPlaceholders`     | Padrão da option `vsPlaceholders`.                                                                                                                                                                              |
+| `mergeConfig`        | Padrão de `undefinedBehavior` e `nullBehavior` do `merge()`/`combine()`. As configs do repository e da chamada são mescladas sobre ele, veja [Mesclando registros com `merge`](#mesclando-registros-com-merge). |
 
 ---
 
@@ -78,6 +78,7 @@ Disponíveis automaticamente em toda subclasse de `VSRepository`. `where` é um 
 | `updateManyReturning(where, obj, options?)` | O mesmo que `updateMany`, mas retorna os registros atualizados.                                                                                                                                                                     |
 | `patch(id, obj, options?)`                  | O mesmo que `update`, pela chave primária.                                                                                                                                                                                          |
 | `merge(where, obj, options?)`               | Busca o registro que bate em `where` e o retorna com um merge profundo, em memória, com o objeto informado — **não** persiste nada; `null` se nenhum bater. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge). |
+| `combine(id, obj, options?)`                | O mesmo que `merge`, mas busca o registro pela chave primária em vez de um `where` — `null` se nenhum bater. Veja [Mesclando registros com `merge`](#mesclando-registros-com-merge).                                                |
 
 **Remoção** (permanente — para soft-delete veja [abaixo](#soft-delete))
 
@@ -148,6 +149,12 @@ A mesma operação existe como [método dinâmico](./dynamic-methods.pt-BR.md#pr
 
 `merge(where, obj, options?)` busca o registro que bate em `where` e o combina, **em memória**, com `obj`. Nada é persistido — passe o resultado para `save` ou `patch` para gravá-lo. O `defaultOrdering` é aplicado, a menos que `options.order` seja informado, o que importa quando mais de um registro bate.
 
+`combine(id, obj, options?)` é a versão por chave primária: busca o registro pelo `id` em vez de um `where` e, fora isso, se comporta exatamente como o `merge`.
+
+```typescript
+const user = await userRepository.combine(1, { name: "Maria" });
+```
+
 Sem nenhuma configuração, cada campo de `obj` sobrescreve o armazenado: objetos aninhados e arrays são **substituídos**, não mesclados; valores `undefined` são ignorados; e valores `null` são escritos. O registro buscado é o que é alterado e retornado, e o `obj` nunca é modificado.
 
 Para mudar isso, passe um [`MergeConfig`](./utility-types.pt-BR.md). Ele pode ser definido em três níveis, cada um **mesclado** sobre o anterior (uma propriedade definida em um nível mais específico vence, e as que ele não define são herdadas):
@@ -215,12 +222,12 @@ O registro é buscado com o `select`/`relations` das options, então carregue as
 
 A maioria dos métodos aceita um objeto de options como último argumento, com um formato que depende do método:
 
-| Tipo                                      | Campos                                                                   | Usado por                                                                                                                                                                                                             |
-| ----------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — os métodos de leitura, que também aplicam o `defaultOrdering` a menos que `order` seja passado.                                            |
-| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                                       | Métodos de um único registro que retornam uma `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., os métodos `*Returning` e os métodos de soft-delete de um registro.     |
-| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — as mesmas options de busca do `MethodOptions`, mais `mergeConfig`.                                                                                                                                          |
-| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                              | Métodos que não retornam uma `Entity` moldada — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, os métodos numéricos `*Many` e os métodos de soft-delete em lote. |
+| Tipo                                      | Campos                                                                                       | Usado por                                                                                                                                                                                                             |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — os métodos de leitura, que também aplicam o `defaultOrdering` a menos que `order` seja passado.                                            |
+| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `relationsOptions`, `see`, `db`                                       | Métodos de um único registro que retornam uma `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., os métodos `*Returning` e os métodos de soft-delete de um registro.     |
+| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge`, `combine` — as mesmas options de busca do `MethodOptions`, mais `mergeConfig`.                                                                                                                               |
+| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                                                  | Métodos que não retornam uma `Entity` moldada — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, os métodos numéricos `*Many` e os métodos de soft-delete em lote. |
 
 `createMany` e `createManyReturning` também aceitam `ignoreConflicts`. `transaction`, `query` e `getDbClient` aceitam suas próprias options ou nenhuma.
 
@@ -285,7 +292,7 @@ await userRepository.multiply("balance", 2, { id: "user-1" }); // balance = bala
 await userRepository.divide("balance", 4, { id: "user-1" }); // balance = balance / 4
 ```
 
-Os quatro retornam a `Entity` atualizada e aceitam `SimpleMethodOptions<Entity, OrmTypes>` (`select`, `relations`, `see`, `db`) como último argumento.
+Os quatro retornam a `Entity` atualizada e aceitam `SimpleMethodOptions<Entity, OrmTypes>` (`select`, `relations`, `relationsOptions`, `see`, `db`) como último argumento.
 
 Cada um tem uma variante `*Many` que aplica a operação a **todos** os registros que baterem em `where` e retorna `{ count }`, aceitando `RestrictMethodOptions<Entity, OrmTypes>` (`see`, `db`):
 

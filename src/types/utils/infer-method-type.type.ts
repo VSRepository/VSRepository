@@ -1,8 +1,8 @@
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
-import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
+import { RelationKeys, VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
 import { VSRepoSelect } from "../vsrepo/vsrepo-select.type.js";
 import { InferMethodReturn } from "./infer-method-return.type.js";
-import { MethodOptions } from "./methods-options.type.js";
+import { MethodOptions } from "./method-options.type.js";
 
 /** Entity type behind a method's return: `E`, `E | null`, `E[]` or `E[] | null` all give `E`. */
 type EntityOf<R> = NonNullable<R> extends readonly (infer U)[] ? U : NonNullable<R>;
@@ -29,20 +29,62 @@ type ExactSpec<S, Ref> = S extends object
           }
     : unknown;
 
-/** Applies `ExactSpec` to `select` and `relations`; `see`/`db` pass through, unknown keys become `never`. */
+/** Entity type behind a relation field: `U` for `U[]`, `U | null` and `U`. */
+type RelatedOf<F> = NonNullable<F> extends readonly (infer U)[] ? NonNullable<U> : NonNullable<F>;
+
+/**
+ * Checks that a `relationsOptions` object only names relation fields of `E`, and that each one only
+ * has the keys its kind allows (`order`/`pagination` are exclusive to to-many relations and `where`
+ * to to-many and optional to-one relations), recursing into the nested `relationsOptions`. The
+ * values of `where`, `order` and `pagination` are validated by the `Options` constraint, so they
+ * pass through.
+ */
+type ExactRelationsOptions<S, E> = S extends object
+    ? {
+          [P in keyof S]: P extends RelationKeys<E> ? ExactRelationOptions<S[P], E[P & keyof E]> : never;
+      }
+    : unknown;
+
+/** `F` is the type of the relation field, which tells to-many from to-one and optional from required. */
+type ExactRelationOptions<S, F> = S extends object
+    ? {
+          [K in keyof S]: K extends "where"
+              ? NonNullable<F> extends readonly unknown[]
+                  ? S[K]
+                  : null extends F
+                    ? S[K]
+                    : undefined extends F
+                      ? S[K]
+                      : never
+              : K extends "order" | "pagination"
+                ? NonNullable<F> extends readonly unknown[]
+                    ? S[K]
+                    : never
+                : K extends "relationsOptions"
+                  ? ExactRelationsOptions<S[K], RelatedOf<F>>
+                  : never;
+      }
+    : unknown;
+
+/**
+ * Applies `ExactSpec` to `select` and `relations` and `ExactRelationsOptions` to `relationsOptions`;
+ * `see`/`db` pass through, unknown keys become `never`.
+ */
 type ExactOptions<O, E> = {
     [K in keyof O]: K extends "select"
         ? ExactSpec<O[K], VSRepoSelect<E>>
         : K extends "relations"
           ? ExactSpec<O[K], VSRepoRelations<E>>
-          : K extends "see" | "db"
-            ? O[K]
-            : never;
+          : K extends "relationsOptions"
+            ? ExactRelationsOptions<O[K], E>
+            : K extends "see" | "db"
+              ? O[K]
+              : never;
 };
 
 /**
  * Declares a dynamic method whose return type is strictly inferred from the `select` / `relations`
- * passed on each call (same rules as `InferMethodReturn`). Unknown keys in `select`/`relations` are rejected.
+ * passed on each call (same rules as `InferMethodReturn`). Unknown keys in `select`/`relations`/`relationsOptions` are rejected.
  * `options` is always the last parameter.
  *
  * @template Args Positional arguments of the method, without `options` (e.g. `[name: string]`).

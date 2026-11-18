@@ -25,7 +25,7 @@ super({
 | `ERROR`         | Falhas detectadas pela própria biblioteca (ex.: um método dinâmico inválido), registradas logo antes do `VSRepoError` ser lançado. |
 | `NONE`          | Desativa completamente os logs.                                                                                                    |
 
-O [query builder](./query-builder.pt-BR.md#logs-do-query-builder) usa o mesmo logger: em `DEBUG` ele também registra cada chamada encadeada e a query resolvida de cada método terminal, e cada método terminal tem o tempo medido como qualquer outra operação (também em `DEBUG`).
+O [query builder](./query-builder.pt-BR.md#logs-do-query-builder) usa o mesmo logger: em `DEBUG` ele registra a query resolvida de cada método terminal.
 
 ## Formato do log
 
@@ -35,15 +35,12 @@ Toda linha começa com um timestamp ISO, o nível e o nome do logger derivado da
 2026-09-21T05:02:02.087Z [INFO] [UserRepositoryLogger] Initializing UserRepository (pk: 'id', softDeleteField: 'deletedAt', defaultOrdering: {"createdAt":"desc"}, adapter: VSRepoPrisma7Adapter)
 ```
 
-Todo método base e todo método dinâmico tem o tempo medido automaticamente. Com `logLevel: VSLogLevel.DEBUG`, uma chamada `userRepository.save({ name: "Joao", email: "joao@email.com" })` imprime:
+Todo método base e todo método dinâmico registra uma única linha `DEBUG` quando roda. Com `logLevel: VSLogLevel.DEBUG`, uma chamada `userRepository.save({ name: "Joao", email: "joao@email.com" })` imprime:
 
 ```text
-2026-09-21T05:02:02.088Z [DEBUG] [UserRepositoryLogger] Starting to run save...
-2026-09-21T05:02:02.091Z [DEBUG] [UserRepositoryLogger] Took 2.73ms to run save
+2026-09-21T05:02:02.088Z [DEBUG] [UserRepositoryLogger] Running BaseMethod 'save'
 ```
 
-A duração só é informada no nível `DEBUG` — não existem avisos de operação lenta.
-
-O nome da operação nessas linhas (`save`, `findByEmail`, `getResultAndCount`, ...) é o método base, o método dinâmico ou o método terminal do query builder que foi chamado.
+Os métodos dinâmicos seguem a mesma ideia, imprimindo `Running DynamicMethod '<nome>' (-> <operação>)`, e os query methods imprimem `Running QueryMethod '<nome>':` seguido da query resolvida e de seus argumentos.
 
 [⬆️ Voltar ao topo](#top)

@@ -43,6 +43,12 @@ export type {
     VSRepoFieldOperators,
 } from "./types/vsrepo/vsrepo-where.type.js";
 export type { VSRepoRelations, RelationKeys } from "./types/vsrepo/vsrepo-relations.type.js";
+export type {
+    VSRepoRelationsOptions,
+    VSRepoRelationOptions,
+    VSRepoOptionalRelationOptions,
+    VSRepoToManyRelationOptions,
+} from "./types/vsrepo/vsrepo-relations-options.type.js";
 export type { VSRepoSelect } from "./types/vsrepo/vsrepo-select.type.js";
 export type { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
 export type { AdapterMethodOptions } from "./types/adapter/adapter-method-options.type.js";
@@ -53,7 +59,7 @@ export type { CountResult } from "./types/utils/count-result.type.js";
 export type { DeepPartial } from "./types/utils/deep-partial.type.js";
 export type { MergeConfig, MergeFieldConfig, MergeFields, MergeOptions } from "./types/utils/merge-config.type.js";
 export type { KeysOfType } from "./types/utils/keys-of-type.type.js";
-export type { MethodOptions } from "./types/utils/methods-options.type.js";
+export type { MethodOptions } from "./types/utils/method-options.type.js";
 export type { InferMethodReturn } from "./types/utils/infer-method-return.type.js";
 export type { InferMethodType } from "./types/utils/infer-method-type.type.js";
 export type { Ordering, OrderByField, SortDirection } from "./types/utils/ordering.type.js";
@@ -73,7 +79,7 @@ export type { PaginatedResult } from "./types/utils/paginated-result.type.js";
 export type { ResolvedMethodsResult } from "./types/utils/resolved-methods-result.type.js";
 export type { ClientOrTransaction } from "./types/utils/client-or-transaction.type.js";
 export type { VSRepoGlobalConfig } from "./types/vsrepo/vsrepo-global-config.type.js";
-export type { SimpleMethodOptions } from "./types/utils/simple-methods-options.type.js";
+export type { SimpleMethodOptions } from "./types/utils/simple-method-options.type.js";
 export type { SimpleAdapterMethodOptions } from "./types/adapter/simple-adapter-method-options.type.js";
 export type { RestrictAdapterMethodOptions } from "./types/adapter/restrict-adapter-method-options.type.js";
 export type { CompiledQuery } from "./types/utils/compiled-query.type.js";
