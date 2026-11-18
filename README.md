@@ -17,7 +17,7 @@ VSRepository is an **ORM-agnostic repository pattern library for TypeScript**. I
 
 VSRepository lets you create strongly-typed repositories with:
 
-- Automatic **base methods**: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow`, `save`, `create`, `createMany`, `update`, `updateMany`, `upsert`, `patch`, `merge`, `delete`, `deleteMany`, `remove`, `count`, `exists`, `has`, plus atomic (`increment`, ...) and aggregate (`sum`, ...) methods
+- Automatic **base methods**: `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow`, `save`, `create`, `createMany`, `update`, `updateMany`, `upsert`, `patch`, `merge`, `combine`, `delete`, `deleteMany`, `remove`, `count`, `exists`, `has`, plus atomic (`increment`, ...) and aggregate (`sum`, ...) methods
 - **Native soft-delete** with `@EnableSoftDelete`: `softDelete`, `softRemove`, `softDeleteMany`, `restore`, `recover`, `restoreMany`
 - **Dynamic methods** inferred from a `declare` field name via the `@DynamicMethod` decorator: `findOneByEmail`, `findByStatusPaginated`, `updateById`
 - **Raw SQL query methods** via the `@QueryMethod` decorator (bypassing the name-parsing engine entirely), parameterized `VSSql` fragments for ad-hoc `query()` calls, and agnostic `?1`, `?2` placeholders with `vsPlaceholders`
@@ -35,7 +35,7 @@ VSRepository is installed as the core package plus one adapter package for your 
 > Version 3 of `VSRepository` is under development, use the **dev** tag to access it.
 
 ```bash
-npm i vsrepo@dev @vsrepo/prisma7-adapter
+npm i vsrepo@dev @vsrepo/prisma7-adapter@dev
 ```
 
 ---
