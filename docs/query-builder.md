@@ -154,13 +154,12 @@ Errors thrown by the adapter while the query runs (e.g. `VSRepoAdapterError`) ar
 
 The builder uses the repository's logger, so it follows the same `logLevel` (see [Logging](./logging.md#logging)):
 
-- `DEBUG` traces every chained call and, for each terminal method, the resolved query: the `see` mode, the final `where` (already including the soft-delete filter) and the options sent to the adapter. The `db` is never logged.
-- Every terminal method is timed as `run query builder <method>`, and the duration is logged at `DEBUG`.
+- `DEBUG` logs each terminal method with the resolved query: the `see` mode, the final `where` (already including the soft-delete filter) and the options sent to the adapter. The `db` is never logged.
 
 For example, `.where({ active: true }).orderBy({ createdAt: "desc" }).limit(20).getResultAndCount()` on a repository with soft-delete enabled prints this at `DEBUG`:
 
 ```text
-[DEBUG] [UserRepositoryLogger] VSQueryBuilder: getResultAndCount
+[DEBUG] [UserRepositoryLogger] Running VSQueryBuilder's 'getResultAndCount':
 {
   "see": "active",
   "where": {
@@ -176,8 +175,6 @@ For example, `.where({ active: true }).orderBy({ createdAt: "desc" }).limit(20).
     }
   }
 }
-[DEBUG] [UserRepositoryLogger] Starting to run query builder getResultAndCount...
-[DEBUG] [UserRepositoryLogger] Took 0.11ms to run query builder getResultAndCount
 ```
 
 [⬆️ Back to top](#top)

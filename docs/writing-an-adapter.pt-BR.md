@@ -16,7 +16,7 @@ O `VSRepository` é dono de toda a abstração. Dado uma chamada como `userRepos
 
 - resolve a primary key em um `VSRepoWhere<T>` (`{ id: "user-1" }`),
 - junta o filtro de soft-delete implícito por `@EnableSoftDelete`/`see`,
-- loga a operação e mede o tempo,
+- loga a operação em `DEBUG`,
 - e então chama **exatamente um** método no seu adapter, com o `where` e as options já resolvidos.
 
 Tudo acima é agnóstico de ORM e compartilhado por todos os adapters. O que fica com você é o último passo — e é nele que está a maior parte do esforço: transformar um `VSRepoWhere<T>` mais um `AdapterMethodOptions<T>` em uma leitura ou escrita real contra o seu banco, e transformar o resultado de volta em um `T`. O seu adapter é o **único** código da stack que sabe que o seu ORM existe.
@@ -147,12 +147,12 @@ export class MyOrmAdapter<T> extends VSRepoAdapter<T> {
 
 O logger apenas observa a falha; o `VSRepoAdapterError` é o que quem chama realmente recebe, que é o encapsulamento que a regra acima exige.
 
-| Método                                               | Descrição                                                                                   |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `new VSLogger(logLevel, name)`                       | Cria um logger; `name` prefixa cada linha.                                                  |
-| `logDebug/logInfo/logWarn(text, obj?)`               | Loga no nível dado se `logLevel` permitir; `obj` é anexado como JSON formatado.             |
-| `logError(text, err?)`                               | Loga em `ERROR`; se `err` for uma `Error`, só `name`/`message`/`stack`/`cause` são logados. |
-| `getLogLevel()`                                      | Retorna o `VSLogLevel` configurado do logger.                                               |
+| Método                                 | Descrição                                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `new VSLogger(logLevel, name)`         | Cria um logger; `name` prefixa cada linha.                                                  |
+| `logDebug/logInfo/logWarn(text, obj?)` | Loga no nível dado se `logLevel` permitir; `obj` é anexado como JSON formatado.             |
+| `logError(text, err?)`                 | Loga em `ERROR`; se `err` for uma `Error`, só `name`/`message`/`stack`/`cause` são logados. |
+| `getLogLevel()`                        | Retorna o `VSLogLevel` configurado do logger.                                               |
 
 Isso é puramente uma conveniência para autores de adapters — nada no core exige que seu adapter o utilize.
 
