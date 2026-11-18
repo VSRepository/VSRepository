@@ -66,6 +66,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     private readonly defaultOrdering?: Ordering<Entity>;
     private readonly vsPlaceholders: boolean;
     private readonly mergeConfig?: MergeConfig<Entity>;
+    private readonly lazyDynamicMethods?: boolean;
 
     private dynamicMethodsResolved = false;
     private alreadyWarnedResolveDynamicMethods = false;
@@ -117,7 +118,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         let dynamicMethodsCount: number | undefined;
         let queryMethodsCount: number | undefined;
 
-        config.lazyDynamicMethods ??= VSRepository.globalConfig.lazyDynamicMethods;
+        this.lazyDynamicMethods = config.lazyDynamicMethods ??= VSRepository.globalConfig.lazyDynamicMethods;
 
         if (!config.lazyDynamicMethods) {
             const result = this.resolveDynamicMethods();
@@ -167,6 +168,10 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
             this.alreadyWarnedResolveDynamicMethods = true;
         }
 
+        if (this.lazyDynamicMethods) {
+            this.logger.logInfo("Starting postponed resolution of dynamic methods");
+        }
+
         const dynamicMethodsResolver = new DynamicMethodsResolver<Entity, PKType>(
             this.logger,
             this.adapter,
@@ -184,6 +189,13 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
         } catch (err) {
             this.logger.logError(`Failed to initialize ${this.constructor.name}`, err);
             throw err;
+        }
+
+        if (this.lazyDynamicMethods) {
+            this.logger.logInfo(
+                `Postponed resolution of dynamic methods completed ` +
+                    `(${dynamicMethodsCount} dynamic method(s), ${queryMethodsCount} query method(s) resolved)`,
+            );
         }
 
         this.dynamicMethodsResolved = true;
