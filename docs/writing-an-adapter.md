@@ -26,7 +26,7 @@ The types you'll meet throughout the contract are all documented in [Utility typ
 | Type                      | Role in the contract                                                                                       |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `VSRepoWhere<T>`          | The already-resolved filter. It must be converted to the ORM equivalent for your adapter.                  |
-| `AdapterMethodOptions<T>` | The per-call options: `select`, `relations`, `see`, and the transaction handle.                            |
+| `AdapterMethodOptions<T>` | The per-call options: `select`, `relations`, `relationsOptions`, `see`, and the transaction handle.        |
 | `DeepPartial<T>`          | A partial entity for writes — a nested `DeepPartial` of a relation is a nested partial, not a full object. |
 | `CountResult`             | What `createMany`/`deleteMany`/`updateMany` resolve to when the caller only wants `{ count }`.             |
 | `NumericKeys<T>`          | Constrains the atomic/aggregate `field` argument to numeric (or `DecimalLike`) columns.                    |
@@ -46,6 +46,8 @@ The contract is the abstract class `VSRepoAdapter<T>`. Every instance method bel
 | Optional (not `abstract`) | `getPkName?()`                                                                               | Declares the entity's primary-key field so `pkName` can be omitted from the repository config.                                                               |
 | Optional static           | `setGlobalConfig?(config)`                                                                   | Configures adapter-specific defaults shared by adapter instances. See below.                                                                                 |
 | Optional static           | `execInTransaction?(dbClient, fn, options?)`                                                 | Opens a transaction directly from a database client when the underlying ORM supports it. See below.                                                          |
+
+`AdapterMethodOptions.relationsOptions` tells the adapter how to load the relations requested through `select`/`relations`: an object keyed by relation field, where each relation may carry `where` (on to-many relations and on to-one relations that can be `null`/`undefined`), `order` and `pagination` (only on to-many relations) and a nested `relationsOptions` for its own relations. Translate it to your ORM's nested read arguments (for instance, Prisma's `include: { posts: { where, orderBy, skip, take } }`) in both the `select` and the `relations` paths. If your ORM doesn't support, throw a clear `VSRepoError`, and document it. See [Filtering, ordering and paginating relations with `relationsOptions`](./select-and-relations.md#filtering-ordering-and-paginating-relations-with-relationsoptions).
 
 The optional `getPkName()` lets the adapter declare the entity's primary-key field to the repository. When instantiating a `VSRepository`, you can omit `pkName` from the constructor config and it will be read from `adapter.getPkName()`. If you omit it and the adapter doesn't implement `getPkName()`, the constructor throws a `VSRepoError`.
 

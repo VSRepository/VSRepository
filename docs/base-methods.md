@@ -215,12 +215,12 @@ The record is fetched with the `select`/`relations` from the options, so load th
 
 Most methods accept an options object as their last argument, with a shape that depends on the method:
 
-| Type                                      | Fields                                                                   | Used by                                                                                                                                                                                                          |
-| ----------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — the read methods, which also apply `defaultOrdering` unless `order` is passed.                                                        |
-| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                                       | Single-record methods that return an `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., the `*Returning` methods and the soft-delete single-record methods.         |
-| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — the same fetch options as `MethodOptions`, plus `mergeConfig`.                                                                                                                                         |
-| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                              | Methods that don't return a shaped `Entity` — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, the `*Many` numeric methods and the soft-delete batch methods. |
+| Type                                      | Fields                                                                                       | Used by                                                                                                                                                                                                          |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — the read methods, which also apply `defaultOrdering` unless `order` is passed.                                                        |
+| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `relationsOptions`, `see`, `db`                                       | Single-record methods that return an `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., the `*Returning` methods and the soft-delete single-record methods.         |
+| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — the same fetch options as `MethodOptions`, plus `mergeConfig`.                                                                                                                                         |
+| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                                                  | Methods that don't return a shaped `Entity` — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, the `*Many` numeric methods and the soft-delete batch methods. |
 
 `createMany` and `createManyReturning` also accept `ignoreConflicts`. `transaction`, `query` and `getDbClient` accept their own options or none at all.
 
@@ -285,7 +285,7 @@ await userRepository.multiply("balance", 2, { id: "user-1" }); // balance = bala
 await userRepository.divide("balance", 4, { id: "user-1" }); // balance = balance / 4
 ```
 
-All four return the updated `Entity` and accept `SimpleMethodOptions<Entity, OrmTypes>` (`select`, `relations`, `see`, `db`) as their last argument.
+All four return the updated `Entity` and accept `SimpleMethodOptions<Entity, OrmTypes>` (`select`, `relations`, `relationsOptions`, `see`, `db`) as their last argument.
 
 Each one has a `*Many` variant that applies the operation to **every** record matching `where` and returns `{ count }`, accepting `RestrictMethodOptions<Entity, OrmTypes>` (`see`, `db`):
 

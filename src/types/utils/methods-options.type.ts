@@ -1,6 +1,7 @@
 import { SeeMode } from "./see-mode.type.js";
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
 import { VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
+import { VSRepoRelationsOptions } from "../vsrepo/vsrepo-relations-options.type.js";
 import { VSRepoSelect } from "../vsrepo/vsrepo-select.type.js";
 import { ClientOrTransaction } from "./client-or-transaction.type.js";
 import { Pagination } from "./pagination.type.js";
@@ -19,6 +20,11 @@ export type MethodOptions<T, K extends VSRepoOrmTypes = VSRepoOrmTypes> = {
     select?: VSRepoSelect<T>;
     /** Relations to eagerly load alongside the result. */
     relations?: VSRepoRelations<T>;
+    /**
+     * Filter, order and pagination of the related records loaded by `select` or `relations`.
+     * Only configures relations that are already being loaded; it doesn't load them by itself.
+     */
+    relationsOptions?: VSRepoRelationsOptions<T>;
     /** Visibility mode for records with soft-delete. Defaults to `"active"`. */
     see?: SeeMode;
     /** Database client or transaction to run this operation in, instead of the repository's default client. */

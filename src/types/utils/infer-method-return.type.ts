@@ -8,6 +8,7 @@ import { SeeMode } from "./see-mode.type.js";
 type InferMethodReturnOptions = {
     select?: object | undefined;
     relations?: object | undefined;
+    relationsOptions?: object | undefined;
     see?: SeeMode | undefined;
     db?: unknown;
 };

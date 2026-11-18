@@ -38,7 +38,7 @@ class UserRepository extends VSRepository<User, string> {
 }
 ```
 
-> **O `MethodOptions` é sempre aceito:** todo método dinâmico, qualquer que seja o prefixo, aceita um `MethodOptions<Entity, OrmTypes>` opcional (`select`, `relations`, `see`, `db`, ...) como seu **último** argumento — o resolver trata o argumento além do que o nome exige como `MethodOptions`. Você ainda precisa **declará-lo na assinatura TS** para o TypeScript deixar você passá-lo (como em todos os exemplos acima); os exemplos mais abaixo às vezes o omitem por brevidade, ao demonstrar outra coisa, mas ele está disponível em todos eles também.
+> **O `MethodOptions` é sempre aceito:** todo método dinâmico, qualquer que seja o prefixo, aceita um `MethodOptions<Entity, OrmTypes>` opcional (`select`, `relations`, `relationsOptions`, `see`, `db`, ...) como seu **último** argumento — o resolver trata o argumento além do que o nome exige como `MethodOptions`. Você ainda precisa **declará-lo na assinatura TS** para o TypeScript deixar você passá-lo (como em todos os exemplos acima); os exemplos mais abaixo às vezes o omitem por brevidade, ao demonstrar outra coisa, mas ele está disponível em todos eles também.
 
 ## Prefixos disponíveis
 
@@ -331,6 +331,7 @@ await userRepository.findOneByEmail("john@example.com", { relations: { address: 
 
 - `options` (`MethodOptions<Entity, OrmTypes>`) é sempre o **último** parâmetro, opcional, depois de todos os argumentos de `Args`. Se algum desses argumentos for opcional, passe `undefined` explicitamente para alcançar `options`.
 - Sem `options` o resultado tem apenas os campos escalares; com elas, segue as [mesmas regras](./select-and-relations.pt-BR.md#tipagem-de-retorno-restrita-com-infermethodreturn) do `InferMethodReturn` (inclusive `select` vencendo `relations`).
+- `relationsOptions` também é aceito e não altera o tipo do resultado.
 - Funciona junto com as [options do decorador](#options-do-decorador) (`proxyTo`, `injectOrdering`).
 - Foi pensado para métodos dinâmicos que retornam entidades (`findBy…`, `findOneBy…`, `findWhere…`, …). Os que não retornam — `countBy…`, `existsBy…` — mantêm a assinatura normal.
 

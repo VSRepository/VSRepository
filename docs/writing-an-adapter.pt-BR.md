@@ -26,7 +26,7 @@ Os tipos que você vai encontrar pelo contrato estão todos documentados em [Tip
 | Tipo                      | Papel no contrato                                                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `VSRepoWhere<T>`          | O filtro já resolvido. Deve ser convertido para o equivalente do ORM do seu Adapter.                                           |
-| `AdapterMethodOptions<T>` | As options da chamada: `select`, `relations`, `see` e o handle da transação.                                                   |
+| `AdapterMethodOptions<T>` | As options da chamada: `select`, `relations`, `relationsOptions`, `see` e o handle da transação.                               |
 | `DeepPartial<T>`          | Uma entidade parcial para escritas — uma `DeepPartial` aninhada de uma relação é uma parcial aninhada, não um objeto completo. |
 | `CountResult`             | O que `createMany`/`deleteMany`/`updateMany` resolvem quando quem chama só quer `{ count }`.                                   |
 | `NumericKeys<T>`          | Restringe o argumento `field` dos métodos atômicos/de agregação a colunas numéricas (ou `DecimalLike`).                        |
@@ -46,6 +46,8 @@ O contrato é a classe abstrata `VSRepoAdapter<T>`. Todos os métodos de instân
 | Opcional (não `abstract`) | `getPkName?()`                                                                               | Declara o campo de primary key da entidade para que `pkName` possa ser omitido da config do repository.                                                 |
 | Estático opcional         | `setGlobalConfig?(config)`                                                                   | Configura defaults específicos do adapter compartilhados pelas instâncias. Veja abaixo.                                                                 |
 | Estático opcional         | `execInTransaction?(dbClient, fn, options?)`                                                 | Abre uma transação diretamente a partir de um client do banco quando o ORM oferece suporte. Veja abaixo.                                                |
+
+`AdapterMethodOptions.relationsOptions` diz ao adapter como carregar as relações pedidas via `select`/`relations`: um objeto indexado pelo campo da relação, em que cada relação pode trazer `where` (em relações to-many e em relações to-one que podem ser `null`/`undefined`), `order` e `pagination` (só em relações to-many) e um `relationsOptions` aninhado para as relações dela. Traduza-o para os argumentos de leitura aninhados do seu ORM (por exemplo, o `include: { posts: { where, orderBy, skip, take } }` do Prisma), tanto no caminho do `select` quanto no do `relations`. Se o seu ORM não oferecer suporte, lance um `VSRepoError` claro, e documente. Veja [Filtrando, ordenando e paginando relations com `relationsOptions`](./select-and-relations.pt-BR.md#filtrando-ordenando-e-paginando-relations-com-relationsoptions).
 
 O `getPkName()` opcional permite que o adapter declare ao repository qual campo é a primary key da entidade. Ao instanciar um `VSRepository`, você pode omitir o `pkName` da config do construtor e ele será lido do `adapter.getPkName()`. Se você omitir e o adapter não implementar o `getPkName()`, o construtor lança um `VSRepoError`.
 

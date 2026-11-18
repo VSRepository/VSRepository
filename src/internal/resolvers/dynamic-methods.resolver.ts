@@ -656,6 +656,7 @@ export class DynamicMethodsResolver<T, K> {
         if (!withoutSelect) {
             vsrepoArgs.options.select = specificSelect ?? options.select;
             vsrepoArgs.options.relations = options.relations;
+            vsrepoArgs.options.relationsOptions = options.relationsOptions;
         }
 
         if (dataPayload) {

@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- New `relationsOptions` option on `MethodOptions` (and therefore on `SimpleMethodOptions` and `MergeOptions`) and on `AdapterMethodOptions` to filter, order and paginate the related records loaded by `select` or `relations`: to-many relations accept `where`, `order` and `pagination`, to-one relations that can be `null`/`undefined` accept `where`, and every relation accepts a nested `relationsOptions` for its own relations
+- `relationsOptions` is typed per relation: unknown relations, `order`/`pagination` on to-one relations and `where` on required to-one relations are compile-time errors, including in dynamic methods declared with `InferMethodType`
+- `VSQueryBuilder` now has a `relationsOptions()` method
+- Dynamic methods now forward `relationsOptions` to the adapter, together with `select` and `relations`
+- Exported the `VSRepoRelationsOptions`, `VSRepoRelationOptions`, `VSRepoOptionalRelationOptions` and `VSRepoToManyRelationOptions` types from the package root
+
+### Documentation
+
+- Documented `relationsOptions` in `select-and-relations`, the query builder, the utility types and the adapter-writing guide; it only configures relations already loaded by `select`/`relations`
+
+## [Unreleased] (Português)
+
+### Adicionado
+
+- Nova option `relationsOptions` em `MethodOptions` (e, portanto, em `SimpleMethodOptions` e `MergeOptions`) e em `AdapterMethodOptions` para filtrar, ordenar e paginar os registros relacionados carregados por `select` ou `relations`: relações to-many aceitam `where`, `order` e `pagination`, relações to-one que podem ser `null`/`undefined` aceitam `where`, e toda relação aceita um `relationsOptions` aninhado para as relações dela
+- `relationsOptions` é tipado por relação: relações inexistentes, `order`/`pagination` em relações to-one e `where` em relações to-one obrigatórias são erros em tempo de compilação, inclusive em métodos dinâmicos declarados com `InferMethodType`
+- O `VSQueryBuilder` agora possui o método `relationsOptions()`
+- Os métodos dinâmicos agora repassam `relationsOptions` ao adapter, junto com `select` e `relations`
+- Os tipos `VSRepoRelationsOptions`, `VSRepoRelationOptions`, `VSRepoOptionalRelationOptions` e `VSRepoToManyRelationOptions` agora são exportados pela raiz do pacote
+
+### Documentação
+
+- Documentado o `relationsOptions` em `select-and-relations`, no query builder, nos utility types e no guia de criação de adapters; ele só configura relações já carregadas por `select`/`relations`
+
 ## [3.0.0-dev.5] - 2026-11-14
 
 ### Added

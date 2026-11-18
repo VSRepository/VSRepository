@@ -25,15 +25,16 @@ For queries whose SQL is too specific for this builder's model — window functi
 
 ## Building the query
 
-| Method                 | Description                                                                                                                                                                             |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `select(select)`       | Fields (and nested relation fields) to select — same shape as in [`select` and `relations`](./select-and-relations.md#select-and-relations). Replaces any previous `select`.            |
-| `relations(relations)` | Relations to eagerly load. Replaces any previous `relations`.                                                                                                                           |
-| `where(where)`         | The filter: the same `VSRepoWhere` used by the rest of the library (field operators, relation filters and `AND`/`OR`/`NOT`). Replaces any previous filter.                              |
-| `orderBy(order)`       | An object or an array of objects with `"asc"`/`"desc"` (lower or upper case). Scalar fields and to-one relations (as a nested ordering) can be ordered. Replaces any previous ordering. |
-| `limit(limit)`         | Maximum number of records. Must be a non-negative integer.                                                                                                                              |
-| `offset(offset)`       | Number of records to skip. Must be a non-negative integer.                                                                                                                              |
-| `see(mode)`            | Soft-delete visibility: `"active"` (default), `"removed"` or `"all"`. See [Soft-delete with `see()`](#soft-delete-with-see).                                                            |
+| Method                               | Description                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `select(select)`                     | Fields (and nested relation fields) to select — same shape as in [`select` and `relations`](./select-and-relations.md#select-and-relations). Replaces any previous `select`.                                                                                                                                                         |
+| `relations(relations)`               | Relations to eagerly load. Replaces any previous `relations`.                                                                                                                                                                                                                                                                        |
+| `relationsOptions(relationsOptions)` | Filter (`where`), ordering (`order`) and pagination (`pagination`) of the related records loaded by `select`/`relations` — see [`relationsOptions`](./select-and-relations.md#filtering-ordering-and-paginating-relations-with-relationsoptions). It doesn't load the relations by itself. Replaces any previous `relationsOptions`. |
+| `where(where)`                       | The filter: the same `VSRepoWhere` used by the rest of the library (field operators, relation filters and `AND`/`OR`/`NOT`). Replaces any previous filter.                                                                                                                                                                           |
+| `orderBy(order)`                     | An object or an array of objects with `"asc"`/`"desc"` (lower or upper case). Scalar fields and to-one relations (as a nested ordering) can be ordered. Replaces any previous ordering.                                                                                                                                              |
+| `limit(limit)`                       | Maximum number of records. Must be a non-negative integer.                                                                                                                                                                                                                                                                           |
+| `offset(offset)`                     | Number of records to skip. Must be a non-negative integer.                                                                                                                                                                                                                                                                           |
+| `see(mode)`                          | Soft-delete visibility: `"active"` (default), `"removed"` or `"all"`. See [Soft-delete with `see()`](#soft-delete-with-see).                                                                                                                                                                                                         |
 
 Calling `where()` again replaces the previous filter, and the [soft-delete](#soft-delete-with-see) filter is added on top of it when the query runs. Since the builder is mutable, a filter that depends on optional inputs is easiest to build as an object first:
 
@@ -58,19 +59,19 @@ async function search(filters: { name?: string; onlyActive?: boolean; page: numb
 
 ## Getting results
 
-| Method                  | Returns                               | Adapter call         | Sent to the adapter                                                                  |
-| ----------------------- | ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
-| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getOneResult()`        | `Entity \| null`                      | `findOne`            | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getOneResultOrThrow()` | `Entity` (throws if not found)        | `findOneOrThrow`     | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getCount()`            | `number`                              | `count`              | `where`                                                                              |
-| `getExistence()`        | `boolean`                             | `exists`             | `where`                                                                              |
-| `getResultAndCount()`   | `{ result: Entity[]; count: number }` | `findMany` + `count` | `findMany`: `where`, `select`, `relations`, `order`, `pagination` — `count`: `where` |
+| Method                  | Returns                               | Adapter call         | Sent to the adapter                                                                                      |
+| ----------------------- | ------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination`                                |
+| `getOneResult()`        | `Entity \| null`                      | `findOne`            | `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination`                                |
+| `getOneResultOrThrow()` | `Entity` (throws if not found)        | `findOneOrThrow`     | `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination`                                |
+| `getCount()`            | `number`                              | `count`              | `where`                                                                                                  |
+| `getExistence()`        | `boolean`                             | `exists`             | `where`                                                                                                  |
+| `getResultAndCount()`   | `{ result: Entity[]; count: number }` | `findMany` + `count` | `findMany`: `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination` — `count`: `where` |
 
 Every terminal method also applies the [`see`](#soft-delete-with-see) mode to the `where` and runs on the builder's `db` (see [`setDb()`](#transactions-and-setdb)). Notes:
 
-- Results are typed as the whole `Entity`, just like the base methods — `select` and `relations` change what is loaded, not the type. See [Strict return typing with `InferMethodReturn`](./select-and-relations.md#strict-return-typing-with-infermethodreturn) if you want it narrowed.
-- `getCount()` and `getExistence()` only send the `where` (plus the `db`): `order`, `limit`/`offset`, `select` and `relations` are ignored, so a builder that has pagination still counts every matching record.
+- Results are typed as the whole `Entity`, just like the base methods — `select`, `relations` and `relationsOptions` change what is loaded, not the type. See [Strict return typing with `InferMethodReturn`](./select-and-relations.md#strict-return-typing-with-infermethodreturn) if you want it narrowed.
+- `getCount()` and `getExistence()` only send the `where` (plus the `db`): `order`, `limit`/`offset`, `select`, `relations` and `relationsOptions` are ignored, so a builder that has pagination still counts every matching record.
 - There is no `distinct` support in this builder — for `select distinct`, use [`selectDistinct()`](./raw-query-builder.md#building-the-query) on the raw query builder.
 
 ## Pagination with `getResultAndCount()`

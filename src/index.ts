@@ -43,6 +43,12 @@ export type {
     VSRepoFieldOperators,
 } from "./types/vsrepo/vsrepo-where.type.js";
 export type { VSRepoRelations, RelationKeys } from "./types/vsrepo/vsrepo-relations.type.js";
+export type {
+    VSRepoRelationsOptions,
+    VSRepoRelationOptions,
+    VSRepoOptionalRelationOptions,
+    VSRepoToManyRelationOptions,
+} from "./types/vsrepo/vsrepo-relations-options.type.js";
 export type { VSRepoSelect } from "./types/vsrepo/vsrepo-select.type.js";
 export type { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
 export type { AdapterMethodOptions } from "./types/adapter/adapter-method-options.type.js";

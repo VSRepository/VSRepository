@@ -3,6 +3,7 @@ import { VSRepoError } from "../../errors/VSRepoError.js";
 import { Ordering } from "../../types/utils/ordering.type.js";
 import { SeeMode } from "../../types/utils/see-mode.type.js";
 import { VSRepoRelations } from "../../types/vsrepo/vsrepo-relations.type.js";
+import { VSRepoRelationsOptions } from "../../types/vsrepo/vsrepo-relations-options.type.js";
 import { VSRepoSelect } from "../../types/vsrepo/vsrepo-select.type.js";
 import { VSRepoWhere } from "../../types/vsrepo/vsrepo-where.type.js";
 import { VSRepoAdapter } from "../../VSRepoAdapter.js";
@@ -13,7 +14,14 @@ import { getVsPlaceholder } from "./placeholder-fns.util.js";
 import { VSLogger } from "./vs-logger.util.js";
 import { VSQueryBuilder } from "./vs-query-builder.util.js";
 
-type User = { id: string; name: string; age: number; deletedAt: Date | null; address: { city: string; state: string } };
+type User = {
+    id: string;
+    name: string;
+    age: number;
+    deletedAt: Date | null;
+    address: { city: string; state: string } | null;
+    posts: { id: string; title: string; published: boolean; createdAt: Date }[];
+};
 
 describe("VSRawQueryBuilder", () => {
     const db = { db: 100 };
@@ -94,6 +102,75 @@ describe("VSRawQueryBuilder", () => {
                 expect.not.objectContaining({ relations: expect.anything() }),
             );
             expect(result).toBe(returned);
+        });
+    });
+
+    describe("relationsOptions", () => {
+        const relationsOptions: VSRepoRelationsOptions<User> = {
+            posts: { where: { published: true }, order: { createdAt: "desc" }, pagination: { limit: 10, offset: 5 } },
+            address: { where: { city: "tal" } },
+        };
+
+        it("should call the adapter with the provided relationsOptions", async () => {
+            const relations: VSRepoRelations<User> = { posts: true, address: true };
+            const returned = [{ id: "123", name: "joao", posts: [] }] as any;
+
+            vi.spyOn(adapter, "findMany").mockResolvedValue(returned);
+
+            const result = await qb.relations(relations).relationsOptions(relationsOptions).getResult();
+
+            expect(adapter.findMany).toHaveBeenCalledWith(
+                undefined,
+                expect.objectContaining({ relations, relationsOptions }),
+            );
+            expect(result).toBe(returned);
+        });
+
+        it("should call the adapter with the relationsOptions of every read terminal method", async () => {
+            vi.spyOn(adapter, "findMany").mockResolvedValue([]);
+            vi.spyOn(adapter, "findOne").mockResolvedValue(null);
+            vi.spyOn(adapter, "findOneOrThrow").mockResolvedValue({} as any);
+
+            qb.relationsOptions(relationsOptions);
+            await qb.getResult();
+            await qb.getOneResult();
+            await qb.getOneResultOrThrow();
+
+            for (const method of ["findMany", "findOne", "findOneOrThrow"] as const) {
+                expect(adapter[method]).toHaveBeenCalledWith(undefined, expect.objectContaining({ relationsOptions }));
+            }
+        });
+
+        it("should call with no relationsOptions", async () => {
+            const returned = [{ id: "123", name: "joao" }] as any;
+
+            vi.spyOn(adapter, "findMany").mockResolvedValue(returned);
+
+            const result = await qb.getResult();
+
+            expect(adapter.findMany).toHaveBeenCalledWith(
+                undefined,
+                expect.not.objectContaining({ relationsOptions: expect.anything() }),
+            );
+            expect(result).toBe(returned);
+        });
+
+        it("should replace the previous relationsOptions instead of merging them", async () => {
+            vi.spyOn(adapter, "findMany").mockResolvedValue([]);
+
+            await qb
+                .relationsOptions({ posts: { pagination: { limit: 1 } } })
+                .relationsOptions({ address: { where: { city: "tal" } } })
+                .getResult();
+
+            expect(adapter.findMany).toHaveBeenCalledWith(
+                undefined,
+                expect.objectContaining({ relationsOptions: { address: { where: { city: "tal" } } } }),
+            );
+        });
+
+        it("should return the qb itself, to allow chaining", () => {
+            expect(qb.relationsOptions(relationsOptions)).toBe(qb);
         });
     });
 
@@ -355,6 +432,28 @@ describe("VSRawQueryBuilder", () => {
             expect({ ...qb }).toEqual({ ...qb2 });
         });
 
+        it("should keep the relationsOptions in the clone without sharing later changes with the original", async () => {
+            const relationsOptions: VSRepoRelationsOptions<User> = { posts: { pagination: { limit: 5 } } };
+            vi.spyOn(adapter, "findMany").mockResolvedValue([]);
+
+            const qb2 = qb.relationsOptions(relationsOptions).clone();
+            qb2.relationsOptions({ posts: { pagination: { limit: 1 } } });
+
+            await qb.getResult();
+            await qb2.getResult();
+
+            expect(adapter.findMany).toHaveBeenNthCalledWith(
+                1,
+                undefined,
+                expect.objectContaining({ relationsOptions }),
+            );
+            expect(adapter.findMany).toHaveBeenNthCalledWith(
+                2,
+                undefined,
+                expect.objectContaining({ relationsOptions: { posts: { pagination: { limit: 1 } } } }),
+            );
+        });
+
         it("a change in a clone should not change the original instance", () => {
             const qb2 = qb
                 .select({ id: true, name: true, age: true })
@@ -376,7 +475,10 @@ describe("VSRawQueryBuilder", () => {
     describe("getResult/getOneResult/getOneResultOrThrow/getCount/getExistence/getResultAndCount", () => {
         const mockWhere: VSRepoWhere<User> = { age: { gt: 18 } };
         const mockSelect: VSRepoSelect<User> = { id: true, name: true };
-        const mockRelations = { address: true };
+        const mockRelations = { address: true, posts: true };
+        const mockRelationsOptions: VSRepoRelationsOptions<User> = {
+            posts: { where: { published: true }, order: { createdAt: "desc" }, pagination: { limit: 3 } },
+        };
         const mockOrder: Ordering<User> = { name: "ASC" };
         const mockLimit = 10;
         const mockOffset = 10;
@@ -386,6 +488,7 @@ describe("VSRawQueryBuilder", () => {
 
             qb.select(mockSelect)
                 .relations(mockRelations)
+                .relationsOptions(mockRelationsOptions)
                 .where(mockWhere)
                 .see("all")
                 .orderBy(mockOrder)
@@ -412,6 +515,7 @@ describe("VSRawQueryBuilder", () => {
                 order: mockOrder,
                 select: mockSelect,
                 relations: mockRelations,
+                relationsOptions: mockRelationsOptions,
             });
             expect(result).toEqual([]);
         });
@@ -427,6 +531,7 @@ describe("VSRawQueryBuilder", () => {
                 order: mockOrder,
                 select: mockSelect,
                 relations: mockRelations,
+                relationsOptions: mockRelationsOptions,
             });
             expect(result).toEqual({ id: "uuid", name: "some guy" });
         });
@@ -442,6 +547,7 @@ describe("VSRawQueryBuilder", () => {
                 order: mockOrder,
                 select: mockSelect,
                 relations: mockRelations,
+                relationsOptions: mockRelationsOptions,
             });
             expect(result).toEqual({ id: "uuid", name: "some guy" });
         });
@@ -476,6 +582,7 @@ describe("VSRawQueryBuilder", () => {
                 order: mockOrder,
                 select: mockSelect,
                 relations: mockRelations,
+                relationsOptions: mockRelationsOptions,
             });
             expect(adapter.count).toHaveBeenCalledWith(mockWhere, {
                 db,
@@ -496,6 +603,7 @@ describe("VSRawQueryBuilder", () => {
                 order: mockOrder,
                 select: mockSelect,
                 relations: mockRelations,
+                relationsOptions: mockRelationsOptions,
             });
         });
     });

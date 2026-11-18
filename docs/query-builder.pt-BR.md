@@ -25,15 +25,16 @@ Para queries cujo SQL é específico demais para o modelo desse builder — fun�
 
 ## Construindo a query
 
-| Método                 | Descrição                                                                                                                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `select(select)`       | Campos (e campos de relações aninhadas) a selecionar — mesmo formato de [`select` e `relations`](./select-and-relations.pt-BR.md#select-e-relations). Substitui qualquer `select` anterior.                  |
-| `relations(relations)` | Relações a carregar junto. Substitui qualquer `relations` anterior.                                                                                                                                          |
-| `where(where)`         | O filtro: o mesmo `VSRepoWhere` usado no resto da biblioteca (operadores de campo, filtros de relação e `AND`/`OR`/`NOT`). Substitui qualquer filtro anterior.                                               |
-| `orderBy(order)`       | Um objeto ou um array de objetos com `"asc"`/`"desc"` (minúsculo ou maiúsculo). Campos escalares e relações to-one (como uma ordenação aninhada) podem ser ordenados. Substitui qualquer ordenação anterior. |
-| `limit(limit)`         | Número máximo de registros. Precisa ser um inteiro não negativo.                                                                                                                                             |
-| `offset(offset)`       | Número de registros a pular. Precisa ser um inteiro não negativo.                                                                                                                                            |
-| `see(mode)`            | Visibilidade do soft-delete: `"active"` (padrão), `"removed"` ou `"all"`. Veja [Soft-delete com `see()`](#soft-delete-com-see).                                                                              |
+| Método                               | Descrição                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `select(select)`                     | Campos (e campos de relações aninhadas) a selecionar — mesmo formato de [`select` e `relations`](./select-and-relations.pt-BR.md#select-e-relations). Substitui qualquer `select` anterior.                                                                                                                                                             |
+| `relations(relations)`               | Relações a carregar junto. Substitui qualquer `relations` anterior.                                                                                                                                                                                                                                                                                     |
+| `relationsOptions(relationsOptions)` | Filtro (`where`), ordenação (`order`) e paginação (`pagination`) dos registros relacionados carregados por `select`/`relations` — veja [`relationsOptions`](./select-and-relations.pt-BR.md#filtrando-ordenando-e-paginando-relations-com-relationsoptions). Não carrega as relações por conta própria. Substitui qualquer `relationsOptions` anterior. |
+| `where(where)`                       | O filtro: o mesmo `VSRepoWhere` usado no resto da biblioteca (operadores de campo, filtros de relação e `AND`/`OR`/`NOT`). Substitui qualquer filtro anterior.                                                                                                                                                                                          |
+| `orderBy(order)`                     | Um objeto ou um array de objetos com `"asc"`/`"desc"` (minúsculo ou maiúsculo). Campos escalares e relações to-one (como uma ordenação aninhada) podem ser ordenados. Substitui qualquer ordenação anterior.                                                                                                                                            |
+| `limit(limit)`                       | Número máximo de registros. Precisa ser um inteiro não negativo.                                                                                                                                                                                                                                                                                        |
+| `offset(offset)`                     | Número de registros a pular. Precisa ser um inteiro não negativo.                                                                                                                                                                                                                                                                                       |
+| `see(mode)`                          | Visibilidade do soft-delete: `"active"` (padrão), `"removed"` ou `"all"`. Veja [Soft-delete com `see()`](#soft-delete-com-see).                                                                                                                                                                                                                         |
 
 Chamar `where()` de novo substitui o filtro anterior, e o filtro de [soft-delete](#soft-delete-com-see) é adicionado por cima dele quando a query roda. Como o builder é mutável, um filtro que depende de entradas opcionais é mais fácil de montar como objeto antes:
 
@@ -58,19 +59,19 @@ async function buscar(filtros: { name?: string; apenasAtivos?: boolean; pagina: 
 
 ## Obtendo resultados
 
-| Método                  | Retorna                               | Chamada no adapter   | Enviado ao adapter                                                                   |
-| ----------------------- | ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
-| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getOneResult()`        | `Entity \| null`                      | `findOne`            | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getOneResultOrThrow()` | `Entity` (lança se não encontrar)     | `findOneOrThrow`     | `where`, `select`, `relations`, `order`, `pagination`                                |
-| `getCount()`            | `number`                              | `count`              | `where`                                                                              |
-| `getExistence()`        | `boolean`                             | `exists`             | `where`                                                                              |
-| `getResultAndCount()`   | `{ result: Entity[]; count: number }` | `findMany` + `count` | `findMany`: `where`, `select`, `relations`, `order`, `pagination` — `count`: `where` |
+| Método                  | Retorna                               | Chamada no adapter   | Enviado ao adapter                                                                                       |
+| ----------------------- | ------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| `getResult()`           | `Entity[]`                            | `findMany`           | `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination`                                |
+| `getOneResult()`        | `Entity \| null`                      | `findOne`            | `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination`                                |
+| `getOneResultOrThrow()` | `Entity` (lança se não encontrar)     | `findOneOrThrow`     | `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination`                                |
+| `getCount()`            | `number`                              | `count`              | `where`                                                                                                  |
+| `getExistence()`        | `boolean`                             | `exists`             | `where`                                                                                                  |
+| `getResultAndCount()`   | `{ result: Entity[]; count: number }` | `findMany` + `count` | `findMany`: `where`, `select`, `relations`, `relationsOptions`, `order`, `pagination` — `count`: `where` |
 
 Todo método terminal também aplica o modo de [`see`](#soft-delete-com-see) ao `where` e roda no `db` do builder (veja [`setDb()`](#transações-e-setdb)). Observações:
 
-- Os resultados são tipados como a `Entity` inteira, igual aos métodos base — `select` e `relations` mudam o que é carregado, não o tipo. Veja [Tipagem de retorno restrita com `InferMethodReturn`](./select-and-relations.pt-BR.md#tipagem-de-retorno-restrita-com-infermethodreturn) se quiser estreitá-lo.
-- `getCount()` e `getExistence()` enviam apenas o `where` (mais o `db`): `order`, `limit`/`offset`, `select` e `relations` são ignorados, então um builder com paginação ainda conta todos os registros que batem.
+- Os resultados são tipados como a `Entity` inteira, igual aos métodos base — `select`, `relations` e `relationsOptions` mudam o que é carregado, não o tipo. Veja [Tipagem de retorno restrita com `InferMethodReturn`](./select-and-relations.pt-BR.md#tipagem-de-retorno-restrita-com-infermethodreturn) se quiser estreitá-lo.
+- `getCount()` e `getExistence()` enviam apenas o `where` (mais o `db`): `order`, `limit`/`offset`, `select`, `relations` e `relationsOptions` são ignorados, então um builder com paginação ainda conta todos os registros que batem.
 - Este builder não tem suporte a `distinct` — para `select distinct`, use o [`selectDistinct()`](./raw-query-builder.pt-BR.md) do raw query builder.
 
 ## Paginação com `getResultAndCount()`

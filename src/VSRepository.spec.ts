@@ -14,6 +14,8 @@ import { VSSql } from "./internal/utils/vs-sql.util.js";
 import { VSRepoConfig } from "./types/vsrepo/vsrepo-config.type.js";
 import { VSRepoAdapter } from "./VSRepoAdapter.js";
 import { VSRepository } from "./VSRepository.js";
+import { Ordering } from "./types/utils/ordering.type.js";
+import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
 
 interface User {
     id: string;
@@ -237,7 +239,7 @@ describe("VSRepository", () => {
             });
 
             it("should apply the soft delete field and the default ordering to dynamic methods", async () => {
-                const order = [{ age: "DESC" }] as any;
+                const order: Ordering<User> = [{ age: "DESC" }];
                 const repo = new SoftDynamicUserRepository({ adapter, defaultOrdering: order });
 
                 await repo.findByName("Ana");
@@ -403,7 +405,7 @@ describe("VSRepository", () => {
                 new SoftDynamicUserRepository({
                     adapter,
                     logLevel: VSLogLevel.INFO,
-                    defaultOrdering: [{ age: "ASC" }] as any,
+                    defaultOrdering: [{ age: "ASC" }],
                 });
 
                 const lines = consoleLog.mock.calls.map(([line]) => String(line));
@@ -550,6 +552,15 @@ describe("VSRepository", () => {
                 await make().merge(W, { age: 30 }, { db: "tx" });
 
                 expect(mocks.findOne).toHaveBeenCalledWith(W, { db: "tx" });
+            });
+
+            it("should forward relationsOptions to the findOne that fetches the record", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { order: { createdAt: "desc" } } };
+
+                await make().merge(W, { age: 30 }, { relations, relationsOptions });
+
+                expect(mocks.findOne).toHaveBeenCalledWith(W, { ...DB, relations, relationsOptions });
             });
 
             describe("mergeConfig", () => {
@@ -785,21 +796,58 @@ describe("VSRepository", () => {
                 const select = { id: true };
                 const relations = { posts: true };
 
-                await make().find(W, { select, relations } as any);
+                await make().find(W, { select, relations });
 
                 expect(mocks.findMany).toHaveBeenCalledWith(W, { db: "default-db", select, relations });
+            });
+
+            it("should forward relationsOptions to the adapter", async () => {
+                const relations = { posts: true };
+                const relationsOptions = {
+                    posts: { where: { published: true }, order: { createdAt: "desc" }, pagination: { limit: 10 } },
+                };
+
+                await make().find(W, { relations, relationsOptions });
+
+                expect(mocks.findMany).toHaveBeenCalledWith(W, { db: "default-db", relations, relationsOptions });
+            });
+
+            it("should forward relationsOptions on the single-record read methods", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { where: { published: true } } };
+
+                await make().get("1", { relations, relationsOptions });
+
+                expect(mocks.findOne).toHaveBeenCalledWith(expect.anything(), {
+                    db: "default-db",
+                    relations,
+                    relationsOptions,
+                });
             });
 
             it("should forward the options of the simple methods to the adapter", async () => {
                 const select = { id: true };
 
-                await make().update(W, { age: 1 }, { select, db: "tx" } as any);
+                await make().update(W, { age: 1 }, { select, db: "tx" });
 
                 expect(mocks.update).toHaveBeenCalledWith(W, { age: 1 }, { db: "tx", select });
             });
 
+            it("should forward relationsOptions on the simple methods", async () => {
+                const relations = { posts: true };
+                const relationsOptions = { posts: { pagination: { limit: 2 } } };
+
+                await make().update(W, { age: 1 }, { relations, relationsOptions });
+
+                expect(mocks.update).toHaveBeenCalledWith(
+                    W,
+                    { age: 1 },
+                    { db: "default-db", relations, relationsOptions },
+                );
+            });
+
             it("should forward ignoreConflicts on the createMany methods", async () => {
-                await make().createMany([{ name: "Ana" }], { ignoreConflicts: true } as any);
+                await make().createMany([{ name: "Ana" }], { ignoreConflicts: true });
 
                 expect(mocks.createMany).toHaveBeenCalledWith([{ name: "Ana" }], {
                     db: "default-db",
@@ -856,7 +904,7 @@ describe("VSRepository", () => {
         });
 
         describe("default ordering", () => {
-            const defaultOrdering = [{ name: "ASC" }] as any;
+            const defaultOrdering: Ordering<User> = [{ name: "ASC" }];
 
             it.each([
                 ["find", "findMany", (r: UserRepository, o?: object) => r.find(W, o)],
@@ -875,7 +923,7 @@ describe("VSRepository", () => {
             });
 
             it("should prefer the order provided in the options", async () => {
-                const order = [{ age: "DESC" }] as any;
+                const order: Ordering<User> = [{ age: "DESC" }];
 
                 await make({ defaultOrdering }).find(W, { order });
 
@@ -1068,7 +1116,7 @@ describe("VSRepository", () => {
 
         it("should forward the transaction options", async () => {
             const fn = vi.fn();
-            const options = { isolationLevel: "SERIALIZABLE" } as any;
+            const options: VSRepoTransactionOptions = { isolationLevel: "Serializable" };
 
             await make().transaction(fn, options);
 
@@ -1136,7 +1184,7 @@ describe("VSRepository", () => {
         });
 
         it("should pass the db and the modifying flag on", async () => {
-            await make().query("delete from user", { db: "tx", modifying: true } as any);
+            await make().query("delete from user", { db: "tx", modifying: true });
 
             expect(mocks.query).toHaveBeenCalledWith("delete from user", { args: [], db: "tx", modifying: true });
         });
@@ -1204,7 +1252,7 @@ describe("VSRepository", () => {
             mocks.query!.mockResolvedValue(3);
 
             await expect(
-                make().query("update user set age = 1", { singleResult: true, modifying: true } as any),
+                make().query("update user set age = 1", { singleResult: true, modifying: true }),
             ).resolves.toBe(3);
         });
 
@@ -1274,9 +1322,7 @@ describe("VSRepository", () => {
         });
 
         it("should make the query builder use the provided db", async () => {
-            await make()
-                .createQueryBuilder("tx" as any)
-                .getResult();
+            await make().createQueryBuilder("tx").getResult();
 
             expect(mocks.findMany).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ db: "tx" }));
         });
@@ -1297,11 +1343,7 @@ describe("VSRepository", () => {
         });
 
         it("should make the raw query builder use the provided db", async () => {
-            await make()
-                .createRawQueryBuilder("tx" as any)
-                .select("1")
-                .from("user")
-                .execute();
+            await make().createRawQueryBuilder("tx").select("1").from("user").execute();
 
             expect(mocks.query).toHaveBeenCalledWith("select 1 from user", expect.objectContaining({ db: "tx" }));
         });

@@ -777,11 +777,30 @@ describe("DynamicMethodsResolver", () => {
                 expect(adapter.findMany).toHaveBeenCalledWith({ name: "Ana" }, { db: "default-db", select, relations });
             });
 
+            it("should forward relationsOptions to the adapter", async () => {
+                const repo = buildRepo("findByName");
+                const relations = { posts: true };
+                const relationsOptions = {
+                    posts: { where: { published: true }, order: { createdAt: "desc" }, pagination: { limit: 10 } },
+                };
+
+                await repo.findByName!("Ana", { relations, relationsOptions });
+
+                expect(adapter.findMany).toHaveBeenCalledWith(
+                    { name: "Ana" },
+                    { db: "default-db", relations, relationsOptions },
+                );
+            });
+
             it.each(["countByName", "existsByName", "deleteManyByName", "updateManyByName"])(
-                "should ignore select and relations on %s",
+                "should ignore select, relations and relationsOptions on %s",
                 async method => {
                     const repo = buildRepo(method);
-                    const options = { select: { id: true }, relations: { posts: true } };
+                    const options = {
+                        select: { id: true },
+                        relations: { posts: true },
+                        relationsOptions: { posts: { pagination: { limit: 1 } } },
+                    };
 
                     if (method === "updateManyByName") {
                         await repo[method]!("Ana", { age: 1 }, options);
@@ -797,22 +816,23 @@ describe("DynamicMethodsResolver", () => {
             );
 
             it.each(["deleteByName", "deleteManyReturningByName", "updateManyReturningByName"])(
-                "should keep select and relations on %s",
+                "should keep select, relations and relationsOptions on %s",
                 async method => {
                     const repo = buildRepo(method);
                     const select = { id: true };
                     const relations = { posts: true };
+                    const relationsOptions = { posts: { pagination: { limit: 1 } } };
 
                     if (method === "updateManyReturningByName") {
-                        await repo[method]!("Ana", { age: 1 }, { select, relations });
+                        await repo[method]!("Ana", { age: 1 }, { select, relations, relationsOptions });
                     } else {
-                        await repo[method]!("Ana", { select, relations });
+                        await repo[method]!("Ana", { select, relations, relationsOptions });
                     }
 
                     const adapterMethod = method.replace(/ByName$/, "");
                     const call = vi.mocked((adapter as any)[adapterMethod]).mock.calls[0]!;
 
-                    expect(call.at(-1)).toEqual({ db: "default-db", select, relations });
+                    expect(call.at(-1)).toEqual({ db: "default-db", select, relations, relationsOptions });
                 },
             );
 

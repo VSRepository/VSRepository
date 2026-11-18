@@ -215,12 +215,12 @@ O registro é buscado com o `select`/`relations` das options, então carregue as
 
 A maioria dos métodos aceita um objeto de options como último argumento, com um formato que depende do método:
 
-| Tipo                                      | Campos                                                                   | Usado por                                                                                                                                                                                                             |
-| ----------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — os métodos de leitura, que também aplicam o `defaultOrdering` a menos que `order` seja passado.                                            |
-| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `see`, `db`                                       | Métodos de um único registro que retornam uma `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., os métodos `*Returning` e os métodos de soft-delete de um registro.     |
-| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — as mesmas options de busca do `MethodOptions`, mais `mergeConfig`.                                                                                                                                          |
-| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                              | Métodos que não retornam uma `Entity` moldada — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, os métodos numéricos `*Many` e os métodos de soft-delete em lote. |
+| Tipo                                      | Campos                                                                                       | Usado por                                                                                                                                                                                                             |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MethodOptions<Entity, OrmTypes>`         | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`                | `find`, `findAndCount`, `findOne`, `findOneOrThrow`, `get`, `getOrThrow` — os métodos de leitura, que também aplicam o `defaultOrdering` a menos que `order` seja passado.                                            |
+| `SimpleMethodOptions<Entity, OrmTypes>`   | `select`, `relations`, `relationsOptions`, `see`, `db`                                       | Métodos de um único registro que retornam uma `Entity` — `save`, `create`, `update`, `patch`, `upsert`, `delete`, `remove`, `increment`, ..., os métodos `*Returning` e os métodos de soft-delete de um registro.     |
+| `MergeOptions<Entity, OrmTypes>`          | `select`, `relations`, `relationsOptions`, `see`, `db`, `pagination`, `order`, `mergeConfig` | `merge` — as mesmas options de busca do `MethodOptions`, mais `mergeConfig`.                                                                                                                                          |
+| `RestrictMethodOptions<Entity, OrmTypes>` | `see`, `db`                                                                                  | Métodos que não retornam uma `Entity` moldada — `count`, `exists`, `has`, `createMany`, `updateMany`, `deleteMany`, `sum`, `average`, `min`, `max`, os métodos numéricos `*Many` e os métodos de soft-delete em lote. |
 
 `createMany` e `createManyReturning` também aceitam `ignoreConflicts`. `transaction`, `query` e `getDbClient` aceitam suas próprias options ou nenhuma.
 
@@ -285,7 +285,7 @@ await userRepository.multiply("balance", 2, { id: "user-1" }); // balance = bala
 await userRepository.divide("balance", 4, { id: "user-1" }); // balance = balance / 4
 ```
 
-Os quatro retornam a `Entity` atualizada e aceitam `SimpleMethodOptions<Entity, OrmTypes>` (`select`, `relations`, `see`, `db`) como último argumento.
+Os quatro retornam a `Entity` atualizada e aceitam `SimpleMethodOptions<Entity, OrmTypes>` (`select`, `relations`, `relationsOptions`, `see`, `db`) como último argumento.
 
 Cada um tem uma variante `*Many` que aplica a operação a **todos** os registros que baterem em `where` e retorna `{ count }`, aceitando `RestrictMethodOptions<Entity, OrmTypes>` (`see`, `db`):
 
