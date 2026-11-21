@@ -11,10 +11,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added `VSRepoIsolationLevel.SNAPSHOT` for transactions that read from a consistent snapshot of the data
-- `CollectionLike<T>` and `ReferenceLike<T>`, structural types for ORM wrappers (e.g. MikroORM's `Collection`, `Reference` and `ScalarReference`), exported from the package root
+- `CollectionLike<T>` and `ReferenceLike<T>`, structural types for ORM wrappers (e.g. MikroORM's `Collection`, `Reference` and `ScalarReference`), exported from the package root together with the `FieldKind`, `FieldType` and `UnwrapReference` helper types
 - A `CollectionLike<U>` field is now a to-many relation of `U` in `RelationKeys`, `VSRepoRelations`, `VSRepoSelect`, `VSRepoWhere` (`_some`/`_every`/`_none`), `VSRepoRelationsOptions`, `InferMethodType` and `MergeFieldConfig`
 - A `ReferenceLike<T>` field is a scalar when `T` is a `Primitive` and a to-one relation of `T` otherwise; `VSRepoWhere`, `Ordering`, `VSRepoSelect`, `VSRepoRelations`, `VSRepoRelationsOptions` and `NumericKeys` use the wrapped type
 - `DeepPartial` accepts, for a `CollectionLike<U>` field, a `CollectionLike<DeepPartial<U>>` or a array of `DeepPartial<U>`; for a `ReferenceLike<T>` field, the reference or `T` when `T` is a `Primitive`, and a `ReferenceLike<DeepPartial<U>>` or a `DeepPartial<U>` otherwise
+- `increment`, `decrement`, `multiply` and `divide` (and their `Many` versions) take the wrapped number as `value` for numeric `ReferenceLike` fields
 - `InferMethodReturn` and `InferMethodType` keep the declared wrapper of `CollectionLike` and `ReferenceLike` fields in the inferred return
 - `CollectionLike` and `ReferenceLike` fields only accept `strategy: "custom"` in `mergeConfig.fields`
 - **Breaking (dev):** the `source` of `customFn` is now typed as a `DeepPartial` of the field for every field (it was the field type), since that is what `merge`/`combine` accept
@@ -32,10 +33,11 @@ All notable changes to this project will be documented in this file.
 ### Adicionado
 
 - Adicionado `VSRepoIsolationLevel.SNAPSHOT` para transações que leem uma visão consistente dos dados
-- `CollectionLike<T>` e `ReferenceLike<T>`, tipos estruturais para wrappers de ORM (ex.: `Collection`, `Reference` e `ScalarReference` do MikroORM), exportados pela raiz do pacote
+- `CollectionLike<T>` e `ReferenceLike<T>`, tipos estruturais para wrappers de ORM (ex.: `Collection`, `Reference` e `ScalarReference` do MikroORM), exportados pela raiz do pacote junto com os tipos auxiliares `FieldKind`, `FieldType` e `UnwrapReference`
 - Um campo `CollectionLike<U>` agora é uma relation to-many de `U` em `RelationKeys`, `VSRepoRelations`, `VSRepoSelect`, `VSRepoWhere` (`_some`/`_every`/`_none`), `VSRepoRelationsOptions`, `InferMethodType` e `MergeFieldConfig`
 - Um campo `ReferenceLike<T>` é escalar quando `T` é `Primitive` e uma relation to-one de `T` caso contrário; `VSRepoWhere`, `Ordering`, `VSRepoSelect`, `VSRepoRelations`, `VSRepoRelationsOptions` e `NumericKeys` usam o tipo embrulhado
 - O `DeepPartial` aceita, para um campo `CollectionLike<U>`, um `CollectionLike<DeepPartial<U>>` ou um array de `DeepPartial<U>`; para um campo `ReferenceLike<T>`, a referência ou `T` quando `T` é `Primitive`, e um `ReferenceLike<DeepPartial<U>>` ou um `DeepPartial<U>` caso contrário
+- `increment`, `decrement`, `multiply` e `divide` (e as versões `Many`) recebem o número embrulhado como `value` em campos numéricos `ReferenceLike`
 - `InferMethodReturn` e `InferMethodType` mantêm o wrapper declarado dos campos `CollectionLike` e `ReferenceLike` no retorno inferido
 - Campos `CollectionLike` e `ReferenceLike` só aceitam `strategy: "custom"` em `mergeConfig.fields`
 - **Breaking (dev):** o `source` do `customFn` agora é tipado como um `DeepPartial` do campo em todos os campos (antes era o tipo do campo), pois é isso que `merge`/`combine` aceitam

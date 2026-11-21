@@ -15,13 +15,9 @@ export type ReferenceValue<R> = R extends { unwrap(): infer T } ? Exclude<T, und
 /**
  * The wrapped type of a `ReferenceLike` field, keeping the nullability of the field itself
  * (`Ref<User> | null` gives `User | null`). Any other field type is returned untouched.
+ * It distributes over unions, so it also works on `T[K]` when `K` is a union of keys.
  */
-export type UnwrapReference<F> =
-    NonNullable<F> extends CollectionLike
-        ? F
-        : NonNullable<F> extends ReferenceLike
-          ? ReferenceValue<NonNullable<F>> | Extract<F, null | undefined>
-          : F;
+export type UnwrapReference<F> = F extends CollectionLike ? F : F extends ReferenceLike ? ReferenceValue<F> : F;
 
 /** Type of the items of a list-like field (`CollectionLike<U>`, `U[]` or `readonly U[]`), without `null`/`undefined`. */
 type ListItem<L> =

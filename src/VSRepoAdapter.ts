@@ -4,6 +4,7 @@ import { RestrictAdapterMethodOptions } from "./types/adapter/restrict-adapter-m
 import { SimpleAdapterMethodOptions } from "./types/adapter/simple-adapter-method-options.type.js";
 import { CountResult } from "./types/utils/count-result.type.js";
 import { DeepPartial } from "./types/utils/deep-partial.type.js";
+import { UnwrapReference } from "./types/utils/field-kind.type.js";
 import { NumericKeys } from "./types/utils/numeric-keys.type.js";
 import { WithIgnoreConflicts } from "./types/utils/with-ignore-conflicts.type.js";
 import { VSRepoTransactionOptions } from "./types/vsrepo/vsrepo-transaction-options.type.js";
@@ -130,7 +131,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Atomically adds `value` to `field` of the record matching `where`. */
     public abstract incrementOne<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
@@ -138,7 +139,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Atomically subtracts `value` from `field` of the record matching `where`. */
     public abstract decrementOne<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
@@ -146,7 +147,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Atomically multiplies `field` of the record matching `where` by `value`. */
     public abstract multiplyOne<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
@@ -154,7 +155,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Atomically divides `field` of the record matching `where` by `value`. */
     public abstract divideOne<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: SimpleAdapterMethodOptions<T>,
     ): Promise<T>;
@@ -162,7 +163,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Same as `incrementOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract incrementMany<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;
@@ -170,7 +171,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Same as `decrementOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract decrementMany<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;
@@ -178,7 +179,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Same as `multiplyOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract multiplyMany<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;
@@ -186,7 +187,7 @@ export abstract class VSRepoAdapter<T = any> {
     /** Same as `divideOne`, for every record matching `where`. Returns the count of affected rows. */
     public abstract divideMany<K extends NumericKeys<T>>(
         field: K,
-        value: NonNullable<T[K]>,
+        value: NonNullable<UnwrapReference<T[K]>>,
         where: VSRepoWhere<T>,
         options?: RestrictAdapterMethodOptions<T>,
     ): Promise<CountResult>;

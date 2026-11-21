@@ -15,6 +15,7 @@ import { DynamicMethodsResolver } from "./internal/resolvers/dynamic-methods.res
 import { VSRepoError } from "./errors/VSRepoError.js";
 import { VSRepoErrorType } from "./internal/enums/vsrepo-error-type.enum.js";
 import { VSRepoQueryOptions } from "./types/vsrepo/vsrepo-query-options.type.js";
+import { UnwrapReference } from "./types/utils/field-kind.type.js";
 import { NumericKeys } from "./types/utils/numeric-keys.type.js";
 import { RestrictMethodOptions } from "./types/utils/restrict-method-options.type.js";
 import { VSQueryBuilder } from "./internal/utils/vs-query-builder.util.js";
@@ -810,7 +811,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
      */
     async increment<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
@@ -824,7 +825,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Atomically subtracts `value` from a numeric field of the record matching `where` and returns the record. */
     async decrement<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
@@ -838,7 +839,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Atomically multiplies a numeric field of the record matching `where` by `value` and returns the record. */
     async multiply<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
@@ -852,7 +853,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Atomically divides a numeric field of the record matching `where` by `value` and returns the record. */
     async divide<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: SimpleMethodOptions<Entity, OrmTypes>,
     ): Promise<Entity> {
@@ -866,7 +867,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Same as `increment`, but for every record matching `where`. Returns how many were updated. */
     async incrementMany<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<CountResult> {
@@ -880,7 +881,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Same as `decrement`, but for every record matching `where`. Returns how many were updated. */
     async decrementMany<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<CountResult> {
@@ -894,7 +895,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Same as `multiply`, but for every record matching `where`. Returns how many were updated. */
     async multiplyMany<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<CountResult> {
@@ -908,7 +909,7 @@ export abstract class VSRepository<Entity, PKType, OrmTypes extends VSRepoOrmTyp
     /** Same as `divide`, but for every record matching `where`. Returns how many were updated. */
     async divideMany<Field extends NumericKeys<Entity>>(
         field: Field,
-        value: NonNullable<Entity[Field]>,
+        value: NonNullable<UnwrapReference<Entity[Field]>>,
         where: VSRepoWhere<Entity>,
         options?: RestrictMethodOptions<Entity, OrmTypes>,
     ): Promise<CountResult> {
