@@ -1,4 +1,6 @@
 import { RelationKeys } from "../vsrepo/vsrepo-relations.type.js";
+import { CollectionLike } from "./collection-like.type.js";
+import { ReferenceLike } from "./reference-like.type.js";
 import { SeeMode } from "./see-mode.type.js";
 
 /**
@@ -63,12 +65,18 @@ type ResultScalarKeys<T, Spec, Mode extends SpecMode> = Mode extends "select"
 /** Relation keys kept in the result: the relation keys present in the spec. */
 type ResultRelationKeys<T, Spec> = Extract<SpecKeys<Spec>, RelationKeys<T>>;
 
-/** Applies the shape to a relation field, preserving its array-ness and nullability. */
-type MapRelation<F, Spec, Mode extends SpecMode> = F extends readonly (infer U)[]
-    ? Shape<U, Spec, Mode>[]
-    : F extends null | undefined
-      ? F
-      : Shape<F, Spec, Mode>;
+/**
+ * Applies the shape to a relation field, preserving its array-ness and nullability. `CollectionLike` and
+ * `ReferenceLike` fields keep their declared wrapper type: the shape is not applied inside them.
+ */
+type MapRelation<F, Spec, Mode extends SpecMode> =
+    NonNullable<F> extends CollectionLike | ReferenceLike
+        ? F
+        : F extends readonly (infer U)[]
+          ? Shape<U, Spec, Mode>[]
+          : F extends null | undefined
+            ? F
+            : Shape<F, Spec, Mode>;
 
 /**
  * Shape of a single entity `T` given a `select` spec (`Mode = "select"`) or

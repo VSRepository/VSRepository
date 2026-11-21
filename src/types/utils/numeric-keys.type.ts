@@ -1,3 +1,4 @@
+import { UnwrapReference } from "./field-kind.type.js";
 import { NumericLike } from "./numeric-like.type.js";
 
 /**
@@ -8,5 +9,5 @@ import { NumericLike } from "./numeric-like.type.js";
  * @publicApi
  */
 export type NumericKeys<T> = {
-    [P in keyof T]: NonNullable<T[P]> extends NumericLike ? P : never;
+    [P in keyof T]: NonNullable<UnwrapReference<T[P]>> extends NumericLike ? P : never;
 }[keyof T];

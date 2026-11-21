@@ -1,3 +1,4 @@
+import { FieldKind, FieldType, UnwrapReference } from "../utils/field-kind.type.js";
 import { Ordering } from "../utils/ordering.type.js";
 import { Pagination } from "../utils/pagination.type.js";
 import { RelationKeys } from "./vsrepo-relations.type.js";
@@ -74,11 +75,11 @@ export type VSRepoToManyRelationOptions<U> = VSRepoOptionalRelationOptions<U> & 
  * @publicApi
  */
 export type VSRepoRelationsOptions<T> = {
-    [P in RelationKeys<T>]?: NonNullable<T[P]> extends readonly (infer U)[]
-        ? VSRepoToManyRelationOptions<NonNullable<U>>
-        : null extends T[P]
-          ? VSRepoOptionalRelationOptions<NonNullable<T[P]>>
-          : undefined extends T[P]
-            ? VSRepoOptionalRelationOptions<NonNullable<T[P]>>
-            : VSRepoRelationOptions<NonNullable<T[P]>>;
+    [P in RelationKeys<T>]?: FieldKind<T[P]> extends "to-many"
+        ? VSRepoToManyRelationOptions<FieldType<T[P]>>
+        : null extends UnwrapReference<T[P]>
+          ? VSRepoOptionalRelationOptions<FieldType<T[P]>>
+          : undefined extends UnwrapReference<T[P]>
+            ? VSRepoOptionalRelationOptions<FieldType<T[P]>>
+            : VSRepoRelationOptions<FieldType<T[P]>>;
 };

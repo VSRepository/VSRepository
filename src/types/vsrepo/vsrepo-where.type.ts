@@ -1,5 +1,5 @@
 import { DecimalLike } from "../utils/decimal-like.type.js";
-import { Primitive } from "../utils/primitive.type.js";
+import { FieldKind, FieldType } from "../utils/field-kind.type.js";
 
 /**
  * Operators available to filter a single scalar field's value.
@@ -62,34 +62,26 @@ export type VSRepoFieldWhere<V> = V | VSRepoFieldOperators<V>;
  * Field-level filters for an entity, without the top-level `AND`/`OR`/`NOT`
  * logical operators (see `VSRepoWhere` for those).
  *
- * Scalar fields accept a `VSRepoFieldWhere`. To-many relation fields accept
- * `_some`/`_every`/`_none` filters, applied to the related records. To-one
- * relation fields accept `_with`/`_without` filters.
- *
  * @publicApi
  */
 export type VSRepoWherePlain<T> = {
-    [P in keyof T]?: NonNullable<T[P]> extends Primitive
-        ? VSRepoFieldWhere<T[P]>
-        : NonNullable<T[P]> extends ReadonlyArray<infer U>
-          ? U extends object
-              ? {
-                    /** Matches records where at least one related record matches the given filter. */
-                    _some?: VSRepoWherePlain<U>;
-                    /** Matches records where every related record matches the given filter. */
-                    _every?: VSRepoWherePlain<U>;
-                    /** Matches records where no related record matches the given filter. */
-                    _none?: VSRepoWherePlain<U>;
-                }
-              : VSRepoFieldWhere<T[P]>
-          : NonNullable<T[P]> extends object
-            ? {
-                  /** Matches records whose related record matches the given filter. */
-                  _with?: VSRepoWherePlain<NonNullable<T[P]>>;
-                  /** Matches records whose related record does not match the given filter. */
-                  _without?: VSRepoWherePlain<NonNullable<T[P]>>;
-              }
-            : VSRepoFieldWhere<T[P]>;
+    [P in keyof T]?: FieldKind<T[P]> extends "scalar"
+        ? VSRepoFieldWhere<FieldType<T[P]>>
+        : FieldKind<T[P]> extends "to-many"
+          ? {
+                /** Matches records where at least one related record matches the given filter. */
+                _some?: VSRepoWherePlain<FieldType<T[P]>>;
+                /** Matches records where every related record matches the given filter. */
+                _every?: VSRepoWherePlain<FieldType<T[P]>>;
+                /** Matches records where no related record matches the given filter. */
+                _none?: VSRepoWherePlain<FieldType<T[P]>>;
+            }
+          : {
+                /** Matches records whose related record matches the given filter. */
+                _with?: VSRepoWherePlain<FieldType<T[P]>>;
+                /** Matches records whose related record does not match the given filter. */
+                _without?: VSRepoWherePlain<FieldType<T[P]>>;
+            };
 };
 
 /**

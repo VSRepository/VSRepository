@@ -1,6 +1,7 @@
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
 import { RelationKeys, VSRepoRelations } from "../vsrepo/vsrepo-relations.type.js";
 import { VSRepoSelect } from "../vsrepo/vsrepo-select.type.js";
+import { FieldKind, FieldType, UnwrapReference } from "./field-kind.type.js";
 import { InferMethodReturn } from "./infer-method-return.type.js";
 import { MethodOptions } from "./method-options.type.js";
 
@@ -29,8 +30,8 @@ type ExactSpec<S, Ref> = S extends object
           }
     : unknown;
 
-/** Entity type behind a relation field: `U` for `U[]`, `U | null` and `U`. */
-type RelatedOf<F> = NonNullable<F> extends readonly (infer U)[] ? NonNullable<U> : NonNullable<F>;
+/** Entity type behind a relation field: `U` for `U[]`, `CollectionLike<U>`, `ReferenceLike<U>`, `U | null` and `U`. */
+type RelatedOf<F> = FieldType<F>;
 
 /**
  * Checks that a `relationsOptions` object only names relation fields of `E`, and that each one only
@@ -49,15 +50,15 @@ type ExactRelationsOptions<S, E> = S extends object
 type ExactRelationOptions<S, F> = S extends object
     ? {
           [K in keyof S]: K extends "where"
-              ? NonNullable<F> extends readonly unknown[]
+              ? FieldKind<F> extends "to-many"
                   ? S[K]
-                  : null extends F
+                  : null extends UnwrapReference<F>
                     ? S[K]
-                    : undefined extends F
+                    : undefined extends UnwrapReference<F>
                       ? S[K]
                       : never
               : K extends "order" | "pagination"
-                ? NonNullable<F> extends readonly unknown[]
+                ? FieldKind<F> extends "to-many"
                     ? S[K]
                     : never
                 : K extends "relationsOptions"
