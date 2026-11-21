@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [Unreleased]
+## [3.0.0-dev.7] - 2026-11-21
 
 ### Added
 
@@ -28,7 +28,7 @@ All notable changes to this project will be documented in this file.
 
 - Documented `CollectionLike` and `ReferenceLike` in the utility types and the `custom` merge strategy in the base methods
 
-## [Unreleased] (Português)
+## [3.0.0-dev.7] - 2026-11-21 (Português)
 
 ### Adicionado
 
