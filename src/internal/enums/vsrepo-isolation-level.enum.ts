@@ -13,4 +13,6 @@ export enum VSRepoIsolationLevel {
     REPEATABLE_READ = "RepeatableRead",
     /** Strongest isolation level: transactions behave as if executed sequentially. */
     SERIALIZABLE = "Serializable",
+    /** Reads from a consistent snapshot of the data for the duration of the transaction. */
+    SNAPSHOT = "Snapshot",
 }
