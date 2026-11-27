@@ -1,4 +1,6 @@
 import { VSRepoOrmTypes } from "../vsrepo/vsrepo-orm-types.type.js";
+import { DeepPartial } from "./deep-partial.type.js";
+import { IsWrapperField } from "./field-kind.type.js";
 import { MethodOptions } from "./method-options.type.js";
 import { Primitive } from "./primitive.type.js";
 
@@ -19,6 +21,10 @@ type IsEntity<T> = T extends Primitive ? false : T extends readonly unknown[] ? 
  *
  * Fields without a strategy are simply overwritten by the source value (nested objects and arrays included).
  *
+ * `customFn` receives the source as a `DeepPartial` of the field (for ORM wrappers, an array, a partial
+ * entity, the wrapper itself...). `CollectionLike` and `ReferenceLike` fields (ORM wrappers) only accept
+ * `"custom"`: the core can't build new wrappers or entities, so merging them is up to `customFn`.
+ *
  * @template T Type of the field being configured.
  *
  * @publicApi
@@ -26,8 +32,11 @@ type IsEntity<T> = T extends Primitive ? false : T extends readonly unknown[] ? 
 export type MergeFieldConfig<T> =
     | {
           strategy: "custom";
-          /** Receives the current (target) and incoming (source) values and returns the value to store. */
-          customFn: (target: T, source: T) => T;
+          /**
+           * Receives the current (target) and incoming (source) values and returns the value to store.
+           * The source is a `DeepPartial` of the field.
+           */
+          customFn: (target: T, source: DeepPartial<T>) => T;
       }
     | ([T] extends [never]
           ? {
@@ -43,41 +52,43 @@ export type MergeFieldConfig<T> =
                  */
                 deduplicate?: boolean;
             }
-          : NonNullable<T> extends readonly unknown[]
-            ? IsEntity<ArrayItem<T>> extends true
+          : IsWrapperField<T> extends true
+            ? never
+            : NonNullable<T> extends readonly unknown[]
+              ? IsEntity<ArrayItem<T>> extends true
+                  ? {
+                        strategy: "to-many";
+                        /** Field of the items that identifies them, used to match target and source items. */
+                        pk: keyof ArrayItem<T> & string;
+                        /**
+                         * Per-field strategies applied when merging two matched items. When omitted, the source
+                         * item's fields simply overwrite the target item's.
+                         */
+                        fields?: MergeFields<ArrayItem<T>>;
+                    }
+                  : {
+                        strategy: "concat";
+                        /**
+                         * Which list comes first in the result: `"target"` (the stored items) or `"source"` (the incoming items).
+                         *
+                         * @default "target"
+                         */
+                        whosFirst?: "source" | "target";
+                        /**
+                         * @default false
+                         */
+                        deduplicate?: boolean;
+                    }
+              : IsEntity<NonNullable<T>> extends true
                 ? {
-                      strategy: "to-many";
-                      /** Field of the items that identifies them, used to match target and source items. */
-                      pk: keyof ArrayItem<T> & string;
+                      strategy: "to-one";
                       /**
-                       * Per-field strategies applied when merging two matched items. When omitted, the source
-                       * item's fields simply overwrite the target item's.
+                       * Per-field strategies applied when merging the nested entity. When omitted, the source
+                       * object's fields simply overwrite the target object's.
                        */
-                      fields?: MergeFields<ArrayItem<T>>;
+                      fields?: MergeFields<NonNullable<T>>;
                   }
-                : {
-                      strategy: "concat";
-                      /**
-                       * Which list comes first in the result: `"target"` (the stored items) or `"source"` (the incoming items).
-                       *
-                       * @default "target"
-                       */
-                      whosFirst?: "source" | "target";
-                      /**
-                       * @default false
-                       */
-                      deduplicate?: boolean;
-                  }
-            : IsEntity<NonNullable<T>> extends true
-              ? {
-                    strategy: "to-one";
-                    /**
-                     * Per-field strategies applied when merging the nested entity. When omitted, the source
-                     * object's fields simply overwrite the target object's.
-                     */
-                    fields?: MergeFields<NonNullable<T>>;
-                }
-              : never);
+                : never);
 
 /**
  * @publicApi

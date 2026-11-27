@@ -1,22 +1,10 @@
-import { Primitive } from "../utils/primitive.type.js";
+import { FieldKind, FieldType } from "../utils/field-kind.type.js";
 
 /**
  * Selection shape accepted by the `select` option of repository/adapter methods.
  *
- * Scalar fields accept a `boolean`; relation fields accept either a `boolean`
- * (select the relation with all of its own scalar fields) or a nested
- * `VSRepoSelect` to further restrict which fields of the relation are returned.
- *
  * @publicApi
  */
 export type VSRepoSelect<T> = {
-    [P in keyof T]?: NonNullable<T[P]> extends Primitive
-        ? boolean
-        : NonNullable<T[P]> extends Array<infer U>
-          ? U extends Primitive
-              ? boolean
-              : VSRepoSelect<U> | boolean
-          : NonNullable<T[P]> extends object
-            ? VSRepoSelect<NonNullable<T[P]>> | boolean
-            : boolean;
+    [P in keyof T]?: FieldKind<T[P]> extends "scalar" ? boolean : VSRepoSelect<FieldType<T[P]>> | boolean;
 };

@@ -36,7 +36,7 @@ await userRepository.transaction(
 | `isolationLevel` | `VSRepoIsolationLevel` | Nível de isolamento usado na transação. O padrão é o default do ORM por trás dela. |
 | `timeoutMs`      | `number`               | Tempo máximo (em ms) que a transação pode rodar antes de ser abortada.             |
 
-`VSRepoIsolationLevel` espelha os níveis de isolamento SQL padrão: `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE`. O suporte a um determinado nível depende do adapter/ORM e do banco de dados por trás dele.
+`VSRepoIsolationLevel` espelha os níveis de isolamento SQL: `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE` e `SNAPSHOT`. O suporte a um determinado nível depende do adapter/ORM e do banco de dados por trás dele.
 
 ## Valor de retorno e propagação de erro
 

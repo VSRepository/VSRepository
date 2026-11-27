@@ -1,3 +1,5 @@
+import { CollectionLike } from "./collection-like.type.js";
+import { UnwrapReference } from "./field-kind.type.js";
 import { Primitive } from "./primitive.type.js";
 
 /**
@@ -15,13 +17,13 @@ export type SortDirection = "asc" | "desc" | "ASC" | "DESC";
  * @publicApi
  */
 export type OrderByField<T, Depth extends unknown[] = []> = {
-    [P in keyof T]?: NonNullable<T[P]> extends Primitive
+    [P in keyof T]?: NonNullable<UnwrapReference<T[P]>> extends Primitive
         ? SortDirection
-        : NonNullable<T[P]> extends readonly unknown[]
+        : NonNullable<UnwrapReference<T[P]>> extends readonly unknown[] | CollectionLike
           ? never
           : Depth["length"] extends 3 // limite de profundidade
             ? never
-            : OrderByField<NonNullable<T[P]>, [...Depth, unknown]>;
+            : OrderByField<NonNullable<UnwrapReference<T[P]>>, [...Depth, unknown]>;
 };
 
 /**
